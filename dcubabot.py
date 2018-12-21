@@ -16,15 +16,15 @@ start: Mensaje al mandar start que es la priemra vez q un usuario habla con el b
 
 
 def start(bot, update):
-    update.message.reply_text("Hola, que tal? mandame /help si no sabes que puedo hacer!")
+    update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
 
 def help(bot, update):
-    update.message.reply_text("Yo tampoco se que puedo hacer")
+    update.message.reply_text("Yo tampoco sé qué puedo hacer.")
 
 
 def estasvivo(bot, update):
-    update.message.reply_text("Si, estoy vivo")
+    update.message.reply_text("Sí, estoy vivo.")
 
 
 def main():
