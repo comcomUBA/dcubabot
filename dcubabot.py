@@ -37,13 +37,10 @@ def main():
         dispatcher = updater.dispatcher
         j = updater.job_queue
 
-        # Ven aca que tenemos un lindo codigo repetido.
-        start_handler = CommandHandler('start', start)
-        dispatcher.add_handler(start_handler)
-        help_handler = CommandHandler('help', help)
-        dispatcher.add_handler(help_handler)
-        estasvivo_handler = CommandHandler('estasvivo', estasvivo)
-        dispatcher.add_handler(estasvivo_handler)
+        commands = [line.rstrip('\n') for line in open('commands.txt')]
+        for command in commands:
+            handler = CommandHandler(command, globals()[command])
+            dispatcher.add_handler(handler)
 
         # Start running the bot
         updater.start_polling(clean=True)
