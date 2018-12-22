@@ -37,7 +37,7 @@ def main():
         dispatcher = updater.dispatcher
         j = updater.job_queue
 
-        commands = [line.rstrip('\n') for line in open('commands.txt')]
+        commands = (line.rstrip('\n') for line in open('commands.txt'))
         for command in commands:
             handler = CommandHandler(command, globals()[command])
             dispatcher.add_handler(handler)
