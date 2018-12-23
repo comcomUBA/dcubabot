@@ -21,12 +21,6 @@ class TestDCUBABot(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         # For use within the tests we nee some stuff. Starting with a Mockbot
-        try:
-            print("bot", self.bot)
-            if self.bot is not None:
-                return
-        except Exception as inst:
-            pass
         self.bot = Mockbot()
         self.bot.request = telegram.utils.request.Request()
         # Some generators for users and chats
