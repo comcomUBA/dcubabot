@@ -39,19 +39,22 @@ class TestDCUBABot(unittest.TestCase):
     def tearDownClass(self):
         self.updater.stop()
 
-    def test_help(self):
-        update = self.mg.get_message(text="/help")
+    @classmethod
+    def sendCommand(self, command):
+        user = self.ug.get_user(first_name="Test", last_name="The Bot")
+        chat = self.cg.get_chat(user=user)
+        update = self.mg.get_message(user=user, chat=chat, text=command)
         self.bot.insertUpdate(update)
+
+    def test_help(self):
+        self.sendCommand("/help")
         # self.assertEqual(len(self.bot.sent_messages), 1)
         sent = self.bot.sent_messages[-1]
         self.assertEqual(sent['method'], "sendMessage")
         self.assertEqual(sent['text'], "Yo tampoco sé qué puedo hacer.")
 
     def test_start(self):
-        user = self.ug.get_user(first_name="Test", last_name="The Bot")
-        chat = self.cg.get_chat(user=user)
-        update = self.mg.get_message(user=user, chat=chat, text="/start")
-        self.bot.insertUpdate(update)
+        self.sendCommand("/start")
         # self.assertEqual(len(self.bot.sent_messages), 1)
         sent = self.bot.sent_messages[-1]
         self.assertEqual(sent['method'], "sendMessage")
@@ -59,10 +62,7 @@ class TestDCUBABot(unittest.TestCase):
             sent['text'], "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
     def test_estasvivo(self):
-        user = self.ug.get_user(first_name="Test", last_name="The Bot")
-        chat = self.cg.get_chat(user=user)
-        update = self.mg.get_message(user=user, chat=chat, text="/estasvivo")
-        self.bot.insertUpdate(update)
+        self.sendCommand("/estasvivo")
         # self.assertEqual(len(self.bot.sent_messages), 1)
         sent = self.bot.sent_messages[-1]
         self.assertEqual(sent['method'], "sendMessage")
