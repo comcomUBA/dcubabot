@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 import unittest
 
+import json
+
 import telegram
 from telegram.ext import CommandHandler
-from telegram.ext import Filters
-from telegram.ext import MessageHandler
 from telegram.ext import Updater
 
 from ptbtest import ChatGenerator
@@ -13,7 +13,7 @@ from ptbtest import MessageGenerator
 from ptbtest import Mockbot
 from ptbtest import UserGenerator
 
-from dcubabot import start, estasvivo, help
+from dcubabot import start, estasvivo, help, listar
 
 
 class TestDCUBABot(unittest.TestCase):
@@ -32,6 +32,7 @@ class TestDCUBABot(unittest.TestCase):
         self.updater.dispatcher.add_handler(CommandHandler("help", help))
         self.updater.dispatcher.add_handler(CommandHandler("start", start))
         self.updater.dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
+        self.updater.dispatcher.add_handler(CommandHandler("listar", listar))
         print("Hice setup")
         self.updater.start_polling()
 
@@ -67,6 +68,26 @@ class TestDCUBABot(unittest.TestCase):
         sent = self.bot.sent_messages[-1]
         self.assertEqual(sent['method'], "sendMessage")
         self.assertEqual(sent['text'], "Sí, estoy vivo.")
+
+    def test_listar(self):
+        self.sendCommand("/listar")
+        # self.assertEqual(len(self.bot.sent_messages), 1)
+        sent = self.bot.sent_messages[-1]
+        self.assertEqual(sent['method'], "sendMessage")
+        self.assertEqual(sent['text'], "Grupos: ")
+
+        # Assertions on keyboard
+        inline_keyboard = json.loads(sent['reply_markup'])['inline_keyboard']
+        self.assertEqual(len(inline_keyboard), 2)  # Number of rows
+        for i in range(2):
+            row = inline_keyboard[i]
+            self.assertEqual((len(row)), 3)  # Number of columns
+            for j in range(3):
+                button = row[j]
+                button_number = str(i*len(row)+j)
+                self.assertEqual(button['text'], "Texto " + button_number)
+                self.assertEqual(button['url'], "https://url" + button_number + ".com")
+                self.assertEqual(button['callback_data'], "data" + button_number)
 
 
 if __name__ == '__main__':
