@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# STL imports
 
+# STL imports
 import sys
 
 # Non STL imports
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (Updater, CommandHandler)
 
 # Local imports
@@ -26,6 +27,25 @@ def help(bot, update):
 def estasvivo(bot, update):
     update.message.reply_text("Sí, estoy vivo.")
 
+def listar(bot, update):
+    keyboard_data = [
+        [
+            ["Texto 0", "https://url0.com", "data0"],
+            ["Texto 1", "https://url1.com", "data1"],
+            ["Texto 2", "https://url2.com", "data2"],
+        ],
+        [
+            ["Texto 3", "https://url3.com", "data3"],
+            ["Texto 4", "https://url4.com", "data4"],
+            ["Texto 5", "https://url5.com", "data5"],
+        ],
+    ]
+    keyboard = []
+    for row in keyboard_data:
+        keyboard.append(list(InlineKeyboardButton(
+            text=button[0], url=button[1], callback_data=button[2]) for button in row))
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.sendMessage(update.message.chat_id, text="Grupos: ", disable_web_page_preview=True, reply_markup=reply_markup)
 
 def main():
     try:
