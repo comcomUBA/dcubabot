@@ -1,4 +1,0 @@
-start
-help
-estasvivo
-listar

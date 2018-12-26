@@ -10,6 +10,7 @@ from telegram.ext import (Updater, CommandHandler)
 
 # Local imports
 from tokenz import *
+from database import *
 
 """
 start: Mensaje al mandar start que es la priemra vez q un usuario habla con el bot, o si alguien pone /start
@@ -26,6 +27,7 @@ def help(bot, update):
 
 def estasvivo(bot, update):
     update.message.reply_text("Sí, estoy vivo.")
+
 
 def listar(bot, update):
     keyboard_data = [
@@ -57,10 +59,10 @@ def main():
         dispatcher = updater.dispatcher
         j = updater.job_queue
 
-        commands = (line.rstrip('\n') for line in open('commands.txt'))
-        for command in commands:
-            handler = CommandHandler(command, globals()[command])
-            dispatcher.add_handler(handler)
+        with db_session:
+            for command in select(c.name for c in Command):
+                handler = CommandHandler(command, globals()[command])
+                dispatcher.add_handler(handler)
 
         # Start running the bot
         updater.start_polling(clean=True)
