@@ -22,7 +22,11 @@ def start(bot, update):
 
 
 def help(bot, update):
-    update.message.reply_text("Yo tampoco sé qué puedo hacer.")
+    message_text = ""
+    with db_session:
+        for command in select(c for c in Command if c.description).order_by(lambda c: c.name):
+            message_text += "/" + command.name + " - " + command.description + "\n"
+    update.message.reply_text(message_text)
 
 
 def estasvivo(bot, update):
