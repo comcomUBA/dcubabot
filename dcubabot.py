@@ -48,7 +48,6 @@ def main():
         print("ERROR AL INICIAR EL DCUBABOT")
         result = str(type(inst)) + "\n"		# the exception instancee
         result += str(inst.args) + "\n"	 # arguments stored in .args
-        # __str__ allows args to be printed directly,
         result += str(inst) + "\n"
         print(result)
 
