@@ -10,7 +10,7 @@ from telegram.ext import (Updater, CommandHandler)
 
 # Local imports
 from tokenz import *
-from database import *
+from models import *
 
 """
 start: Mensaje al mandar start que es la priemra vez q un usuario habla con el bot, o si alguien pone /start
@@ -51,7 +51,9 @@ def listar(bot, update):
         keyboard.append(list(InlineKeyboardButton(
             text=button[0], url=button[1], callback_data=button[2]) for button in row))
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.sendMessage(update.message.chat_id, text="Grupos: ", disable_web_page_preview=True, reply_markup=reply_markup)
+    bot.sendMessage(update.message.chat_id, text="Grupos: ",
+                    disable_web_page_preview=True, reply_markup=reply_markup)
+
 
 def main():
     try:
