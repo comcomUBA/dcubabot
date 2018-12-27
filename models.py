@@ -11,5 +11,6 @@ class Command(db.Entity):
     description = Optional(str)
 
 
-db.bind('sqlite', 'commands.sqlite3', create_db=True)
-db.generate_mapping(create_tables=True)
+def init_db(path):
+    db.bind('sqlite', path, create_db=True)
+    db.generate_mapping(create_tables=True)

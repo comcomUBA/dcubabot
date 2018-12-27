@@ -3,6 +3,7 @@
 import unittest
 
 import json
+import os
 
 import telegram
 from telegram.ext import CommandHandler
@@ -14,6 +15,7 @@ from ptbtest import Mockbot
 from ptbtest import UserGenerator
 
 from dcubabot import start, estasvivo, help, listar
+from models import *
 
 
 class TestDCUBABot(unittest.TestCase):
@@ -48,11 +50,24 @@ class TestDCUBABot(unittest.TestCase):
         self.bot.insertUpdate(update)
 
     def test_help(self):
+        init_db("test.sqlite3")
+        with db_session:
+            Command(name="comandoSinDescripcion1")
+            Command(name="comandoConDescripcion1", description="Descripción 1")
+            Command(name="comandoSinDescripcion2")
+            Command(name="comandoConDescripcion2", description="Descripción 2")
+            Command(name="comandoSinDescripcion3")
+            Command(name="comandoConDescripcion3", description="Descripción 3")
+
         self.sendCommand("/help")
         # self.assertEqual(len(self.bot.sent_messages), 1)
         sent = self.bot.sent_messages[-1]
         self.assertEqual(sent['method'], "sendMessage")
-        self.assertEqual(sent['text'], "Yo tampoco sé qué puedo hacer.")
+        self.assertEqual(sent['text'], ("/comandoConDescripcion1 - Descripción 1\n"
+                                        "/comandoConDescripcion2 - Descripción 2\n"
+                                        "/comandoConDescripcion3 - Descripción 3\n"))
+
+        os.remove("test.sqlite3")
 
     def test_start(self):
         self.sendCommand("/start")
@@ -84,7 +99,7 @@ class TestDCUBABot(unittest.TestCase):
             self.assertEqual((len(row)), 3)  # Number of columns
             for j in range(3):
                 button = row[j]
-                button_number = str(i*len(row)+j)
+                button_number = str(i * len(row) + j)
                 self.assertEqual(button['text'], "Texto " + button_number)
                 self.assertEqual(button['url'], "https://url" + button_number + ".com")
                 self.assertEqual(button['callback_data'], "data" + button_number)

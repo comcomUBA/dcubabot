@@ -65,6 +65,7 @@ def main():
         dispatcher = updater.dispatcher
         j = updater.job_queue
 
+        init_db("commands.sqlite3")
         with db_session:
             for command in select(c.name for c in Command):
                 handler = CommandHandler(command, globals()[command])
@@ -74,8 +75,8 @@ def main():
         updater.start_polling(clean=True)
     except Exception as inst:
         print("ERROR AL INICIAR EL DCUBABOT")
-        result = str(type(inst)) + "\n"		# the exception instancee
-        result += str(inst.args) + "\n"	 # arguments stored in .args
+        result = str(type(inst)) + "\n"  # the exception instancee
+        result += str(inst.args) + "\n"  # arguments stored in .args
         result += str(inst) + "\n"
         print(result)
 
