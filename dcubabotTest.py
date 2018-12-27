@@ -35,12 +35,14 @@ class TestDCUBABot(unittest.TestCase):
         self.updater.dispatcher.add_handler(CommandHandler("start", start))
         self.updater.dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
         self.updater.dispatcher.add_handler(CommandHandler("listar", listar))
+        init_db("test.sqlite3")
         print("Hice setup")
         self.updater.start_polling()
 
     @classmethod
     def tearDownClass(self):
         self.updater.stop()
+        os.remove("test.sqlite3")
 
     @classmethod
     def sendCommand(self, command):
@@ -50,7 +52,6 @@ class TestDCUBABot(unittest.TestCase):
         self.bot.insertUpdate(update)
 
     def test_help(self):
-        init_db("test.sqlite3")
         with db_session:
             Command(name="comandoSinDescripcion1")
             Command(name="comandoConDescripcion1", description="Descripción 1")
@@ -67,7 +68,6 @@ class TestDCUBABot(unittest.TestCase):
                                         "/comandoConDescripcion2 - Descripción 2\n"
                                         "/comandoConDescripcion3 - Descripción 3\n"))
 
-        os.remove("test.sqlite3")
 
     def test_start(self):
         self.sendCommand("/start")
@@ -85,6 +85,10 @@ class TestDCUBABot(unittest.TestCase):
         self.assertEqual(sent['text'], "Sí, estoy vivo.")
 
     def test_listar(self):
+        with db_session:
+            for i in range(6):
+                Listable(name="Texto " + str(i), url="https://url" + str(i) + ".com")
+
         self.sendCommand("/listar")
         # self.assertEqual(len(self.bot.sent_messages), 1)
         sent = self.bot.sent_messages[-1]
@@ -99,10 +103,10 @@ class TestDCUBABot(unittest.TestCase):
             self.assertEqual((len(row)), 3)  # Number of columns
             for j in range(3):
                 button = row[j]
-                button_number = str(i * len(row) + j)
+                button_number = str(i * 3 + j)
                 self.assertEqual(button['text'], "Texto " + button_number)
                 self.assertEqual(button['url'], "https://url" + button_number + ".com")
-                self.assertEqual(button['callback_data'], "data" + button_number)
+                self.assertEqual(button['callback_data'], button['url'])
 
 
 if __name__ == '__main__':
