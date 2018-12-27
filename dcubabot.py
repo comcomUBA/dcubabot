@@ -54,7 +54,6 @@ def main():
         print("Iniciando DCUBABOT")
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
-        j = updater.job_queue
 
         init_db("commands.sqlite3")
         with db_session:
