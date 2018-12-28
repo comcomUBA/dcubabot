@@ -10,6 +10,10 @@ class Command(db.Entity):
     name = Required(str)
     description = Optional(str)
 
+class Listable(db.Entity):
+    name = Required(str)
+    url = Required(str)
+
 
 def init_db(path):
     db.bind('sqlite', path, create_db=True)
