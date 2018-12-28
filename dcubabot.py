@@ -51,8 +51,9 @@ def listar(bot, update):
         keyboard = []
         columns = 3
         for k in range(0, len(buttons), columns):
-            keyboard.append(list(InlineKeyboardButton(
-                text=button.name, url=button.url, callback_data=button.url) for button in buttons[k:k+columns]))
+            row = [InlineKeyboardButton(text=button.name, url=button.url,
+                                        callback_data=button.url) for button in buttons[k:k+columns]]
+            keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
         bot.sendMessage(update.message.chat_id, text="Grupos: ",
                         disable_web_page_preview=True, reply_markup=reply_markup)
