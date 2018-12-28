@@ -3,6 +3,7 @@
 
 # STL imports
 import sys
+import logging
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -11,6 +12,17 @@ from telegram.ext import (Updater, CommandHandler)
 # Local imports
 from tokenz import *
 from models import *
+
+# TODO:Move this from here
+logging.basicConfig(
+    level=logging.INFO,
+    # level=logging.DEBUG,
+    format='[%(asctime)s] - [%(name)s] - [%(levelname)s] - %(message)s',
+    filename="bots.log")
+
+
+# Globals ...... yes, globals
+logger = logging.getLogger("Bots.log")
 
 """
 start: Mensaje al mandar start que es la priemra vez q un usuario habla con el bot, o si alguien pone /start
@@ -61,6 +73,7 @@ def main():
         # Telegram Bot Authorization Token
         botname = "DCUBABOT"
         print("Iniciando DCUBABOT")
+        logger.info("Iniciando DCUBABOT")
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
 
@@ -69,15 +82,11 @@ def main():
             for command in select(c.name for c in Command):
                 handler = CommandHandler(command, globals()[command])
                 dispatcher.add_handler(handler)
-
         # Start running the bot
         updater.start_polling(clean=True)
     except Exception as inst:
-        print("ERROR AL INICIAR EL DCUBABOT")
-        result = str(type(inst)) + "\n"  # the exception instancee
-        result += str(inst.args) + "\n"  # arguments stored in .args
-        result += str(inst) + "\n"
-        print(result)
+        logger.critical("ERROR AL INICIAR EL DCUBABOT")
+        logger.exception(inst)
 
 
 if __name__ == '__main__':
