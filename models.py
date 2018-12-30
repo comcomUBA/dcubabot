@@ -10,9 +10,22 @@ class Command(db.Entity):
     name = Required(str)
     description = Optional(str)
 
+
 class Listable(db.Entity):
     name = Required(str)
     url = Required(str)
+
+
+class Obligatoria(Listable):
+    pass
+
+
+class Optativa(Listable):
+    pass
+
+
+class Otro(Listable):
+    pass
 
 
 def init_db(path):

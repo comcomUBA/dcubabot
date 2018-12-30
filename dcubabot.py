@@ -45,18 +45,30 @@ def estasvivo(bot, update):
     update.message.reply_text("Sí, estoy vivo.")
 
 
-def listar(bot, update):
+def list(bot, update, listable_type):
     with db_session:
-        buttons = select(l for l in Listable).order_by(lambda l: l.name)
+        buttons = select(l for l in listable_type).order_by(lambda l: l.name)
         keyboard = []
         columns = 3
         for k in range(0, len(buttons), columns):
             row = [InlineKeyboardButton(text=button.name, url=button.url,
-                                        callback_data=button.url) for button in buttons[k:k+columns]]
+                                        callback_data=button.url) for button in buttons[k:k + columns]]
             keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
         bot.sendMessage(update.message.chat_id, text="Grupos: ",
                         disable_web_page_preview=True, reply_markup=reply_markup)
+
+
+def listar(bot, update):
+    list(bot, update, Obligatoria)
+
+
+def listaroptativa(bot, update):
+    list(bot, update, Optativa)
+
+
+def listarotro(bot, update):
+    list(bot, update, Otro)
 
 
 def main():

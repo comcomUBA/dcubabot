@@ -14,7 +14,7 @@ from ptbtest import MessageGenerator
 from ptbtest import Mockbot
 from ptbtest import UserGenerator
 
-from dcubabot import start, estasvivo, help, listar
+from dcubabot import start, estasvivo, help, listar, listaroptativa, listarotro
 from models import *
 
 
@@ -35,7 +35,14 @@ class TestDCUBABot(unittest.TestCase):
         self.updater.dispatcher.add_handler(CommandHandler("start", start))
         self.updater.dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
         self.updater.dispatcher.add_handler(CommandHandler("listar", listar))
+        self.updater.dispatcher.add_handler(CommandHandler("listaroptativa", listaroptativa))
+        self.updater.dispatcher.add_handler(CommandHandler("listarotro", listarotro))
         init_db("test.sqlite3")
+        with db_session:
+            for listable_type in Listable.__subclasses__():
+                for i in range(6):
+                    listable_type(name=listable_type._discriminator_ + " " + str(i),
+                                  url="https://url" + str(i) + ".com")
         print("Hice setup")
         self.updater.start_polling()
 
@@ -68,7 +75,6 @@ class TestDCUBABot(unittest.TestCase):
                                         "/comandoConDescripcion2 - Descripción 2\n"
                                         "/comandoConDescripcion3 - Descripción 3\n"))
 
-
     def test_start(self):
         self.sendCommand("/start")
         # self.assertEqual(len(self.bot.sent_messages), 1)
@@ -84,12 +90,9 @@ class TestDCUBABot(unittest.TestCase):
         self.assertEqual(sent['method'], "sendMessage")
         self.assertEqual(sent['text'], "Sí, estoy vivo.")
 
-    def test_listar(self):
-        with db_session:
-            for i in range(6):
-                Listable(name="Texto " + str(i), url="https://url" + str(i) + ".com")
-
-        self.sendCommand("/listar")
+    # TODO: Rename
+    def list_test(self, command, listable_type):
+        self.sendCommand(command)
         # self.assertEqual(len(self.bot.sent_messages), 1)
         sent = self.bot.sent_messages[-1]
         self.assertEqual(sent['method'], "sendMessage")
@@ -104,9 +107,18 @@ class TestDCUBABot(unittest.TestCase):
             for j in range(3):
                 button = row[j]
                 button_number = str(i * 3 + j)
-                self.assertEqual(button['text'], "Texto " + button_number)
+                self.assertEqual(button['text'], listable_type._discriminator_ + " " + button_number)
                 self.assertEqual(button['url'], "https://url" + button_number + ".com")
                 self.assertEqual(button['callback_data'], button['url'])
+
+    def test_listar(self):
+        self.list_test("/listar", Obligatoria)
+
+    def test_listar(self):
+        self.list_test("/listaroptativa", Optativa)
+
+    def test_listar(self):
+        self.list_test("/listarotro", Otro)
 
 
 if __name__ == '__main__':
