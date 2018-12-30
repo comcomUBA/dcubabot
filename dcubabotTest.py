@@ -59,8 +59,9 @@ class TestDCUBABot(unittest.TestCase):
         self.bot.insertUpdate(update)
 
     def assert_command_sends_message(self, command, message_text):
+        sent_messages_before = len(self.bot.sent_messages)
         self.sendCommand(command)
-        # self.assertEqual(len(self.bot.sent_messages), 1)
+        self.assertEqual(len(self.bot.sent_messages) - sent_messages_before, 1)
         sent = self.bot.sent_messages[-1]
         self.assertEqual(sent['method'], "sendMessage")
         self.assertEqual(sent['text'], message_text)
