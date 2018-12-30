@@ -58,6 +58,13 @@ class TestDCUBABot(unittest.TestCase):
         update = self.mg.get_message(user=user, chat=chat, text=command)
         self.bot.insertUpdate(update)
 
+    def assert_command_sends_message(self, command, message_text):
+        self.sendCommand(command)
+        # self.assertEqual(len(self.bot.sent_messages), 1)
+        sent = self.bot.sent_messages[-1]
+        self.assertEqual(sent['method'], "sendMessage")
+        self.assertEqual(sent['text'], message_text)
+
     def test_help(self):
         with db_session:
             Command(name="comandoSinDescripcion1")
@@ -67,39 +74,22 @@ class TestDCUBABot(unittest.TestCase):
             Command(name="comandoSinDescripcion3")
             Command(name="comandoConDescripcion3", description="Descripción 3")
 
-        self.sendCommand("/help")
-        # self.assertEqual(len(self.bot.sent_messages), 1)
-        sent = self.bot.sent_messages[-1]
-        self.assertEqual(sent['method'], "sendMessage")
-        self.assertEqual(sent['text'], ("/comandoConDescripcion1 - Descripción 1\n"
-                                        "/comandoConDescripcion2 - Descripción 2\n"
-                                        "/comandoConDescripcion3 - Descripción 3\n"))
+        self.assert_command_sends_message("/help", ("/comandoConDescripcion1 - Descripción 1\n"
+                                                    "/comandoConDescripcion2 - Descripción 2\n"
+                                                    "/comandoConDescripcion3 - Descripción 3\n"))
 
     def test_start(self):
-        self.sendCommand("/start")
-        # self.assertEqual(len(self.bot.sent_messages), 1)
-        sent = self.bot.sent_messages[-1]
-        self.assertEqual(sent['method'], "sendMessage")
-        self.assertEqual(
-            sent['text'], "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
+        self.assert_command_sends_message("/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
     def test_estasvivo(self):
-        self.sendCommand("/estasvivo")
-        # self.assertEqual(len(self.bot.sent_messages), 1)
-        sent = self.bot.sent_messages[-1]
-        self.assertEqual(sent['method'], "sendMessage")
-        self.assertEqual(sent['text'], "Sí, estoy vivo.")
+        self.assert_command_sends_message("/estasvivo", "Sí, estoy vivo.")
 
     # TODO: Rename
     def list_test(self, command, listable_type):
-        self.sendCommand(command)
-        # self.assertEqual(len(self.bot.sent_messages), 1)
-        sent = self.bot.sent_messages[-1]
-        self.assertEqual(sent['method'], "sendMessage")
-        self.assertEqual(sent['text'], "Grupos: ")
+        self.assert_command_sends_message(command, "Grupos: ")
 
         # Assertions on keyboard
-        inline_keyboard = json.loads(sent['reply_markup'])['inline_keyboard']
+        inline_keyboard = json.loads(self.bot.sent_messages[-1]['reply_markup'])['inline_keyboard']
         self.assertEqual(len(inline_keyboard), 2)  # Number of rows
         for i in range(2):
             row = inline_keyboard[i]
