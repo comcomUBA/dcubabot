@@ -84,10 +84,10 @@ def messageLog(bot, update):
     user = str(update.message.from_user.id)
     # EAFP
     try:
-        userAtGroup = user+" @ " + update.message.chat.title
+        user_at_group = user+" @ " + update.message.chat.title
     except:
-        userAtGroup = user
-    logger.info(userAtGroup + ": " + update.message.text)
+        user_at_group = user
+    logger.info(user_at_group + ": " + update.message.text)
 
 
 def main():
