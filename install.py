@@ -14,6 +14,7 @@ with db_session:
     Command(name="listaroptativa", description="Muestra todos los grupos de materias optativas conocidos por el bot")
     Command(name="listarotro", description="Muestra todos los grupos relacionados a la gente de este grupo "
                                            "(algo así como off-topics)")
+    Command(name="cubawiki")
 
     #TODO: Delete this
     Obligatoria.select().delete()

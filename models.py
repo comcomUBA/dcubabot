@@ -14,11 +14,11 @@ class Command(db.Entity):
 class Listable(db.Entity):
     name = Required(str)
     url = Required(str)
-    chat_id = Required(int)
+    chat_id = Required(int, size=64)
 
 
 class Obligatoria(Listable):
-    pass
+    cubawiki_url = Optional(str)
 
 
 class Optativa(Listable):

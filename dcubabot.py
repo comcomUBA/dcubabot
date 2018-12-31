@@ -72,6 +72,14 @@ def listarotro(bot, update):
     list(bot, update, Otro)
 
 
+def cubawiki(bot, update):
+    with db_session:
+        group = select(o for o in Obligatoria if o.chat_id == update.message.chat.id
+                       and o.cubawiki_url is not None).first()
+        if group:
+            update.message.reply_text(group.cubawiki_url)
+
+
 def messageLog(bot, update):
     user = str(update.message.from_user.id)
     # EAFP

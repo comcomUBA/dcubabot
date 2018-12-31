@@ -19,7 +19,7 @@ from ptbtest import UserGenerator
 
 
 # Local imports
-from dcubabot import start, estasvivo, help, listar, listaroptativa, listarotro, messageLog
+from dcubabot import start, estasvivo, help, listar, listaroptativa, listarotro, cubawiki, messageLog
 from models import *
 
 
@@ -44,6 +44,7 @@ class TestDCUBABot(unittest.TestCase):
         dispatcher.add_handler(CommandHandler("listar", listar))
         dispatcher.add_handler(CommandHandler("listaroptativa", listaroptativa))
         dispatcher.add_handler(CommandHandler("listarotro", listarotro))
+        dispatcher.add_handler(CommandHandler("cubawiki", cubawiki))
         init_db("test.sqlite3")
         with db_session:
             for listable_type in Listable.__subclasses__():
@@ -58,20 +59,27 @@ class TestDCUBABot(unittest.TestCase):
         os.remove("test.sqlite3")
 
     @classmethod
-    def sendCommand(self, command):
+    def sendCommand(self, command, chat_id=None):
         user = self.ug.get_user(first_name="Test", last_name="The Bot")
-        chat = self.cg.get_chat(user=user)
+        if chat_id:
+            chat = self.cg.get_chat(chat_id)
+        else:
+            chat = self.cg.get_chat(user=user)
         update = self.mg.get_message(user=user, chat=chat, text=command)
         self.bot.insertUpdate(update)
         return user, chat
 
-    def assert_command_sends_message(self, command, message_text):
+    def assert_bot_response(self, message_text, response_text, chat_id=None):
         sent_messages_before = len(self.bot.sent_messages)
-        self.sendCommand(command)
-        self.assertEqual(len(self.bot.sent_messages) - sent_messages_before, 1)
-        sent = self.bot.sent_messages[-1]
-        self.assertEqual(sent['method'], "sendMessage")
-        self.assertEqual(sent['text'], message_text)
+        self.sendCommand(message_text, chat_id=chat_id)
+        response_sent_messages = len(self.bot.sent_messages) - sent_messages_before
+        if response_text:
+            self.assertEqual(response_sent_messages, 1)
+            sent = self.bot.sent_messages[-1]
+            self.assertEqual(sent['method'], "sendMessage")
+            self.assertEqual(sent['text'], response_text)
+        else:
+            self.assertEqual(response_sent_messages, 0)
 
     def test_help(self):
         with db_session:
@@ -82,20 +90,19 @@ class TestDCUBABot(unittest.TestCase):
             Command(name="comandoSinDescripcion3")
             Command(name="comandoConDescripcion3", description="Descripción 3")
 
-        self.assert_command_sends_message("/help", ("/comandoConDescripcion1 - Descripción 1\n"
-                                                    "/comandoConDescripcion2 - Descripción 2\n"
-                                                    "/comandoConDescripcion3 - Descripción 3\n"))
+        self.assert_bot_response("/help", ("/comandoConDescripcion1 - Descripción 1\n"
+                                           "/comandoConDescripcion2 - Descripción 2\n"
+                                           "/comandoConDescripcion3 - Descripción 3\n"))
 
     def test_start(self):
-        self.assert_command_sends_message(
-            "/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
+        self.assert_bot_response("/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
     def test_estasvivo(self):
-        self.assert_command_sends_message("/estasvivo", "Sí, estoy vivo.")
+        self.assert_bot_response("/estasvivo", "Sí, estoy vivo.")
 
     # TODO: Rename
     def list_test(self, command, listable_type):
-        self.assert_command_sends_message(command, "Grupos: ")
+        self.assert_bot_response(command, "Grupos: ")
 
         # Assertions on keyboard
         inline_keyboard = json.loads(self.bot.sent_messages[-1]['reply_markup'])['inline_keyboard']
@@ -128,6 +135,21 @@ class TestDCUBABot(unittest.TestCase):
             second_message = 'INFO:DCUBABOT:'+str(user.id)+': /estasvivo'
             self.assertEqual(cm.output, [first_message, second_message])
 
+    def test_cubawiki(self):
+        cubawiki_url = "https://www.cubawiki.com.ar/index.php/Segundo_Parcial_del_10/12/18"
+        positive_chat_id = -123456
+        negative_chat_id_no_cubawiki = -654321
+        negative_chat_id_no_entry = -123321
+        with db_session:
+            Obligatoria(name="Test", url="test.com", chat_id=positive_chat_id, cubawiki_url=cubawiki_url)
+            Obligatoria(name="Test", url="test.com", chat_id=negative_chat_id_no_cubawiki)
+
+        # Positive test case
+        self.assert_bot_response("/cubawiki", cubawiki_url, chat_id=positive_chat_id)
+
+        # Negative test cases
+        self.assert_bot_response("/cubawiki", None, chat_id=negative_chat_id_no_cubawiki)
+        self.assert_bot_response("/cubawiki", None, chat_id=negative_chat_id_no_entry)
 
 if __name__ == '__main__':
     unittest.main()
