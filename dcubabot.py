@@ -87,8 +87,7 @@ def messageLog(bot, update):
         userAtGroup = user+" @ " + update.message.chat.title
     except:
         userAtGroup = user
-    if not update.message.text is None:
-        logger.info(userAtGroup + ": " + update.message.text)
+    logger.info(userAtGroup + ": " + update.message.text)
 
 
 def main():
@@ -100,7 +99,7 @@ def main():
         logger.info("Iniciando")
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
-        dispatcher.add_handler(MessageHandler(Filters.all, messageLog), group=1)
+        dispatcher.add_handler(MessageHandler((Filters.text | Filters.command), messageLog), group=1)
         init_db("commands.sqlite3")
         with db_session:
             for command in select(c.name for c in Command):
