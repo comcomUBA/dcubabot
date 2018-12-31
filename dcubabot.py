@@ -24,10 +24,6 @@ logging.basicConfig(
 # Globals ...... yes, globals
 logger = logging.getLogger("DCUBABOT")
 
-"""
-start: Mensaje al mandar start que es la priemra vez q un usuario habla con el bot, o si alguien pone /start
-"""
-
 
 def start(bot, update):
     update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
