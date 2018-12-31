@@ -7,7 +7,7 @@ import logging
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (Updater, CommandHandler)
+from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler)
 
 # Local imports
 from tokenz import *
@@ -71,6 +71,16 @@ def listarotro(bot, update):
     list(bot, update, Otro)
 
 
+def messageLog(bot, update):
+    user = str(update.message.from_user.id)
+    # EAFP
+    try:
+        userAtGroup = user+" @ " + update.message.chat.title
+    except:
+        userAtGroup = user
+    logger.info(userAtGroup + ": " + update.message.text)
+
+
 def main():
     try:
         global update_id
@@ -80,7 +90,7 @@ def main():
         logger.info("Iniciando DCUBABOT")
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
-
+        dispatcher.add_handler(MessageHandler(Filters.all, messageLog), group=1)
         init_db("commands.sqlite3")
         with db_session:
             for command in select(c.name for c in Command):

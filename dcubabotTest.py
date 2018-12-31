@@ -1,20 +1,25 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import unittest
 
+# STL imports
+import unittest
 import json
 import os
+import logging
 
+# Non STL imports
 import telegram
-from telegram.ext import CommandHandler
-from telegram.ext import Updater
+from telegram.ext import CommandHandler, MessageHandler
+from telegram.ext import Updater, Filters
 
 from ptbtest import ChatGenerator
 from ptbtest import MessageGenerator
 from ptbtest import Mockbot
 from ptbtest import UserGenerator
 
-from dcubabot import start, estasvivo, help, listar, listaroptativa, listarotro
+
+# Local imports
+from dcubabot import start, estasvivo, help, listar, listaroptativa, listarotro, messageLog
 from models import *
 
 
@@ -31,12 +36,14 @@ class TestDCUBABot(unittest.TestCase):
         # And a Messagegenerator and updater (for use with the bot.)
         self.mg = MessageGenerator(self.bot)
         self.updater = Updater(bot=self.bot)
-        self.updater.dispatcher.add_handler(CommandHandler("help", help))
-        self.updater.dispatcher.add_handler(CommandHandler("start", start))
-        self.updater.dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
-        self.updater.dispatcher.add_handler(CommandHandler("listar", listar))
-        self.updater.dispatcher.add_handler(CommandHandler("listaroptativa", listaroptativa))
-        self.updater.dispatcher.add_handler(CommandHandler("listarotro", listarotro))
+        dispatcher = self.updater.dispatcher
+        dispatcher.add_handler(MessageHandler(Filters.all, messageLog), group=1)
+        dispatcher.add_handler(CommandHandler("help", help))
+        dispatcher.add_handler(CommandHandler("start", start))
+        dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
+        dispatcher.add_handler(CommandHandler("listar", listar))
+        dispatcher.add_handler(CommandHandler("listaroptativa", listaroptativa))
+        dispatcher.add_handler(CommandHandler("listarotro", listarotro))
         init_db("test.sqlite3")
         with db_session:
             for listable_type in Listable.__subclasses__():
@@ -57,6 +64,7 @@ class TestDCUBABot(unittest.TestCase):
         chat = self.cg.get_chat(user=user)
         update = self.mg.get_message(user=user, chat=chat, text=command)
         self.bot.insertUpdate(update)
+        return user, chat
 
     def assert_command_sends_message(self, command, message_text):
         sent_messages_before = len(self.bot.sent_messages)
@@ -80,7 +88,8 @@ class TestDCUBABot(unittest.TestCase):
                                                     "/comandoConDescripcion3 - Descripción 3\n"))
 
     def test_start(self):
-        self.assert_command_sends_message("/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
+        self.assert_command_sends_message(
+            "/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
     def test_estasvivo(self):
         self.assert_command_sends_message("/estasvivo", "Sí, estoy vivo.")
@@ -98,7 +107,8 @@ class TestDCUBABot(unittest.TestCase):
             for j in range(3):
                 button = row[j]
                 button_number = str(i * 3 + j)
-                self.assertEqual(button['text'], listable_type._discriminator_ + " " + button_number)
+                self.assertEqual(
+                    button['text'], listable_type._discriminator_ + " " + button_number)
                 self.assertEqual(button['url'], "https://url" + button_number + ".com")
                 self.assertEqual(button['callback_data'], button['url'])
 
@@ -110,6 +120,14 @@ class TestDCUBABot(unittest.TestCase):
 
     def test_listar(self):
         self.list_test("/listarotro", Otro)
+
+    def test_logger(self):
+        with self.assertLogs("Bots.log", level='INFO') as cm:
+            user, _ = self.sendCommand("/listar")
+            first_message = 'INFO:Bots.log:'+str(user.id) + ': /listar'
+            user, _ = self.sendCommand("/estasvivo")
+            second_message = 'INFO:Bots.log:'+str(user.id)+': /estasvivo'
+            self.assertEqual(cm.output, [first_message, second_message])
 
 
 if __name__ == '__main__':
