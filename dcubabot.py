@@ -45,7 +45,6 @@ def estasvivo(bot, update):
     update.message.reply_text("Sí, estoy vivo.")
 
 
-# TODO: Rename
 def list_buttons(bot, update, listable_type):
     with db_session:
         buttons = select(l for l in listable_type).order_by(lambda l: l.name)
@@ -80,7 +79,7 @@ def cubawiki(bot, update):
             update.message.reply_text(group.cubawiki_url)
 
 
-def messageLog(bot, update):
+def log_message(bot, update):
     user = str(update.message.from_user.id)
     # EAFP
     try:
@@ -100,7 +99,7 @@ def main():
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
         dispatcher.add_handler(MessageHandler(
-            (Filters.text | Filters.command), messageLog), group=1)
+            (Filters.text | Filters.command), log_message), group=1)
         init_db("dcubabot.sqlite3")
         with db_session:
             for command in select(c.name for c in Command):
