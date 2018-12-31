@@ -14,6 +14,7 @@ class Command(db.Entity):
 class Listable(db.Entity):
     name = Required(str)
     url = Required(str)
+    chat_id = Required(int)
 
 
 class Obligatoria(Listable):

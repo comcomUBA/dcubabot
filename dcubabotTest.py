@@ -49,7 +49,7 @@ class TestDCUBABot(unittest.TestCase):
             for listable_type in Listable.__subclasses__():
                 for i in range(6):
                     listable_type(name=listable_type._discriminator_ + " " + str(i),
-                                  url="https://url" + str(i) + ".com")
+                                  url="https://url" + str(i) + ".com", chat_id=i)
         self.updater.start_polling()
 
     @classmethod
@@ -105,11 +105,11 @@ class TestDCUBABot(unittest.TestCase):
             self.assertEqual((len(row)), 3)  # Number of columns
             for j in range(3):
                 button = row[j]
-                button_number = str(i * 3 + j)
+                button_number = i * 3 + j
                 self.assertEqual(
-                    button['text'], listable_type._discriminator_ + " " + button_number)
-                self.assertEqual(button['url'], "https://url" + button_number + ".com")
-                self.assertEqual(button['callback_data'], button['url'])
+                    button['text'], listable_type._discriminator_ + " " + str(button_number))
+                self.assertEqual(button['url'], "https://url" + str(button_number) + ".com")
+                self.assertEqual(button['callback_data'], button_number)
 
     def test_listar(self):
         self.list_test("/listar", Obligatoria)
