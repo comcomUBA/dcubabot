@@ -46,7 +46,7 @@ def estasvivo(bot, update):
 
 
 # TODO: Rename
-def list(bot, update, listable_type):
+def list_buttons(bot, update, listable_type):
     with db_session:
         buttons = select(l for l in listable_type).order_by(lambda l: l.name)
         keyboard = []
