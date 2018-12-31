@@ -99,8 +99,9 @@ def main():
         logger.info("Iniciando")
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
-        dispatcher.add_handler(MessageHandler((Filters.text | Filters.command), messageLog), group=1)
-        init_db("commands.sqlite3")
+        dispatcher.add_handler(MessageHandler(
+            (Filters.text | Filters.command), messageLog), group=1)
+        init_db("dcubabot.sqlite3")
         with db_session:
             for command in select(c.name for c in Command):
                 handler = CommandHandler(command, globals()[command])
