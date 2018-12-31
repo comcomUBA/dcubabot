@@ -121,10 +121,10 @@ class TestDCUBABot(unittest.TestCase):
     def test_listar(self):
         self.list_test("/listar", Obligatoria)
 
-    def test_listar(self):
+    def test_listaroptativa(self):
         self.list_test("/listaroptativa", Optativa)
 
-    def test_listar(self):
+    def test_listarotro(self):
         self.list_test("/listarotro", Otro)
 
     def test_logger(self):
@@ -141,8 +141,8 @@ class TestDCUBABot(unittest.TestCase):
         negative_chat_id_no_cubawiki = -654321
         negative_chat_id_no_entry = -123321
         with db_session:
-            Obligatoria(name="Test", url="test.com", chat_id=positive_chat_id, cubawiki_url=cubawiki_url)
-            Obligatoria(name="Test", url="test.com", chat_id=negative_chat_id_no_cubawiki)
+            Obligatoria(name="Cubawiki", url="test.com", chat_id=positive_chat_id, cubawiki_url=cubawiki_url)
+            Obligatoria(name="Cubawiki", url="test.com", chat_id=negative_chat_id_no_cubawiki)
 
         # Positive test case
         self.assert_bot_response("/cubawiki", cubawiki_url, chat_id=positive_chat_id)
@@ -150,6 +150,10 @@ class TestDCUBABot(unittest.TestCase):
         # Negative test cases
         self.assert_bot_response("/cubawiki", None, chat_id=negative_chat_id_no_cubawiki)
         self.assert_bot_response("/cubawiki", None, chat_id=negative_chat_id_no_entry)
+
+        with db_session:
+            delete(o for o in Obligatoria if o.name == "Cubawiki")
+
 
 if __name__ == '__main__':
     unittest.main()
