@@ -13,7 +13,7 @@ from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler)
 from tokenz import *
 from models import *
 
-# TODO:Move this from here
+# TODO:Move this out of here
 logging.basicConfig(
     level=logging.INFO,
     # level=logging.DEBUG,
@@ -87,7 +87,8 @@ def messageLog(bot, update):
         userAtGroup = user+" @ " + update.message.chat.title
     except:
         userAtGroup = user
-    logger.info(userAtGroup + ": " + update.message.text)
+    if not update.message.text is None:
+        logger.info(userAtGroup + ": " + update.message.text)
 
 
 def main():
