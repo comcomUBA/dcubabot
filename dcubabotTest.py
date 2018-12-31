@@ -36,15 +36,6 @@ class TestDCUBABot(unittest.TestCase):
         # And a Messagegenerator and updater (for use with the bot.)
         self.mg = MessageGenerator(self.bot)
         self.updater = Updater(bot=self.bot)
-        dispatcher = self.updater.dispatcher
-        dispatcher.add_handler(MessageHandler(Filters.all, messageLog), group=1)
-        dispatcher.add_handler(CommandHandler("help", help))
-        dispatcher.add_handler(CommandHandler("start", start))
-        dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
-        dispatcher.add_handler(CommandHandler("listar", listar))
-        dispatcher.add_handler(CommandHandler("listaroptativa", listaroptativa))
-        dispatcher.add_handler(CommandHandler("listarotro", listarotro))
-        dispatcher.add_handler(CommandHandler("cubawiki", cubawiki))
         init_db("test.sqlite3")
         with db_session:
             for listable_type in Listable.__subclasses__():
@@ -82,6 +73,7 @@ class TestDCUBABot(unittest.TestCase):
             self.assertEqual(response_sent_messages, 0)
 
     def test_help(self):
+        self.updater.dispatcher.add_handler(CommandHandler("help", help))
         with db_session:
             Command(name="comandoSinDescripcion1")
             Command(name="comandoConDescripcion1", description="Descripción 1")
@@ -95,9 +87,11 @@ class TestDCUBABot(unittest.TestCase):
                                            "/comandoConDescripcion3 - Descripción 3\n"))
 
     def test_start(self):
+        self.updater.dispatcher.add_handler(CommandHandler("start", start))
         self.assert_bot_response("/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
     def test_estasvivo(self):
+        self.updater.dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
         self.assert_bot_response("/estasvivo", "Sí, estoy vivo.")
 
     # TODO: Rename
@@ -119,15 +113,19 @@ class TestDCUBABot(unittest.TestCase):
                 self.assertEqual(button['callback_data'], button_number)
 
     def test_listar(self):
+        self.updater.dispatcher.add_handler(CommandHandler("listar", listar))
         self.list_test("/listar", Obligatoria)
 
     def test_listaroptativa(self):
+        self.updater.dispatcher.add_handler(CommandHandler("listaroptativa", listaroptativa))
         self.list_test("/listaroptativa", Optativa)
 
     def test_listarotro(self):
+        self.updater.dispatcher.add_handler(CommandHandler("listarotro", listarotro))
         self.list_test("/listarotro", Otro)
 
     def test_logger(self):
+        self.updater.dispatcher.add_handler(MessageHandler(Filters.all, messageLog), group=1)
         with self.assertLogs("DCUBABOT", level='INFO') as cm:
             user, _ = self.sendCommand("/listar")
             first_message = 'INFO:DCUBABOT:'+str(user.id) + ': /listar'
@@ -136,6 +134,7 @@ class TestDCUBABot(unittest.TestCase):
             self.assertEqual(cm.output, [first_message, second_message])
 
     def test_cubawiki(self):
+        self.updater.dispatcher.add_handler(CommandHandler("cubawiki", cubawiki))
         cubawiki_url = "https://www.cubawiki.com.ar/index.php/Segundo_Parcial_del_10/12/18"
         positive_chat_id = -123456
         negative_chat_id_no_cubawiki = -654321
