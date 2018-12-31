@@ -22,7 +22,7 @@ logging.basicConfig(
 
 
 # Globals ...... yes, globals
-logger = logging.getLogger("Bots.log")
+logger = logging.getLogger("DCUBABOT")
 
 """
 start: Mensaje al mandar start que es la priemra vez q un usuario habla con el bot, o si alguien pone /start
@@ -87,7 +87,7 @@ def main():
         # Telegram Bot Authorization Token
         botname = "DCUBABOT"
         print("Iniciando DCUBABOT")
-        logger.info("Iniciando DCUBABOT")
+        logger.info("Iniciando")
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
         dispatcher.add_handler(MessageHandler(Filters.all, messageLog), group=1)

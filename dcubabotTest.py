@@ -121,11 +121,11 @@ class TestDCUBABot(unittest.TestCase):
         self.list_test("/listarotro", Otro)
 
     def test_logger(self):
-        with self.assertLogs("Bots.log", level='INFO') as cm:
+        with self.assertLogs("DCUBABOT", level='INFO') as cm:
             user, _ = self.sendCommand("/listar")
-            first_message = 'INFO:Bots.log:'+str(user.id) + ': /listar'
+            first_message = 'INFO:DCUBABOT:'+str(user.id) + ': /listar'
             user, _ = self.sendCommand("/estasvivo")
-            second_message = 'INFO:Bots.log:'+str(user.id)+': /estasvivo'
+            second_message = 'INFO:DCUBABOT:'+str(user.id)+': /estasvivo'
             self.assertEqual(cm.output, [first_message, second_message])
 
 
