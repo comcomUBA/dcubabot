@@ -26,7 +26,8 @@ logger = logging.getLogger("DCUBABOT")
 
 
 def start(bot, update):
-    update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
+    update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
+                              quote=False)
 
 
 def help(bot, update):
@@ -34,11 +35,11 @@ def help(bot, update):
     with db_session:
         for command in select(c for c in Command if c.description).order_by(lambda c: c.name):
             message_text += "/" + command.name + " - " + command.description + "\n"
-    update.message.reply_text(message_text)
+    update.message.reply_text(message_text, quote=False)
 
 
 def estasvivo(bot, update):
-    update.message.reply_text("Sí, estoy vivo.")
+    update.message.reply_text("Sí, estoy vivo.", quote=False)
 
 
 def list_buttons(bot, update, listable_type):
@@ -51,8 +52,8 @@ def list_buttons(bot, update, listable_type):
                                         callback_data=button.url) for button in buttons[k:k + columns]]
             keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
-        bot.sendMessage(update.message.chat_id, text="Grupos: ",
-                        disable_web_page_preview=True, reply_markup=reply_markup)
+        update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
+                                  reply_markup=reply_markup, quote=False)
 
 
 def listar(bot, update):
@@ -72,7 +73,7 @@ def cubawiki(bot, update):
         group = select(o for o in Obligatoria if o.chat_id == update.message.chat.id
                        and o.cubawiki_url is not None).first()
         if group:
-            update.message.reply_text(group.cubawiki_url)
+            update.message.reply_text(group.cubawiki_url, quote=False)
 
 
 def log_message(bot, update):
