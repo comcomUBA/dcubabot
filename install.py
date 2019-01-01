@@ -16,3 +16,4 @@ with db_session:
     Command(name="listarotro", description="Muestra todos los grupos relacionados a la gente de este grupo "
                                            "(algo así como off-topics)")
     Command(name="cubawiki")
+    Command(name="rozendioanalisis", description="Te dice si Rozen ya dio el final de análisis o no")
