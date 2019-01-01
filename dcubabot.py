@@ -56,15 +56,15 @@ def list_buttons(bot, update, listable_type):
 
 
 def listar(bot, update):
-    list(bot, update, Obligatoria)
+    list_buttons(bot, update, Obligatoria)
 
 
 def listaroptativa(bot, update):
-    list(bot, update, Optativa)
+    list_buttons(bot, update, Optativa)
 
 
 def listarotro(bot, update):
-    list(bot, update, Otro)
+    list_buttons(bot, update, Otro)
 
 
 def cubawiki(bot, update):

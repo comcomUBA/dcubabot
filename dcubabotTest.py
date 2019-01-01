@@ -19,7 +19,7 @@ from ptbtest import UserGenerator
 
 
 # Local imports
-from dcubabot import start, estasvivo, help, listar, listaroptativa, listarotro, cubawiki, messageLog
+from dcubabot import start, estasvivo, help, listar, listaroptativa, listarotro, cubawiki, log_message
 from models import *
 
 
@@ -125,7 +125,7 @@ class TestDCUBABot(unittest.TestCase):
         self.list_test("/listarotro", Otro)
 
     def test_logger(self):
-        self.updater.dispatcher.add_handler(MessageHandler(Filters.all, messageLog), group=1)
+        self.updater.dispatcher.add_handler(MessageHandler(Filters.all, log_message), group=1)
         with self.assertLogs("DCUBABOT", level='INFO') as cm:
             user, _ = self.sendCommand("/listar")
             first_message = 'INFO:DCUBABOT:'+str(user.id) + ': /listar'
