@@ -8,5 +8,5 @@ Para probar el bot en acción en Telegram es necesario crear un archivo `tokenz.
 
 Para instalar las dependecias correr lo siguiente:
 ```bash
-$ pip3 install -r requirements.tx
+$ pip3 install -r requirements.txt
 ```
