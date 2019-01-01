@@ -101,6 +101,9 @@ def felizdia(bot, job):
     bot.send_message(chat_id="@dcfceynuba", text=felizdia_text(today))
 
 
+def rozendioanalisis(bot, update):
+    update.message.reply_text("No. Rozen todavia no dio el final de análisis.", quote=False)
+
 def main():
     try:
         global update_id

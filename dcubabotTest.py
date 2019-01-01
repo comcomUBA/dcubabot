@@ -20,7 +20,7 @@ from ptbtest import UserGenerator
 
 # Local imports
 from dcubabot import (start, estasvivo, help, listar, listaroptativa,
-                      listarotro, cubawiki, log_message, felizdia_text)
+                      listarotro, cubawiki, log_message, felizdia_text, rozendioanalisis)
 from models import *
 
 
@@ -95,6 +95,10 @@ class TestDCUBABot(unittest.TestCase):
     def test_estasvivo(self):
         self.updater.dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
         self.assert_bot_response("/estasvivo", "Sí, estoy vivo.")
+
+    def test_rozendioanalisis(self):
+        self.updater.dispatcher.add_handler(CommandHandler("rozendioanalisis", rozendioanalisis))
+        self.assert_bot_response("/rozendioanalisis", "No. Rozen todavia no dio el final de análisis.")
 
     # TODO: Rename
     def list_test(self, command, listable_type):
