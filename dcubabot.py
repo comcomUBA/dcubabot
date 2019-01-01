@@ -4,6 +4,7 @@
 # STL imports
 import sys
 import logging
+import datetime
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -86,6 +87,20 @@ def log_message(bot, update):
     logger.info(user_at_group + ": " + update.message.text)
 
 
+def felizdia_text(today):
+    meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+             "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    dia = str(today.day)
+    mes = int(today.month)
+    mes = meses[mes - 1]
+    return "Feliz " + dia + " de " + mes
+
+
+def felizdia(bot, job):
+    today = datetime.date.today()
+    bot.send_message(chat_id="@dcfceynuba", text=felizdia_text(today))
+
+
 def main():
     try:
         global update_id
@@ -97,6 +112,7 @@ def main():
         dispatcher = updater.dispatcher
         dispatcher.add_handler(MessageHandler(
             (Filters.text | Filters.command), log_message), group=1)
+        updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
         init_db("dcubabot.sqlite3")
         with db_session:
             for command in select(c.name for c in Command):

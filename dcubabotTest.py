@@ -6,7 +6,7 @@ import unittest
 import json
 import os
 import logging
-
+import datetime
 # Non STL imports
 import telegram
 from telegram.ext import CommandHandler, MessageHandler
@@ -19,7 +19,8 @@ from ptbtest import UserGenerator
 
 
 # Local imports
-from dcubabot import start, estasvivo, help, listar, listaroptativa, listarotro, cubawiki, log_message
+from dcubabot import (start, estasvivo, help, listar, listaroptativa,
+                      listarotro, cubawiki, log_message, felizdia_text)
 from models import *
 
 
@@ -88,7 +89,8 @@ class TestDCUBABot(unittest.TestCase):
 
     def test_start(self):
         self.updater.dispatcher.add_handler(CommandHandler("start", start))
-        self.assert_bot_response("/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
+        self.assert_bot_response(
+            "/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
     def test_estasvivo(self):
         self.updater.dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
@@ -140,7 +142,8 @@ class TestDCUBABot(unittest.TestCase):
         negative_chat_id_no_cubawiki = -654321
         negative_chat_id_no_entry = -123321
         with db_session:
-            Obligatoria(name="Cubawiki", url="test.com", chat_id=positive_chat_id, cubawiki_url=cubawiki_url)
+            Obligatoria(name="Cubawiki", url="test.com",
+                        chat_id=positive_chat_id, cubawiki_url=cubawiki_url)
             Obligatoria(name="Cubawiki", url="test.com", chat_id=negative_chat_id_no_cubawiki)
 
         # Positive test case
@@ -152,6 +155,18 @@ class TestDCUBABot(unittest.TestCase):
 
         with db_session:
             delete(o for o in Obligatoria if o.name == "Cubawiki")
+
+    def test_felizdia(self):
+        today = datetime.datetime(2019, 1, 1)
+        self.assertEqual(felizdia_text(today), "Feliz 1 de Enero")
+        today = datetime.datetime(2019, 2, 1)
+        self.assertEqual(felizdia_text(today), "Feliz 1 de Febrero")
+        today = datetime.datetime(2019, 3, 1)
+        self.assertEqual(felizdia_text(today), "Feliz 1 de Marzo")
+        today = datetime.datetime(2019, 4, 4)
+        self.assertEqual(felizdia_text(today), "Feliz 4 de Abril")
+        today = datetime.datetime(2019, 5, 21)
+        self.assertEqual(felizdia_text(today), "Feliz 21 de Mayo")
 
 
 if __name__ == '__main__':
