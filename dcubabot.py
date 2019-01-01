@@ -10,7 +10,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler)
 
 # Local imports
-from tokenz import *
+# from tokenz import *
 from models import *
 
 # TODO:Move this out of here
@@ -110,4 +110,5 @@ def main():
 
 
 if __name__ == '__main__':
+    from tokenz import *
     main()
