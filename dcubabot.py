@@ -48,7 +48,7 @@ def list_buttons(bot, update, listable_type):
         columns = 3
         for k in range(0, len(buttons), columns):
             row = [InlineKeyboardButton(text=button.name, url=button.url,
-                                        callback_data=button.chat_id) for button in buttons[k:k + columns]]
+                                        callback_data=button.url) for button in buttons[k:k + columns]]
             keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
         bot.sendMessage(update.message.chat_id, text="Grupos: ",

@@ -110,7 +110,7 @@ class TestDCUBABot(unittest.TestCase):
                 self.assertEqual(
                     button['text'], listable_type._discriminator_ + " " + str(button_number))
                 self.assertEqual(button['url'], "https://url" + str(button_number) + ".com")
-                self.assertEqual(button['callback_data'], button_number)
+                self.assertEqual(button['callback_data'], button['url'])
 
     def test_listar(self):
         self.updater.dispatcher.add_handler(CommandHandler("listar", listar))
