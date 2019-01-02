@@ -125,8 +125,9 @@ def main():
         updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
         init_db("dcubabot.sqlite3")
         with db_session:
-            for command in select(c.name for c in Command):
-                handler = CommandHandler(command, globals()[command])
+            for command in select(c for c in Command):
+                handler = CommandHandler(command.name, globals()[command.name],
+                                         pass_args=command.args)
                 dispatcher.add_handler(handler)
         # Start running the bot
         updater.start_polling(clean=True)
