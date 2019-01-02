@@ -17,3 +17,4 @@ with db_session:
                                            "(algo así como off-topics)")
     Command(name="cubawiki")
     Command(name="rozendioanalisis", description="Te dice si Rozen ya dio el final de análisis o no")
+    Command(name="noitip")

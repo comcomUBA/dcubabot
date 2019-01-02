@@ -20,7 +20,8 @@ from ptbtest import UserGenerator
 
 # Local imports
 from dcubabot import (start, estasvivo, help, listar, listaroptativa,
-                      listarotro, cubawiki, log_message, felizdia_text, rozendioanalisis)
+                      listarotro, cubawiki, log_message, felizdia_text,
+                      rozendioanalisis, noitip)
 from models import *
 
 
@@ -69,7 +70,10 @@ class TestDCUBABot(unittest.TestCase):
             self.assertEqual(response_sent_messages, 1)
             sent = self.bot.sent_messages[-1]
             self.assertEqual(sent['method'], "sendMessage")
-            self.assertEqual(sent['text'], response_text)
+            if isinstance(response_text, str):
+                self.assertEqual(sent['text'], response_text)
+            else:
+                self.assertIn(sent['text'], response_text)
         else:
             self.assertEqual(response_sent_messages, 0)
 
@@ -171,6 +175,16 @@ class TestDCUBABot(unittest.TestCase):
         self.assertEqual(felizdia_text(today), "Feliz 4 de Abril")
         today = datetime.datetime(2019, 5, 21)
         self.assertEqual(felizdia_text(today), "Feliz 21 de Mayo")
+
+    # TODO: Test randomness?
+    def test_noitip(self):
+        self.updater.dispatcher.add_handler(CommandHandler("noitip", noitip))
+        noitips = ["me siento boludeadisimo", "Not this shit again", "noitip"]
+        with db_session:
+            for phrase in noitips:
+                Noitip(text=phrase)
+
+        self.assert_bot_response("/noitip", noitips)
 
 
 if __name__ == '__main__':

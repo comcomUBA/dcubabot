@@ -104,6 +104,13 @@ def felizdia(bot, job):
 def rozendioanalisis(bot, update):
     update.message.reply_text("No. Rozen todavia no dio el final de análisis.", quote=False)
 
+
+def noitip(bot, update):
+    with db_session:
+        random_noitip = Noitip.select_random(1)[0].text
+    update.message.reply_text(random_noitip, quote=False)
+
+
 def main():
     try:
         global update_id

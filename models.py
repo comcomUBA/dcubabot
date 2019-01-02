@@ -29,6 +29,10 @@ class Otro(Listable):
     pass
 
 
+class Noitip(db.Entity):
+    text = Required(str)
+
+
 def init_db(path):
     db.bind('sqlite', path, create_db=True)
     db.generate_mapping(create_tables=True)
