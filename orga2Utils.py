@@ -22,7 +22,7 @@ def asm(bot, update, args):
                      if levenshtein(mnemonic, i.mnemonic) < 2]
     if not possibles:
         update.message.reply_text("No pude encontrar esa instrucción.", quote=False)
-    elif mnemonic == possibles[0].mnemonic:
+    elif mnemonic in [i.mnemonic for i in possibles]:
         update.message.reply_text(getasminfo(possibles[0]), quote=False)
     else:
         response_text = ("No pude encontrar esa instrucción.\n"
