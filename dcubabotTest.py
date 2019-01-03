@@ -189,6 +189,9 @@ class TestDCUBABot(unittest.TestCase):
     def test_asm(self):
         self.updater.dispatcher.add_handler(CommandHandler("asm", asm, pass_args=True))
         with db_session:
+            AsmInstruction(mnemonic="AAD",
+                           summary="ASCII Adjust AX Before Division",
+                           url="https://www.felixcloutier.com/x86/aad")
             AsmInstruction(mnemonic="ADD",
                            summary="Add",
                            url="https://www.felixcloutier.com/x86/add")
