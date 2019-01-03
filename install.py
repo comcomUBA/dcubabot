@@ -18,3 +18,4 @@ with db_session:
     Command(name="cubawiki")
     Command(name="rozendioanalisis", description="Te dice si Rozen ya dio el final de análisis o no")
     Command(name="noitip")
+    Command(name="asm", args=True)

@@ -21,7 +21,7 @@ from ptbtest import UserGenerator
 # Local imports
 from dcubabot import (start, estasvivo, help, listar, listaroptativa,
                       listarotro, cubawiki, log_message, felizdia_text,
-                      rozendioanalisis, noitip)
+                      rozendioanalisis, noitip, asm)
 from models import *
 
 
@@ -185,6 +185,31 @@ class TestDCUBABot(unittest.TestCase):
                 Noitip(text=phrase)
 
         self.assert_bot_response("/noitip", noitips)
+
+    def test_asm(self):
+        self.updater.dispatcher.add_handler(CommandHandler("asm", asm, pass_args=True))
+        with db_session:
+            AsmInstruction(mnemonic="ADD",
+                           summary="Add",
+                           url="https://www.felixcloutier.com/x86/add")
+            AsmInstruction(mnemonic="ADDPD",
+                           summary="Add Packed Double-Precision Floating-Point Values",
+                           url="https://www.felixcloutier.com/x86/addpd")
+
+        not_found = "No pude encontrar esa instrucción."
+        possibles = not_found + "\nQuizás quisiste decir:"
+        add_info = ("[ADD] Descripción: Add.\n"
+                    "Más info: https://www.felixcloutier.com/x86/add")
+        addpd_info = ("[ADDPD] Descripción: Add Packed Double-Precision Floating-Point Values.\n"
+                      "Más info: https://www.felixcloutier.com/x86/addpd")
+
+        self.assert_bot_response("/asm", "No me pasaste ninguna instrucción.")
+        self.assert_bot_response("/asm add", add_info)
+        self.assert_bot_response("/asm ADDPD", addpd_info)
+        self.assert_bot_response("/asm a", not_found)
+        self.assert_bot_response("/asm Adp", possibles + "\n" + add_info)
+        self.assert_bot_response("/asm ADDPS", possibles + "\n" + addpd_info)
+        self.assert_bot_response("/asm addP", possibles + "\n" + add_info + "\n" + addpd_info)
 
 
 if __name__ == '__main__':

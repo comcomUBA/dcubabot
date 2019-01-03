@@ -34,6 +34,12 @@ class Noitip(db.Entity):
     text = Required(str)
 
 
+class AsmInstruction(db.Entity):
+    mnemonic = Required(str)
+    summary = Required(str)
+    url = Required(str)
+
+
 def init_db(path):
     db.bind('sqlite', path, create_db=True)
     db.generate_mapping(create_tables=True)
