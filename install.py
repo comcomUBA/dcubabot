@@ -17,5 +17,5 @@ with db_session:
                                            "(algo así como off-topics)")
     Command(name="cubawiki")
     Command(name="rozendioanalisis", description="Te dice si Rozen ya dio el final de análisis o no")
-    Command(name="noitip")
-    Command(name="asm", args=True)
+    Command(name="noitip", description="Escuchar un tip de noit de orga2")
+    Command(name="asm", description="Información sobre una instrucción de Intel 64 o IA-32", args=True)
