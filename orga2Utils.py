@@ -16,22 +16,22 @@ def asm(bot, update, args):
         update.message.reply_text("No me pasaste ninguna instrucción.", quote=False)
         return
 
-    mnemonic = args[0].upper()
+    mnemonic = " ".join(args).upper()
     with db_session:
         possibles = [i for i in list(AsmInstruction.select())
-                     if levenshtein(mnemonic, i.mnemonic) < 2]
+                     if levenshtein(mnemonic, i.mnemonic.upper()) < 2]
     if not possibles:
         update.message.reply_text("No pude encontrar esa instrucción.", quote=False)
     else:
-        instr_match = next((i for i in possibles if i.mnemonic == mnemonic), None)
+        instr_match = [i for i in possibles if i.mnemonic.upper() == mnemonic]
         if instr_match:
-            update.message.reply_text(getasminfo(instr_match), quote=False)
+            response_text = ""
+            response_text += "\n".join(getasminfo(i) for i in instr_match)
         else:
             response_text = ("No pude encontrar esa instrucción.\n"
-                             "Quizás quisiste decir:")
-            for instr in possibles:
-                response_text += "\n" + getasminfo(instr)
-            update.message.reply_text(response_text, quote=False)
+                             "Quizás quisiste decir:\n")
+            response_text += "\n".join(getasminfo(i) for i in possibles)
+        update.message.reply_text(response_text, quote=False)
 
 
 def levenshtein(string1, string2):

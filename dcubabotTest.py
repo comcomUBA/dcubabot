@@ -198,6 +198,15 @@ class TestDCUBABot(unittest.TestCase):
             AsmInstruction(mnemonic="ADDPD",
                            summary="Add Packed Double-Precision Floating-Point Values",
                            url="https://www.felixcloutier.com/x86/addpd")
+            AsmInstruction(mnemonic="MOV",
+                           summary="Move to/from Control Registers",
+                           url="http://www.felixcloutier.com/x86/MOV-1.html")
+            AsmInstruction(mnemonic="MOV",
+                           summary="Move to/from Debug Registers",
+                           url="http://www.felixcloutier.com/x86/MOV-2.html")
+            AsmInstruction(mnemonic="INT n",
+                           summary="Call to Interrupt Procedure",
+                           url="http://www.felixcloutier.com/x86/INT%20n:INTO:INT%203.html")
 
         not_found = "No pude encontrar esa instrucción."
         possibles = not_found + "\nQuizás quisiste decir:"
@@ -205,6 +214,12 @@ class TestDCUBABot(unittest.TestCase):
                     "Más info: https://www.felixcloutier.com/x86/add")
         addpd_info = ("[ADDPD] Descripción: Add Packed Double-Precision Floating-Point Values.\n"
                       "Más info: https://www.felixcloutier.com/x86/addpd")
+        mov1_info = ("[MOV] Descripción: Move to/from Control Registers.\n"
+                     "Más info: http://www.felixcloutier.com/x86/MOV-1.html")
+        mov2_info = ("[MOV] Descripción: Move to/from Debug Registers.\n"
+                     "Más info: http://www.felixcloutier.com/x86/MOV-2.html")
+        intn_info = ("[INT n] Descripción: Call to Interrupt Procedure.\n"
+                     "Más info: http://www.felixcloutier.com/x86/INT%20n:INTO:INT%203.html")
 
         self.assert_bot_response("/asm", "No me pasaste ninguna instrucción.")
         self.assert_bot_response("/asm add", add_info)
@@ -213,6 +228,8 @@ class TestDCUBABot(unittest.TestCase):
         self.assert_bot_response("/asm Adp", possibles + "\n" + add_info)
         self.assert_bot_response("/asm ADDPS", possibles + "\n" + addpd_info)
         self.assert_bot_response("/asm addP", possibles + "\n" + add_info + "\n" + addpd_info)
+        self.assert_bot_response("/asm MOV", mov1_info + "\n" + mov2_info)
+        self.assert_bot_response("/asm INT n", intn_info)
 
 
 if __name__ == '__main__':
