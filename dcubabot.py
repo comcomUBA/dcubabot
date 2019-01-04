@@ -122,7 +122,7 @@ def suggest_listable(bot, update, args, listable_type):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.sendMessage(chat_id=187622583, text="Obligatoria: " + name + "\n" + url,
+    bot.sendMessage(chat_id=187622583, text=listable_type.__name__ + ": " + name + "\n" + url,
                     reply_markup=reply_markup)
     update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
 
