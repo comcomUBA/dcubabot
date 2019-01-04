@@ -8,7 +8,7 @@ import datetime
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler)
+from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler, CallbackQueryHandler)
 
 # Local imports
 # from tokenz import *
@@ -46,7 +46,7 @@ def estasvivo(bot, update):
 
 def list_buttons(bot, update, listable_type):
     with db_session:
-        buttons = select(l for l in listable_type).order_by(lambda l: l.name)
+        buttons = select(l for l in listable_type if l.validated).order_by(lambda l: l.name)
         keyboard = []
         columns = 3
         for k in range(0, len(buttons), columns):
@@ -106,6 +106,55 @@ def rozendioanalisis(bot, update):
     update.message.reply_text("No. Rozen todavia no dio el final de análisis.", quote=False)
 
 
+def suggest_listable(bot, update, args, listable_type):
+    try:
+        name, url = " ".join(args).split("|")
+    except:
+        update.message.reply_text(("Hiciste algo mal, la idea es que pongas:\n"
+                                   "/sugerirgrupo <nombre>|<link>"), quote=False)
+        return
+    with db_session:
+        group = listable_type(name=name, url=url)
+    keyboard = [
+        [
+            InlineKeyboardButton(text="Aceptar", callback_data=str(group.id) + '|1'),
+            InlineKeyboardButton(text="Rechazar", callback_data=str(group.id) + '|0')
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.sendMessage(chat_id=187622583, text="Obligatoria: " + name + "\n" + url,
+                    reply_markup=reply_markup)
+    update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+
+
+def sugerirgrupo(bot, update, args):
+    suggest_listable(bot, update, args, Obligatoria)
+
+
+def sugeriroptativa(bot, update, args):
+    suggest_listable(bot, update, args, Optativa)
+
+
+def sugerirotro(bot, update, args):
+    suggest_listable(bot, update, args, Otro)
+
+
+def button(bot, update):
+    query = update.callback_query
+    message = query.message
+    id, action = query.data.split("|")
+    with db_session:
+        group = Listable[int(id)]
+        if action == "1":
+            group.validated = True
+            action_text = "\n¡Aceptado!"
+        else:
+            group.delete()
+            action_text = "\n¡Rechazado!"
+    bot.editMessageText(chat_id=message.chat_id, message_id=message.message_id,
+                        text=message.text + action_text)
+
+
 def main():
     try:
         global update_id
@@ -124,6 +173,7 @@ def main():
                 handler = CommandHandler(command.name, globals()[command.name],
                                          pass_args=command.args)
                 dispatcher.add_handler(handler)
+        dispatcher.add_handler(CallbackQueryHandler(button))
         # Start running the bot
         updater.start_polling(clean=True)
     except Exception as inst:

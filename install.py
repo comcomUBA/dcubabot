@@ -19,3 +19,9 @@ with db_session:
     Command(name="rozendioanalisis", description="Te dice si Rozen ya dio el final de análisis o no")
     Command(name="noitip", description="Escuchar un tip de noit de orga2")
     Command(name="asm", description="Información sobre una instrucción de Intel 64 o IA-32", args=True)
+    Command(name="sugerirgrupo",
+            description="Sugiere un grupo de alguna de las materias obligatorias", args=True)
+    Command(name="sugeriroptativa",
+            description="Sugiere un grupo de alguna de las materias optativas", args=True)
+    Command(name="sugerirotro",
+            description="Sugiere un grupo de cualquier cosa donde predomine gente de Exactas", args=True)
