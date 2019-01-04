@@ -110,8 +110,8 @@ def suggest_listable(bot, update, args, listable_type):
     try:
         name, url = " ".join(args).split("|")
     except:
-        update.message.reply_text(("Hiciste algo mal, la idea es que pongas:\n"
-                                   "/sugerirgrupo <nombre>|<link>"), quote=False)
+        update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
+                                  update.message.text.split()[0] + " <nombre>|<link>", quote=False)
         return
     with db_session:
         group = listable_type(name=name, url=url)
