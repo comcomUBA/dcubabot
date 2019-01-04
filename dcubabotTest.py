@@ -14,14 +14,13 @@ from telegram.ext import Updater, Filters
 
 from ptbtest import ChatGenerator
 from ptbtest import MessageGenerator
+from ptbtest import CallbackQueryGenerator
 from ptbtest import Mockbot
 from ptbtest import UserGenerator
 
 
 # Local imports
-from dcubabot import (start, estasvivo, help, listar, listaroptativa,
-                      listarotro, cubawiki, log_message, felizdia_text,
-                      rozendioanalisis, noitip, asm)
+from dcubabot import *
 from models import *
 
 
@@ -35,8 +34,9 @@ class TestDCUBABot(unittest.TestCase):
         # Some generators for users and chats
         self.ug = UserGenerator()
         self.cg = ChatGenerator()
-        # And a Messagegenerator and updater (for use with the bot.)
+        # And a Messagegenerator,CallbackQueryGenerator and updater (for use with the bot.)
         self.mg = MessageGenerator(self.bot)
+        self.cqg = CallbackQueryGenerator(self.bot)
         self.updater = Updater(bot=self.bot)
         init_db("test.sqlite3")
         with db_session:
@@ -63,20 +63,38 @@ class TestDCUBABot(unittest.TestCase):
         self.bot.insertUpdate(update)
         return user, chat
 
-    def assert_bot_response(self, message_text, response_text, chat_id=None):
-        sent_messages_before = len(self.bot.sent_messages)
+    # TODO: Cleanup this
+    def assert_bot_response(self, message_text, response_text, chat_id=None, random=False):
+        if isinstance(response_text, str):
+            response_text = [response_text]
+
+        sent_messages = self.bot.sent_messages
+        sent_messages_before = len(sent_messages)
         self.sendCommand(message_text, chat_id=chat_id)
-        response_sent_messages = len(self.bot.sent_messages) - sent_messages_before
-        if response_text:
-            self.assertEqual(response_sent_messages, 1)
-            sent = self.bot.sent_messages[-1]
+        response_sent_messages = len(sent_messages) - sent_messages_before
+        expected_sent_messages = 0 if not response_text else\
+            (1 if random else len(response_text))
+        self.assertEqual(response_sent_messages, expected_sent_messages)
+
+        for i in range(response_sent_messages):
+            sent = sent_messages[sent_messages_before+i]
             self.assertEqual(sent['method'], "sendMessage")
-            if isinstance(response_text, str):
-                self.assertEqual(sent['text'], response_text)
+            if not random:
+                self.assertEqual(sent['text'], response_text[i])
             else:
                 self.assertIn(sent['text'], response_text)
-        else:
-            self.assertEqual(response_sent_messages, 0)
+
+    def get_keyboard(self, message):
+        return json.loads(message['reply_markup'])['inline_keyboard']
+
+    def button_in_list(self, name, url, list_command):
+        self.sendCommand("/" + list_command)
+        inline_keyboard = self.get_keyboard(self.bot.sent_messages[-1])
+        for row in inline_keyboard:
+            for button in row:
+                if button["text"] == name and button["url"] == url:
+                    return True
+        return False
 
     def test_help(self):
         self.updater.dispatcher.add_handler(CommandHandler("help", help))
@@ -110,7 +128,7 @@ class TestDCUBABot(unittest.TestCase):
         self.assert_bot_response(command, "Grupos: ")
 
         # Assertions on keyboard
-        inline_keyboard = json.loads(self.bot.sent_messages[-1]['reply_markup'])['inline_keyboard']
+        inline_keyboard = self.get_keyboard(self.bot.sent_messages[-1])
         self.assertEqual(len(inline_keyboard), 2)  # Number of rows
         for i in range(2):
             row = inline_keyboard[i]
@@ -134,6 +152,70 @@ class TestDCUBABot(unittest.TestCase):
     def test_listarotro(self):
         self.updater.dispatcher.add_handler(CommandHandler("listarotro", listarotro))
         self.list_test("/listarotro", Otro)
+
+    def suggestion_test(self, command, list_command, listable_type):
+        self.updater.dispatcher.add_handler(CommandHandler(list_command, globals()[list_command]))
+        self.updater.dispatcher.add_handler(CallbackQueryHandler(button))
+        name = "Sugerido"
+        url = "sugerido.com"
+        error_message = "Hiciste algo mal, la idea es que pongas:\n" +\
+                        command + " <nombre>|<link>"
+
+        # Invalid command usages
+        self.assert_bot_response(command, error_message)
+        self.assert_bot_response(command + " " + name, error_message)
+        self.assert_bot_response(command + " " + name + "|" + url + "|sobra", error_message)
+
+        # Make a group suggestion to accept
+        self.assert_bot_response(command + " " + name + "|" + url,
+                                 [listable_type.__name__ + ": " + name + "\n" + url,
+                                  "OK, se lo mando a Rozen."])
+
+        # Assertions on keyboard
+        inline_keyboard = self.get_keyboard(self.bot.sent_messages[-2])
+        self.assertEqual(len(inline_keyboard), 1)  # Number of rows
+        row = inline_keyboard[0]
+        self.assertEqual(len(row), 2)  # Number of columns
+        self.assertEqual(row[0]["text"], "Aceptar")
+        self.assertEqual(row[1]["text"], "Rechazar")
+
+        # The suggested group shouldn't be listed
+        self.assertFalse(self.button_in_list(name, url, list_command))
+
+        # Pressing the "Aceptar" button makes the group listable
+        u = self.cqg.get_callback_query(message=self.mg.get_message().message,
+                                        data=row[0]["callback_data"])
+        self.bot.insertUpdate(u)
+        self.assertTrue(self.button_in_list(name, url, list_command))
+        with db_session:
+            delete(l for l in Listable if l.name == name)
+
+        # Make a group suggestion to reject
+        self.sendCommand(command + " " + name + "|" + url)
+        inline_keyboard = self.get_keyboard(self.bot.sent_messages[-2])
+        row = inline_keyboard[0]
+
+        # Pressing the "Rechazar" button doesn't make the group listable
+        u = self.cqg.get_callback_query(message=self.mg.get_message().message,
+                                        data=row[1]["callback_data"])
+        self.bot.insertUpdate(u)
+        self.assertFalse(self.button_in_list(name, url, list_command))
+
+        # The database is clean of rejected suggestions
+        with db_session:
+            self.assertEqual(count(l for l in Listable if l.name == name), 0)
+
+    def test_sugerirgrupo(self):
+        self.updater.dispatcher.add_handler(CommandHandler("sugerirgrupo", sugerirgrupo, pass_args=True))
+        self.suggestion_test("/sugerirgrupo", "listar", Obligatoria)
+
+    def test_sugeriroptativa(self):
+        self.updater.dispatcher.add_handler(CommandHandler("sugeriroptativa", sugeriroptativa, pass_args=True))
+        self.suggestion_test("/sugeriroptativa", "listaroptativa", Optativa)
+
+    def test_sugerirotro(self):
+        self.updater.dispatcher.add_handler(CommandHandler("sugerirotro", sugerirotro, pass_args=True))
+        self.suggestion_test("/sugerirotro", "listarotro", Otro)
 
     def test_logger(self):
         self.updater.dispatcher.add_handler(MessageHandler(Filters.all, log_message), group=1)
@@ -185,7 +267,7 @@ class TestDCUBABot(unittest.TestCase):
             for phrase in noitips:
                 Noitip(text=phrase)
 
-        self.assert_bot_response("/noitip", noitips)
+        self.assert_bot_response("/noitip", noitips, random=True)
 
     def test_asm(self):
         self.updater.dispatcher.add_handler(CommandHandler("asm", asm, pass_args=True))
