@@ -22,6 +22,7 @@ from ptbtest import UserGenerator
 # Local imports
 from dcubabot import *
 from models import *
+from install import install_commands
 
 
 class TestDCUBABot(unittest.TestCase):
@@ -39,6 +40,8 @@ class TestDCUBABot(unittest.TestCase):
         self.cqg = CallbackQueryGenerator(self.bot)
         self.updater = Updater(bot=self.bot)
         init_db("test.sqlite3")
+        install_commands()
+        add_all_handlers(self.updater.dispatcher)
         with db_session:
             for listable_type in Listable.__subclasses__():
                 for i in range(6):
@@ -97,8 +100,9 @@ class TestDCUBABot(unittest.TestCase):
         return False
 
     def test_help(self):
-        self.updater.dispatcher.add_handler(CommandHandler("help", help))
         with db_session:
+            for c in Command.select():
+                c.description = ""
             Command(name="comandoSinDescripcion1")
             Command(name="comandoConDescripcion1", description="Descripción 1")
             Command(name="comandoSinDescripcion2")
@@ -111,16 +115,13 @@ class TestDCUBABot(unittest.TestCase):
                                            "/comandoConDescripcion3 - Descripción 3\n"))
 
     def test_start(self):
-        self.updater.dispatcher.add_handler(CommandHandler("start", start))
         self.assert_bot_response(
             "/start", "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
     def test_estasvivo(self):
-        self.updater.dispatcher.add_handler(CommandHandler("estasvivo", estasvivo))
         self.assert_bot_response("/estasvivo", "Sí, estoy vivo.")
 
     def test_rozendioanalisis(self):
-        self.updater.dispatcher.add_handler(CommandHandler("rozendioanalisis", rozendioanalisis))
         self.assert_bot_response("/rozendioanalisis", "No. Rozen todavia no dio el final de análisis.")
 
     # TODO: Rename
@@ -142,20 +143,15 @@ class TestDCUBABot(unittest.TestCase):
                 self.assertEqual(button['callback_data'], button['url'])
 
     def test_listar(self):
-        self.updater.dispatcher.add_handler(CommandHandler("listar", listar))
         self.list_test("/listar", Obligatoria)
 
     def test_listaroptativa(self):
-        self.updater.dispatcher.add_handler(CommandHandler("listaroptativa", listaroptativa))
         self.list_test("/listaroptativa", Optativa)
 
     def test_listarotro(self):
-        self.updater.dispatcher.add_handler(CommandHandler("listarotro", listarotro))
         self.list_test("/listarotro", Otro)
 
     def suggestion_test(self, command, list_command, listable_type):
-        self.updater.dispatcher.add_handler(CommandHandler(list_command, globals()[list_command]))
-        self.updater.dispatcher.add_handler(CallbackQueryHandler(button))
         name = "Sugerido"
         url = "sugerido.com"
         error_message = "Hiciste algo mal, la idea es que pongas:\n" +\
@@ -206,19 +202,15 @@ class TestDCUBABot(unittest.TestCase):
             self.assertEqual(count(l for l in Listable if l.name == name), 0)
 
     def test_sugerirgrupo(self):
-        self.updater.dispatcher.add_handler(CommandHandler("sugerirgrupo", sugerirgrupo, pass_args=True))
         self.suggestion_test("/sugerirgrupo", "listar", Obligatoria)
 
     def test_sugeriroptativa(self):
-        self.updater.dispatcher.add_handler(CommandHandler("sugeriroptativa", sugeriroptativa, pass_args=True))
         self.suggestion_test("/sugeriroptativa", "listaroptativa", Optativa)
 
     def test_sugerirotro(self):
-        self.updater.dispatcher.add_handler(CommandHandler("sugerirotro", sugerirotro, pass_args=True))
         self.suggestion_test("/sugerirotro", "listarotro", Otro)
 
     def test_logger(self):
-        self.updater.dispatcher.add_handler(MessageHandler(Filters.all, log_message), group=1)
         with self.assertLogs("DCUBABOT", level='INFO') as cm:
             user, _ = self.sendCommand("/listar")
             first_message = 'INFO:DCUBABOT:'+str(user.id) + ': /listar'
@@ -227,7 +219,6 @@ class TestDCUBABot(unittest.TestCase):
             self.assertEqual(cm.output, [first_message, second_message])
 
     def test_cubawiki(self):
-        self.updater.dispatcher.add_handler(CommandHandler("cubawiki", cubawiki))
         cubawiki_url = "https://www.cubawiki.com.ar/index.php/Segundo_Parcial_del_10/12/18"
         positive_chat_id = -123456
         negative_chat_id_no_cubawiki = -654321
@@ -261,7 +252,6 @@ class TestDCUBABot(unittest.TestCase):
 
     # TODO: Test randomness?
     def test_noitip(self):
-        self.updater.dispatcher.add_handler(CommandHandler("noitip", noitip))
         noitips = ["me siento boludeadisimo", "Not this shit again", "noitip"]
         with db_session:
             for phrase in noitips:
@@ -270,7 +260,6 @@ class TestDCUBABot(unittest.TestCase):
         self.assert_bot_response("/noitip", noitips, random=True)
 
     def test_asm(self):
-        self.updater.dispatcher.add_handler(CommandHandler("asm", asm, pass_args=True))
         with db_session:
             AsmInstruction(mnemonic="AAD",
                            summary="ASCII Adjust AX Before Division",
