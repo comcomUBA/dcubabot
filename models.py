@@ -16,6 +16,7 @@ class Listable(db.Entity):
     name = Required(str)
     url = Required(str)
     chat_id = Optional(int, size=64)
+    validated = Required(bool, default=False)
 
 
 class Obligatoria(Listable):
