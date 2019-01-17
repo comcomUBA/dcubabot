@@ -155,6 +155,17 @@ def button(bot, update):
                         text=message.text + action_text)
 
 
+def add_all_handlers(dispatcher):
+    dispatcher.add_handler(MessageHandler(
+        (Filters.text | Filters.command), log_message), group=1)
+    with db_session:
+        for command in select(c for c in Command):
+            handler = CommandHandler(command.name, globals()[command.name],
+                                     pass_args=command.args)
+            dispatcher.add_handler(handler)
+    dispatcher.add_handler(CallbackQueryHandler(button))
+
+
 def main():
     try:
         global update_id
@@ -162,18 +173,11 @@ def main():
         botname = "DCUBABOT"
         print("Iniciando DCUBABOT")
         logger.info("Iniciando")
+        init_db("dcubabot.sqlite3")
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
-        dispatcher.add_handler(MessageHandler(
-            (Filters.text | Filters.command), log_message), group=1)
         updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
-        init_db("dcubabot.sqlite3")
-        with db_session:
-            for command in select(c for c in Command):
-                handler = CommandHandler(command.name, globals()[command.name],
-                                         pass_args=command.args)
-                dispatcher.add_handler(handler)
-        dispatcher.add_handler(CallbackQueryHandler(button))
+        add_all_handlers(dispatcher)
         # Start running the bot
         updater.start_polling(clean=True)
     except Exception as inst:
