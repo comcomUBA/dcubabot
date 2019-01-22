@@ -110,6 +110,8 @@ def rozendioanalisis(bot, update):
 def suggest_listable(bot, update, args, listable_type):
     try:
         name, url = " ".join(args).split("|")
+        if not (name and url):
+            raise Exception
     except:
         update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
                                   update.message.text.split()[0] + " <nombre>|<link>", quote=False)

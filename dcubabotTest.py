@@ -160,6 +160,9 @@ class TestDCUBABot(unittest.TestCase):
         # Invalid command usages
         self.assert_bot_response(command, error_message)
         self.assert_bot_response(command + " " + name, error_message)
+        self.assert_bot_response(command + " " + name + "|", error_message)
+        self.assert_bot_response(command + " |" + url, error_message)
+        self.assert_bot_response(command + " |", error_message)
         self.assert_bot_response(command + " " + name + "|" + url + "|sobra", error_message)
 
         # Make a group suggestion to accept
