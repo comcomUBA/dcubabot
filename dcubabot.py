@@ -14,6 +14,7 @@ from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler, Call
 # from tokenz import *
 from models import *
 from orga2Utils import noitip, asm
+from errors import error_callback
 
 # TODO:Move this out of here
 logging.basicConfig(
@@ -177,6 +178,7 @@ def main():
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
         updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
+        dispatcher.add_error_handler(error_callback)
         add_all_handlers(dispatcher)
         # Start running the bot
         updater.start_polling(clean=True)
