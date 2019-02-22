@@ -104,7 +104,7 @@ def felizdia(bot, job):
 
 
 def rozendioanalisis(bot, update):
-    update.message.reply_text("No. Rozen todavia no dio el final de análisis.", quote=False)
+    update.message.reply_text("¡Sí, Rozen ya dio el final de análisis!", quote=False)
 
 
 def suggest_listable(bot, update, args, listable_type):

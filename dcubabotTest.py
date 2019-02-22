@@ -122,7 +122,7 @@ class TestDCUBABot(unittest.TestCase):
         self.assert_bot_response("/estasvivo", "Sí, estoy vivo.")
 
     def test_rozendioanalisis(self):
-        self.assert_bot_response("/rozendioanalisis", "No. Rozen todavia no dio el final de análisis.")
+        self.assert_bot_response("/rozendioanalisis", "¡Sí, Rozen ya dio el final de análisis!")
 
     # TODO: Rename
     def list_test(self, command, listable_type):
