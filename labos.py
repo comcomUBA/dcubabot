@@ -35,15 +35,23 @@ def aware_now():
 # Decide si vale la pena o no recargar un calendario.
 def should_reload(name):
     calendar = calendars[name]
-    return aware_now() - timedelta(hours=1) > calendar[1]
+    return aware_now() - timedelta(hours=12) > calendar[1]
 
 
 # Carga un calendario desde una url y lo guarda con la fecha de carga.
-def load_calendar(name):
+def load_calendar(name, retries=3):
     url = urls[name]
-    calendar = Calendar(urlopen(url).read().decode('utf8'))
-    calendars[name] = (calendar, aware_now())
-    return calendar
+
+    while retries > 0:
+        try:
+            calendar = Calendar(urlopen(url).read().decode('utf8'))
+            calendars[name] = (calendar, aware_now())
+            return calendar
+        except Exception:
+            retries -= 1
+
+    # Debería levantar una excepción?
+    return None
 
 
 # Dado el nombre de un calendario lo devuelve (y recarga si es necesario).
@@ -55,13 +63,8 @@ def get_calendar(name):
     else:
         retries = 0
 
-    while retries > 0:
-        try:
-            return load_calendar(name)
-        except Exception:
-            retries -= 1
-
-    return calendars[name][0]
+    # Si load_calendar falló fallbackeo
+    return load_calendar(name, retries) or calendars[name][0]
 
 
 # Repite l siguiente valor del generador, útil para ver si un generador está
