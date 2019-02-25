@@ -94,3 +94,9 @@ def events_at(time):
 
         for event in events:
             yield '[%s] %s' % (name, event.name)
+
+
+# Llamado periódicamente para forzar la actualización de los calendarios
+def update(bot, job):
+    for name in calendars:
+        load_calendar(name)
