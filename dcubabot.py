@@ -76,7 +76,7 @@ def listarlabos(bot, update, args):
     mins = int(args[0]) if len(args) > 0 else 0
     instant = labos.aware_now() - datetime.timedelta(minutes=mins)
     respuesta = '\n'.join(labos.events_at(instant))
-    bot.send_message(chat_id="@dcfceynuba", text=respuesta)
+    update.message.reply_text(text=respuesta, quote=False)
 
 
 def cubawiki(bot, update):
