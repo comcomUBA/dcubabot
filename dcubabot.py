@@ -15,6 +15,7 @@ from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler, Call
 from models import *
 from orga2Utils import noitip, asm
 from errors import error_callback
+import labos
 
 # TODO:Move this out of here
 logging.basicConfig(
@@ -69,6 +70,13 @@ def listaroptativa(bot, update):
 
 def listarotro(bot, update):
     list_buttons(bot, update, Otro)
+
+
+def listarlabos(bot, update, args):
+    mins = int(args[0]) if len(args) > 0 else 0
+    instant = labos.aware_now() - datetime.timedelta(minutes=mins)
+    respuesta = '\n'.join(labos.events_at(instant))
+    bot.send_message(chat_id="@dcfceynuba", text=respuesta)
 
 
 def cubawiki(bot, update):
@@ -180,6 +188,7 @@ def main():
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
         updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
+        updater.job_queue.run_hourly(callback=labos.update)
         dispatcher.add_error_handler(error_callback)
         add_all_handlers(dispatcher)
         # Start running the bot
