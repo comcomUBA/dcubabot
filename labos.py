@@ -14,7 +14,7 @@ urls = {
 }
 
 calendars = {
-    # 'name': (c :Calendar, loaded: Datetime)
+    # 'name': (c: Calendar, loaded: Datetime)
     'Labo 1': (None,),
     'Labo 2': (None,),
     'Labo 3 (Graduados)': (None,),
@@ -67,7 +67,7 @@ def get_calendar(name):
     return load_calendar(name, retries) or calendars[name][0]
 
 
-# Repite l siguiente valor del generador, útil para ver si un generador está
+# Repite el siguiente valor del generador, útil para ver si un generador está
 # vacío sin romperlo.
 def repeat_next(generator):
     empty = object()
