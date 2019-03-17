@@ -142,6 +142,36 @@ def sugerirotro(bot, update, args):
     suggest_listable(bot, update, args, Otro)
 
 
+def sugerirnombre(bot, update, args):
+    try:
+        name, new_name = " ".join(args).split("|")
+        if not (name and new_name):
+            raise Exception
+    except:
+        update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
+                                  update.message.text.split()[0] + " <nombre>|<nuevo nombre>", quote=False)
+        return
+    with db_session:
+        try:
+            if count(l for l in Listable if l.name=name and l.validado) < 1:
+                update.message.reply_text(
+                    "Ese grupo no existe, fijate si lo pusiste bien, peter deja de escuchar lo q digo", quote=False)
+                return
+
+    keyboard = [
+        [
+            InlineKeyboardButton(text="Aceptar", callback_data=str(
+                group.id) + f'{name}|{new_name}|1'),
+            InlineKeyboardButton(text="Rechazar", callback_data=str(
+                group.id) + f'{name}|{new_name}|0')
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.sendMessage(chat_id=137497264, text=listable_type.__name__ + ": " + name + "\n" + url,
+                    reply_markup=reply_markup)
+    update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+
+
 def button(bot, update):
     query = update.callback_query
     message = query.message
