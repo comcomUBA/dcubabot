@@ -1,5 +1,4 @@
-from ics import Calendar
-from urllib.request import urlopen
+from icalevents import icaldownload, icalparser
 from datetime import datetime, timedelta
 from pytz import timezone
 
@@ -44,7 +43,7 @@ def load_calendar(name, retries=3):
 
     while retries > 0:
         try:
-            calendar = Calendar(urlopen(url).read().decode('utf8'))
+            calendar = icaldownload.ICalDownload().data_from_url(url)
             calendars[name] = (calendar, aware_now())
             return calendar
         except Exception:
@@ -67,33 +66,19 @@ def get_calendar(name):
     return load_calendar(name, retries) or calendars[name][0]
 
 
-# Repite el siguiente valor del generador, útil para ver si un generador está
-# vacío sin romperlo.
-def repeat_next(generator):
-    empty = object()
-    _next = next(generator, empty)
-
-    if _next is empty:
-        return
-
-    yield _next
-    yield _next
-    yield from generator
-
-
 # Este sería el API que exponemos.
 # El datetime no puede ser naive.
 def events_at(time):
     for name in calendars:
         calendar = get_calendar(name)
 
-        events = repeat_next(calendar.timeline.at(time))
+        events = icalparser.parse_events(calendar, start=time, end=time)
 
-        if next(events, None) is None:
+        if not events:
             yield '[%s] No tiene nada reservado' % name
 
         for event in events:
-            yield '[%s] %s' % (name, event.name)
+            yield '[%s] %s' % (name, event.summary)
 
 
 # Llamado periódicamente para forzar la actualización de los calendarios

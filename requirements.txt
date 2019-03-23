@@ -1,5 +1,5 @@
 pony==0.7.6
 git+https://github.com/jsenin/ptbtest.git
 python_telegram_bot==11.1.0
-ics==0.4
+icalevents==0.1.19
 pytz==2018.9
