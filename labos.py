@@ -13,7 +13,7 @@ urls = {
 }
 
 calendars = {
-    # 'name': (c: Calendar, loaded: Datetime)
+    # 'name': (c: List[Event], loaded: Datetime)
     'Labo 1': (None,),
     'Labo 2': (None,),
     'Labo 3 (Graduados)': (None,),
@@ -43,8 +43,13 @@ def load_calendar(name, retries=3):
 
     while retries > 0:
         try:
-            calendar = icaldownload.ICalDownload().data_from_url(url)
-            calendars[name] = (calendar, aware_now())
+            now = aware_now()
+            span = timedelta(weeks=4)
+            calendar_raw = icaldownload.ICalDownload().data_from_url(url)
+            calendar = icalparser.parse_events(calendar_raw,
+                                               start=now - span,
+                                               end=now + span)
+            calendars[name] = (calendar, now)
             return calendar
         except Exception:
             retries -= 1
@@ -66,15 +71,29 @@ def get_calendar(name):
     return load_calendar(name, retries) or calendars[name][0]
 
 
+# Repite el siguiente valor del generador, útil para ver si un generador está
+# vacío sin romperlo.
+def repeat_next(generator):
+    empty = object()
+    _next = next(generator, empty)
+
+    if _next is empty:
+        return
+
+    yield _next
+    yield _next
+    yield from generator
+
+
 # Este sería el API que exponemos.
 # El datetime no puede ser naive.
 def events_at(time):
     for name in calendars:
         calendar = get_calendar(name)
 
-        events = icalparser.parse_events(calendar, start=time, end=time)
+        events = repeat_next(e for e in calendar if e.start <= time <= e.end)
 
-        if not events:
+        if next(events, None) is None:
             yield '[%s] No tiene nada reservado' % name
 
         for event in events:
