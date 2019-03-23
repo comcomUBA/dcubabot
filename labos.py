@@ -13,7 +13,7 @@ urls = {
 }
 
 calendars = {
-    # 'name': (c: List[Event], loaded: Datetime)
+    # 'name': (events: List[Event], loaded: Datetime, span: Timedelta, raw: Str)
     'Labo 1': (None,),
     'Labo 2': (None,),
     'Labo 3 (Graduados)': (None,),
@@ -46,11 +46,11 @@ def load_calendar(name, retries=3):
             now = aware_now()
             span = timedelta(weeks=4)
             calendar_raw = icaldownload.ICalDownload().data_from_url(url)
-            calendar = icalparser.parse_events(calendar_raw,
-                                               start=now - span,
-                                               end=now + span)
-            calendars[name] = (calendar, now)
-            return calendar
+            events = icalparser.parse_events(calendar_raw,
+                                             start=now - span,
+                                             end=now + span)
+            calendars[name] = (events, now, span, calendar_raw)
+            return calendars[name]
         except Exception:
             retries -= 1
 
@@ -68,7 +68,7 @@ def get_calendar(name):
         retries = 0
 
     # Si load_calendar falló fallbackeo
-    return load_calendar(name, retries) or calendars[name][0]
+    return load_calendar(name, retries) or calendars[name]
 
 
 # Repite el siguiente valor del generador, útil para ver si un generador está
@@ -91,7 +91,14 @@ def events_at(time):
     for name in calendars:
         calendar = get_calendar(name)
 
-        events = repeat_next(e for e in calendar if e.start <= time <= e.end)
+        # Vemos si podemos usar los eventos en caché o tenemos que parsear raw
+        if calendar[1] - calendar[2] <= time <= calendar[1] + calendar[2]:
+            events_gen = (e for e in calendar[0] if e.start <= time <= e.end)
+        else:
+            events_gen = (e for e in icalparser.parse_events(calendar[3],
+                                                             start=time,
+                                                             end=time))
+        events = repeat_next(events_gen)
 
         if next(events, None) is None:
             yield '[%s] No tiene nada reservado' % name
