@@ -28,12 +28,12 @@ logging.basicConfig(
 logger = logging.getLogger("DCUBABOT")
 
 
-def start(bot, update):
+def start(update, context):
     update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
                               quote=False)
 
 
-def help(bot, update):
+def help(update, context):
     message_text = ""
     with db_session:
         for command in select(c for c in Command if c.description).order_by(lambda c: c.name):
@@ -41,11 +41,11 @@ def help(bot, update):
     update.message.reply_text(message_text, quote=False)
 
 
-def estasvivo(bot, update):
+def estasvivo(update, context):
     update.message.reply_text("Sí, estoy vivo.", quote=False)
 
 
-def list_buttons(bot, update, listable_type):
+def list_buttons(update, context, listable_type):
     with db_session:
         buttons = select(l for l in listable_type if l.validated).order_by(lambda l: l.name)
         keyboard = []
@@ -59,19 +59,19 @@ def list_buttons(bot, update, listable_type):
                                   reply_markup=reply_markup, quote=False)
 
 
-def listar(bot, update):
-    list_buttons(bot, update, Obligatoria)
+def listar(update, context):
+    list_buttons(update, context, Obligatoria)
 
 
-def listaroptativa(bot, update):
-    list_buttons(bot, update, Optativa)
+def listaroptativa(update, context):
+    list_buttons(update, context, Optativa)
 
 
-def listarotro(bot, update):
-    list_buttons(bot, update, Otro)
+def listarotro(update, context):
+    list_buttons(update, context, Otro)
 
 
-def cubawiki(bot, update):
+def cubawiki(update, context):
     with db_session:
         group = select(o for o in Obligatoria if o.chat_id == update.message.chat.id
                        and o.cubawiki_url is not None).first()
@@ -79,7 +79,7 @@ def cubawiki(bot, update):
             update.message.reply_text(group.cubawiki_url, quote=False)
 
 
-def log_message(bot, update):
+def log_message(update, context):
     user = str(update.message.from_user.id)
     # EAFP
     try:
@@ -98,14 +98,14 @@ def felizdia_text(today):
     return "Feliz " + dia + " de " + mes
 
 
-def felizdia(bot, job):
+def felizdia(context):
     today = datetime.date.today()
-    bot.send_message(chat_id="@dcfceynuba", text=felizdia_text(today))
+    context.bot.send_message(chat_id="@dcfceynuba", text=felizdia_text(today))
 
 
-def suggest_listable(bot, update, args, listable_type):
+def suggest_listable(update, context, listable_type):
     try:
-        name, url = " ".join(args).split("|")
+        name, url = " ".join(context.args).split("|")
         if not (name and url):
             raise Exception
     except:
@@ -121,27 +121,27 @@ def suggest_listable(bot, update, args, listable_type):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.sendMessage(chat_id=137497264, text=listable_type.__name__ + ": " + name + "\n" + url,
-                    reply_markup=reply_markup)
+    context.bot.sendMessage(chat_id=137497264, text=listable_type.__name__ + ": " + name + "\n" + url,
+                            reply_markup=reply_markup)
     update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
 
 
-def sugerirgrupo(bot, update, args):
-    suggest_listable(bot, update, args, Obligatoria)
+def sugerirgrupo(update, context):
+    suggest_listable(update, context, Obligatoria)
 
 
-def sugeriroptativa(bot, update, args):
-    suggest_listable(bot, update, args, Optativa)
+def sugeriroptativa(update, context):
+    suggest_listable(update, context, Optativa)
 
 
-def sugerirotro(bot, update, args):
-    suggest_listable(bot, update, args, Otro)
+def sugerirotro(update, context):
+    suggest_listable(update, context, Otro)
 
 
-''' La funcion button se encarga de tomar todos los botones que se apreten en el bot (y que no sean links)'''
+''' La funcion button se encarga de tomar todos los context.botones que se apreten en el context.bot (y que no sean links)'''
 
 
-def button(bot, update):
+def button(update, context):
     query = update.callback_query
     message = query.message
     id, action = query.data.split("|")
@@ -153,8 +153,8 @@ def button(bot, update):
         else:
             group.delete()
             action_text = "\n¡Rechazado!"
-    bot.editMessageText(chat_id=message.chat_id, message_id=message.message_id,
-                        text=message.text + action_text)
+    context.bot.editMessageText(chat_id=message.chat_id, message_id=message.message_id,
+                                text=message.text + action_text)
 
 
 def add_all_handlers(dispatcher):
@@ -171,17 +171,17 @@ def add_all_handlers(dispatcher):
 def main():
     try:
         global update_id
-        # Telegram Bot Authorization Token
+        # Telegram context.bot Authorization Token
         botname = "DCUBABOT"
         print("Iniciando DCUBABOT")
         logger.info("Iniciando")
         init_db("dcubabot.sqlite3")
-        updater = Updater(token=token)
+        updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
         updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
         dispatcher.add_error_handler(error_callback)
         add_all_handlers(dispatcher)
-        # Start running the bot
+        # Start running the context.bot
         updater.start_polling(clean=True)
     except Exception as inst:
         logger.critical("ERROR AL INICIAR EL DCUBABOT")

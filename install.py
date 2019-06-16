@@ -18,8 +18,7 @@ def install_commands():
                 description="Muestra todos los grupos de materias optativas conocidos por el bot")
         Command(name="listarotro", description="Muestra todos los grupos relacionados a la gente de este grupo "
                                                "(algo así como off-topics)")
-        Command(name="listarlabos",
-                description="Lista las reservaciones de los laboratorios de la facultad", args=True)
+        # Command(name="listarlabos", description="Lista las reservaciones de los laboratorios de la facultad", args=True)
         Command(name="cubawiki")
         Command(name="noitip", description="Escuchar un tip de noit de orga2")
         Command(name="asm", description="Información sobre una instrucción de Intel 64 o IA-32", args=True)

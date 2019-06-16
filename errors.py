@@ -2,5 +2,5 @@
 # -*- coding: utf-8 -*-
 
 
-def error_callback(bot, update, error):
-    logger.exception(error)
+def error_callback(update, context):
+    logger.exception(context.error)
