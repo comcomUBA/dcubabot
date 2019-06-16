@@ -10,15 +10,17 @@ def install_commands():
         Command.select().delete()
         Command(name="start")
         Command(name="help", description="Muestra este mensaje horrible")
-        Command(name="estasvivo", description="Responde un mensaje corto para ver si el bot esta al día y activo")
-        Command(name="listar", description="Muestra todos los grupos de materias obligatorias conocidos por el bot")
+        Command(name="estasvivo",
+                description="Responde un mensaje corto para ver si el bot esta al día y activo")
+        Command(name="listar",
+                description="Muestra todos los grupos de materias obligatorias conocidos por el bot")
         Command(name="listaroptativa",
                 description="Muestra todos los grupos de materias optativas conocidos por el bot")
         Command(name="listarotro", description="Muestra todos los grupos relacionados a la gente de este grupo "
                                                "(algo así como off-topics)")
-        Command(name="listarlabos", description="Lista las reservaciones de los laboratorios de la facultad", args=True)
+        Command(name="listarlabos",
+                description="Lista las reservaciones de los laboratorios de la facultad", args=True)
         Command(name="cubawiki")
-        Command(name="rozendioanalisis", description="Te dice si Rozen ya dio el final de análisis o no")
         Command(name="noitip", description="Escuchar un tip de noit de orga2")
         Command(name="asm", description="Información sobre una instrucción de Intel 64 o IA-32", args=True)
         Command(name="sugerirgrupo",

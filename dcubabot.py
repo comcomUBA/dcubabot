@@ -103,10 +103,6 @@ def felizdia(bot, job):
     bot.send_message(chat_id="@dcfceynuba", text=felizdia_text(today))
 
 
-def rozendioanalisis(bot, update):
-    update.message.reply_text("¡Sí, Rozen ya dio el final de análisis!", quote=False)
-
-
 def suggest_listable(bot, update, args, listable_type):
     try:
         name, url = " ".join(args).split("|")
