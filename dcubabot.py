@@ -15,7 +15,6 @@ from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler, Call
 from models import *
 from orga2Utils import noitip, asm
 from errors import error_callback
-import labos
 
 # TODO:Move this out of here
 logging.basicConfig(
@@ -70,13 +69,6 @@ def listaroptativa(bot, update):
 
 def listarotro(bot, update):
     list_buttons(bot, update, Otro)
-
-
-def listarlabos(bot, update, args):
-    mins = int(args[0]) if len(args) > 0 else 0
-    instant = labos.aware_now() + datetime.timedelta(minutes=mins)
-    respuesta = '\n'.join(labos.events_at(instant))
-    update.message.reply_text(text=respuesta, quote=False)
 
 
 def cubawiki(bot, update):
@@ -150,34 +142,7 @@ def sugerirotro(bot, update, args):
     suggest_listable(bot, update, args, Otro)
 
 
-def sugerirnombre(bot, update, args):
-    try:
-        name, new_name = " ".join(args).split("|")
-        if not (name and new_name):
-            raise Exception
-    except:
-        update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
-                                  update.message.text.split()[0] + " <nombre>|<nuevo nombre>", quote=False)
-        return
-    with db_session:
-        try:
-            if count(l for l in Listable if l.name=name and l.validado) < 1:
-                update.message.reply_text(
-                    "Ese grupo no existe, fijate si lo pusiste bien, peter deja de escuchar lo q digo", quote=False)
-                return
-
-    keyboard = [
-        [
-            InlineKeyboardButton(text="Aceptar", callback_data=str(
-                group.id) + f'{name}|{new_name}|1'),
-            InlineKeyboardButton(text="Rechazar", callback_data=str(
-                group.id) + f'{name}|{new_name}|0')
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.sendMessage(chat_id=137497264, text=listable_type.__name__ + ": " + name + "\n" + url,
-                    reply_markup=reply_markup)
-    update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+''' La funcion button se encarga de tomar todos los botones que se apreten en el bot (y que no sean links)'''
 
 
 def button(bot, update):
@@ -218,7 +183,6 @@ def main():
         updater = Updater(token=token)
         dispatcher = updater.dispatcher
         updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
-        updater.job_queue.run_repeating(callback=labos.update, interval=datetime.timedelta(hours=1))
         dispatcher.add_error_handler(error_callback)
         add_all_handlers(dispatcher)
         # Start running the bot
