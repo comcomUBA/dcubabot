@@ -97,6 +97,6 @@ def events_at(time):
 
 
 # Llamado periódicamente para forzar la actualización de los calendarios
-def update(bot, job):
+def update(context):
     for name in calendars:
         load_calendar(name)
