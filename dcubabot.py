@@ -15,6 +15,7 @@ from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler, Call
 from models import *
 from orga2Utils import noitip, asm
 from errors import error_callback
+import labos
 
 # TODO:Move this out of here
 logging.basicConfig(
@@ -138,6 +139,14 @@ def sugerirotro(update, context):
     suggest_listable(update, context, Otro)
 
 
+def listarlabos(update, context):
+    args = context.args
+    mins = int(args[0]) if len(args) > 0 else 0
+    instant = labos.aware_now() + datetime.timedelta(minutes=mins)
+    respuesta = '\n'.join(labos.events_at(instant))
+    update.message.reply_text(text=respuesta, quote=False)
+
+
 ''' La funcion button se encarga de tomar todos los context.botones que se apreten en el context.bot (y que no sean links)'''
 
 
@@ -179,6 +188,7 @@ def main():
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
         updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
+        updater.job_queue.run_repeating(callback=labos.update, interval=datetime.timedelta(hours=1))
         dispatcher.add_error_handler(error_callback)
         add_all_handlers(dispatcher)
         # Start running the context.bot
