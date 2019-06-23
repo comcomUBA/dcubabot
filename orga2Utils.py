@@ -5,18 +5,18 @@
 from models import *
 
 
-def noitip(bot, update):
+def noitip(update, context):
     with db_session:
         random_noitip = Noitip.select_random(1)[0].text
     update.message.reply_text(random_noitip, quote=False)
 
 
-def asm(bot, update, args):
-    if not args:
+def asm(update, context):
+    if not context.args:
         update.message.reply_text("No me pasaste ninguna instrucción.", quote=False)
         return
 
-    mnemonic = " ".join(args).upper()
+    mnemonic = " ".join(context.args).upper()
     with db_session:
         possibles = [i for i in list(AsmInstruction.select())
                      if levenshtein(mnemonic, i.mnemonic.upper()) < 2]
