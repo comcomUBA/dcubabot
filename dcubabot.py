@@ -171,8 +171,7 @@ def add_all_handlers(dispatcher):
         (Filters.text | Filters.command), log_message), group=1)
     with db_session:
         for command in select(c for c in Command):
-            handler = CommandHandler(command.name, globals()[command.name],
-                                     pass_args=command.args)
+            handler = CommandHandler(command.name, globals()[command.name])
             dispatcher.add_handler(handler)
     dispatcher.add_handler(CallbackQueryHandler(button))
 

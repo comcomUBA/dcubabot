@@ -18,16 +18,16 @@ def install_commands():
                 description="Muestra todos los grupos de materias optativas conocidos por el bot")
         Command(name="listarotro", description="Muestra todos los grupos relacionados a la gente de este grupo "
                                                "(algo así como off-topics)")
-        Command(name="listarlabos", description="Lista las reservaciones de los laboratorios de la facultad", args=True)
+        Command(name="listarlabos", description="Lista las reservaciones de los laboratorios de la facultad")
         Command(name="cubawiki")
         Command(name="noitip", description="Escuchar un tip de noit de orga2")
-        Command(name="asm", description="Información sobre una instrucción de Intel 64 o IA-32", args=True)
+        Command(name="asm", description="Información sobre una instrucción de Intel 64 o IA-32")
         Command(name="sugerirgrupo",
-                description="Sugiere un grupo de alguna de las materias obligatorias", args=True)
+                description="Sugiere un grupo de alguna de las materias obligatorias")
         Command(name="sugeriroptativa",
-                description="Sugiere un grupo de alguna de las materias optativas", args=True)
+                description="Sugiere un grupo de alguna de las materias optativas")
         Command(name="sugerirotro",
-                description="Sugiere un grupo de cualquier cosa donde predomine gente de Exactas", args=True)
+                description="Sugiere un grupo de cualquier cosa donde predomine gente de Exactas")
 
 
 if __name__ == '__main__':

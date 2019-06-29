@@ -9,8 +9,7 @@ db = Database()
 class Command(db.Entity):
     name = Required(str)
     description = Optional(str)
-    args = Required(bool, default=False)
-
+    #enabled= Required(bool, default=True)
 
 class Listable(db.Entity):
     name = Required(str)
