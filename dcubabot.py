@@ -156,7 +156,7 @@ def listarlabos(update, context):
     context.dc_sent_messages.append(msg)
 
 
-''' La funcion button se encarga de tomar todos los context.botones que se apreten en el context.bot (y que no sean links)'''
+''' La funcion button se encarga de tomar todos los botones que se apreten en el bot (y que no sean links)'''
 
 
 def button(update, context):
@@ -188,7 +188,7 @@ def add_all_handlers(dispatcher):
 def main():
     try:
         global update_id
-        # Telegram context.bot Authorization Token
+        # Telegram bot Authorization Token
         botname = "DCUBABOT"
         print("Iniciando DCUBABOT")
         logger.info("Iniciando")
@@ -199,7 +199,7 @@ def main():
         updater.job_queue.run_repeating(callback=labos.update, interval=datetime.timedelta(hours=1))
         dispatcher.add_error_handler(error_callback)
         add_all_handlers(dispatcher)
-        # Start running the context.bot
+        # Start running the bot
         updater.start_polling(clean=True)
     except Exception as inst:
         logger.critical("ERROR AL INICIAR EL DCUBABOT")
