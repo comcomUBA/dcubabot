@@ -28,6 +28,7 @@ logging.basicConfig(
 
 # Globals ...... yes, globals
 logger = logging.getLogger("DCUBABOT")
+admin_ids = [137497264, 187622583] # @Rozen, @dgarro
 
 
 def start(update, context):
@@ -154,6 +155,18 @@ def listarlabos(update, context):
     respuesta = '\n'.join(labos.events_at(instant))
     msg = update.message.reply_text(text=respuesta, quote=False)
     context.dc_sent_messages.append(msg)
+
+
+def togglecommand(update, context):
+    if context.args and update.message.from_user.id in admin_ids:
+        with db_session:
+            command = Command.get(name=context.args[0])
+            if command is None:
+                update.message.reply_text(text=f"No existe el comando /{context.args[0]}.", quote=False)
+            else:
+                command.enabled = not command.enabled
+                action = "activado" if command.enabled else "desactivado"
+                update.message.reply_text(text=f"Comando /{context.args[0]} {action}.", quote=False)
 
 
 ''' La funcion button se encarga de tomar todos los botones que se apreten en el bot (y que no sean links)'''

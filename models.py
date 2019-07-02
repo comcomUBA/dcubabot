@@ -10,7 +10,7 @@ db = Database()
 class Command(db.Entity):
     name = Required(str)
     description = Optional(str)
-    #enabled= Required(bool, default=True)
+    enabled = Required(bool, default=True)
 
 
 class SentMessage(db.Entity):

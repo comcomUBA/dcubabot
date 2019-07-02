@@ -28,6 +28,8 @@ def install_commands():
                 description="Sugiere un grupo de alguna de las materias optativas")
         Command(name="sugerirotro",
                 description="Sugiere un grupo de cualquier cosa donde predomine gente de Exactas")
+        # Administration commands
+        Command(name="togglecommand")
 
 
 if __name__ == '__main__':
