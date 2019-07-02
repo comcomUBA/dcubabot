@@ -28,8 +28,8 @@ logging.basicConfig(
 
 # Globals ...... yes, globals
 logger = logging.getLogger("DCUBABOT")
-admin_ids = [137497264, 187622583] # @Rozen, @dgarro
-
+admin_ids = [137497264, 187622583]  # @Rozen, @dgarro
+command_handlers = {}
 
 def start(update, context):
     msg = update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
@@ -159,14 +159,20 @@ def listarlabos(update, context):
 
 def togglecommand(update, context):
     if context.args and update.message.from_user.id in admin_ids:
+        command_name = context.args[0]
+        if command_name not in command_handlers:
+            update.message.reply_text(text=f"No existe el comando /{command_name}.", quote=False)
+            return
         with db_session:
-            command = Command.get(name=context.args[0])
-            if command is None:
-                update.message.reply_text(text=f"No existe el comando /{context.args[0]}.", quote=False)
+            command = Command.get(name=command_name)
+            command.enabled = not command.enabled
+            if command.enabled:
+                action = "activado"
+                context._dispatcher.add_handler(command_handlers[command_name])
             else:
-                command.enabled = not command.enabled
-                action = "activado" if command.enabled else "desactivado"
-                update.message.reply_text(text=f"Comando /{context.args[0]} {action}.", quote=False)
+                action = "desactivado"
+                context._dispatcher.remove_handler(command_handlers[command_name])
+            update.message.reply_text(text=f"Comando /{command_name} {action}.", quote=False)
 
 
 ''' La funcion button se encarga de tomar todos los botones que se apreten en el bot (y que no sean links)'''
@@ -194,7 +200,9 @@ def add_all_handlers(dispatcher):
     with db_session:
         for command in select(c for c in Command):
             handler = DCCommandHandler(command.name, globals()[command.name])
-            dispatcher.add_handler(handler)
+            command_handlers[command.name] = handler
+            if command.enabled:
+                dispatcher.add_handler(handler)
     dispatcher.add_handler(CallbackQueryHandler(button))
 
 
