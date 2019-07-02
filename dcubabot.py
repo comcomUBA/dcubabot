@@ -8,11 +8,12 @@ import datetime
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (Updater, Filters, CommandHandler, MessageHandler, CallbackQueryHandler)
+from telegram.ext import (Updater, Filters, MessageHandler, CallbackQueryHandler)
 
 # Local imports
 # from tokenz import *
 from models import *
+from dccommandhandler import DCCommandHandler
 from orga2Utils import noitip, asm
 from errors import error_callback
 import labos
@@ -30,8 +31,9 @@ logger = logging.getLogger("DCUBABOT")
 
 
 def start(update, context):
-    update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
+    msg = update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
                               quote=False)
+    context.dc_sent_messages.append(msg)
 
 
 def help(update, context):
@@ -39,11 +41,13 @@ def help(update, context):
     with db_session:
         for command in select(c for c in Command if c.description).order_by(lambda c: c.name):
             message_text += "/" + command.name + " - " + command.description + "\n"
-    update.message.reply_text(message_text, quote=False)
+    msg = update.message.reply_text(message_text, quote=False)
+    context.dc_sent_messages.append(msg)
 
 
 def estasvivo(update, context):
-    update.message.reply_text("Sí, estoy vivo.", quote=False)
+    msg = update.message.reply_text("Sí, estoy vivo.", quote=False)
+    context.dc_sent_messages.append(msg)
 
 
 def list_buttons(update, context, listable_type):
@@ -56,8 +60,9 @@ def list_buttons(update, context, listable_type):
                                         callback_data=button.url) for button in buttons[k:k + columns]]
             keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
-        update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
-                                  reply_markup=reply_markup, quote=False)
+        msg = update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
+                                        reply_markup=reply_markup, quote=False)
+        context.dc_sent_messages.append(msg)
 
 
 def listar(update, context):
@@ -77,7 +82,8 @@ def cubawiki(update, context):
         group = select(o for o in Obligatoria if o.chat_id == update.message.chat.id
                        and o.cubawiki_url is not None).first()
         if group:
-            update.message.reply_text(group.cubawiki_url, quote=False)
+            msg = update.message.reply_text(group.cubawiki_url, quote=False)
+            context.dc_sent_messages.append(msg)
 
 
 def log_message(update, context):
@@ -110,8 +116,9 @@ def suggest_listable(update, context, listable_type):
         if not (name and url):
             raise Exception
     except:
-        update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
-                                  update.message.text.split()[0] + " <nombre>|<link>", quote=False)
+        msg = update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
+                                         update.message.text.split()[0] + " <nombre>|<link>", quote=False)
+        context.dc_sent_messages.append(msg)
         return
     with db_session:
         group = listable_type(name=name, url=url)
@@ -124,7 +131,8 @@ def suggest_listable(update, context, listable_type):
     reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.sendMessage(chat_id=137497264, text=listable_type.__name__ + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
-    update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+    msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+    context.dc_sent_messages.append(msg)
 
 
 def sugerirgrupo(update, context):
@@ -144,7 +152,8 @@ def listarlabos(update, context):
     mins = int(args[0]) if len(args) > 0 else 0
     instant = labos.aware_now() + datetime.timedelta(minutes=mins)
     respuesta = '\n'.join(labos.events_at(instant))
-    update.message.reply_text(text=respuesta, quote=False)
+    msg = update.message.reply_text(text=respuesta, quote=False)
+    context.dc_sent_messages.append(msg)
 
 
 ''' La funcion button se encarga de tomar todos los context.botones que se apreten en el context.bot (y que no sean links)'''
@@ -171,7 +180,7 @@ def add_all_handlers(dispatcher):
         (Filters.text | Filters.command), log_message), group=1)
     with db_session:
         for command in select(c for c in Command):
-            handler = CommandHandler(command.name, globals()[command.name])
+            handler = DCCommandHandler(command.name, globals()[command.name])
             dispatcher.add_handler(handler)
     dispatcher.add_handler(CallbackQueryHandler(button))
 

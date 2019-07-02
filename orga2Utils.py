@@ -8,12 +8,14 @@ from models import *
 def noitip(update, context):
     with db_session:
         random_noitip = Noitip.select_random(1)[0].text
-    update.message.reply_text(random_noitip, quote=False)
+    msg = update.message.reply_text(random_noitip, quote=False)
+    context.dc_sent_messages.append(msg)
 
 
 def asm(update, context):
     if not context.args:
-        update.message.reply_text("No me pasaste ninguna instrucción.", quote=False)
+        msg = update.message.reply_text("No me pasaste ninguna instrucción.", quote=False)
+        context.dc_sent_messages.append(msg)
         return
 
     mnemonic = " ".join(context.args).upper()
@@ -21,7 +23,7 @@ def asm(update, context):
         possibles = [i for i in list(AsmInstruction.select())
                      if levenshtein(mnemonic, i.mnemonic.upper()) < 2]
     if not possibles:
-        update.message.reply_text("No pude encontrar esa instrucción.", quote=False)
+        msg = update.message.reply_text("No pude encontrar esa instrucción.", quote=False)
     else:
         instr_match = [i for i in possibles if i.mnemonic.upper() == mnemonic]
         if instr_match:
@@ -31,7 +33,8 @@ def asm(update, context):
             response_text = ("No pude encontrar esa instrucción.\n"
                              "Quizás quisiste decir:\n")
             response_text += "\n".join(getasminfo(i) for i in possibles)
-        update.message.reply_text(response_text, quote=False)
+        msg =update.message.reply_text(response_text, quote=False)
+    context.dc_sent_messages.append(msg)
 
 
 def levenshtein(string1, string2):

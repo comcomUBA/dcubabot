@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from pony.orm import *
+import datetime
 
 db = Database()
 
@@ -10,6 +11,14 @@ class Command(db.Entity):
     name = Required(str)
     description = Optional(str)
     #enabled= Required(bool, default=True)
+
+
+class SentMessage(db.Entity):
+    command = Required(str)
+    chat_id = Required(int, size=64)
+    message_id = Required(int, size=64)
+    timestamp = Required(datetime.datetime, default=datetime.datetime.utcnow)
+
 
 class Listable(db.Entity):
     name = Required(str)
