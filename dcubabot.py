@@ -13,7 +13,7 @@ from telegram.ext import (Updater, Filters, MessageHandler, CallbackQueryHandler
 # Local imports
 # from tokenz import *
 from models import *
-from dccommandhandler import DCCommandHandler
+from deletablecommandhandler import DeletableCommandHandler
 from orga2Utils import noitip, asm
 from errors import error_callback
 import labos
@@ -34,7 +34,7 @@ command_handlers = {}
 def start(update, context):
     msg = update.message.reply_text("Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
                               quote=False)
-    context.dc_sent_messages.append(msg)
+    context.sent_messages.append(msg)
 
 
 def help(update, context):
@@ -43,12 +43,12 @@ def help(update, context):
         for command in select(c for c in Command if c.description).order_by(lambda c: c.name):
             message_text += "/" + command.name + " - " + command.description + "\n"
     msg = update.message.reply_text(message_text, quote=False)
-    context.dc_sent_messages.append(msg)
+    context.sent_messages.append(msg)
 
 
 def estasvivo(update, context):
     msg = update.message.reply_text("Sí, estoy vivo.", quote=False)
-    context.dc_sent_messages.append(msg)
+    context.sent_messages.append(msg)
 
 
 def list_buttons(update, context, listable_type):
@@ -63,7 +63,7 @@ def list_buttons(update, context, listable_type):
         reply_markup = InlineKeyboardMarkup(keyboard)
         msg = update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
                                         reply_markup=reply_markup, quote=False)
-        context.dc_sent_messages.append(msg)
+        context.sent_messages.append(msg)
 
 
 def listar(update, context):
@@ -84,7 +84,7 @@ def cubawiki(update, context):
                        and o.cubawiki_url is not None).first()
         if group:
             msg = update.message.reply_text(group.cubawiki_url, quote=False)
-            context.dc_sent_messages.append(msg)
+            context.sent_messages.append(msg)
 
 
 def log_message(update, context):
@@ -119,7 +119,7 @@ def suggest_listable(update, context, listable_type):
     except:
         msg = update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
                                          update.message.text.split()[0] + " <nombre>|<link>", quote=False)
-        context.dc_sent_messages.append(msg)
+        context.sent_messages.append(msg)
         return
     with db_session:
         group = listable_type(name=name, url=url)
@@ -133,7 +133,7 @@ def suggest_listable(update, context, listable_type):
     context.bot.sendMessage(chat_id=137497264, text=listable_type.__name__ + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
     msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
-    context.dc_sent_messages.append(msg)
+    context.sent_messages.append(msg)
 
 
 def sugerirgrupo(update, context):
@@ -154,7 +154,7 @@ def listarlabos(update, context):
     instant = labos.aware_now() + datetime.timedelta(minutes=mins)
     respuesta = '\n'.join(labos.events_at(instant))
     msg = update.message.reply_text(text=respuesta, quote=False)
-    context.dc_sent_messages.append(msg)
+    context.sent_messages.append(msg)
 
 
 def togglecommand(update, context):
@@ -168,10 +168,10 @@ def togglecommand(update, context):
             command.enabled = not command.enabled
             if command.enabled:
                 action = "activado"
-                context._dispatcher.add_handler(command_handlers[command_name])
+                context.dispatcher.add_handler(command_handlers[command_name])
             else:
                 action = "desactivado"
-                context._dispatcher.remove_handler(command_handlers[command_name])
+                context.dispatcher.remove_handler(command_handlers[command_name])
             update.message.reply_text(text=f"Comando /{command_name} {action}.", quote=False)
 
 
@@ -199,7 +199,7 @@ def add_all_handlers(dispatcher):
         (Filters.text | Filters.command), log_message), group=1)
     with db_session:
         for command in select(c for c in Command):
-            handler = DCCommandHandler(command.name, globals()[command.name])
+            handler = DeletableCommandHandler(command.name, globals()[command.name])
             command_handlers[command.name] = handler
             if command.enabled:
                 dispatcher.add_handler(handler)

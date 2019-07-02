@@ -9,13 +9,13 @@ def noitip(update, context):
     with db_session:
         random_noitip = Noitip.select_random(1)[0].text
     msg = update.message.reply_text(random_noitip, quote=False)
-    context.dc_sent_messages.append(msg)
+    context.sent_messages.append(msg)
 
 
 def asm(update, context):
     if not context.args:
         msg = update.message.reply_text("No me pasaste ninguna instrucción.", quote=False)
-        context.dc_sent_messages.append(msg)
+        context.sent_messages.append(msg)
         return
 
     mnemonic = " ".join(context.args).upper()
@@ -34,7 +34,7 @@ def asm(update, context):
                              "Quizás quisiste decir:\n")
             response_text += "\n".join(getasminfo(i) for i in possibles)
         msg =update.message.reply_text(response_text, quote=False)
-    context.dc_sent_messages.append(msg)
+    context.sent_messages.append(msg)
 
 
 def levenshtein(string1, string2):
