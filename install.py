@@ -7,7 +7,6 @@ from models import *
 
 def install_commands():
     with db_session:
-        Command.select().delete()
         Command(name="start")
         Command(name="help", description="Muestra este mensaje horrible")
         Command(name="estasvivo",
@@ -30,10 +29,14 @@ def install_commands():
                 description="Sugiere un grupo de cualquier cosa donde predomine gente de Exactas")
         Command(name="flan",
                 description="Muestra el grafo de materias de la carrera con correlatividades"),
+        Command(name="sugerirNoticia")
         # Administration commands
         Command(name="togglecommand")
 
 
+
 if __name__ == '__main__':
-    init_db("dcubabot.sqlite3")
+    db.bind('sqlite', "dcubabot.sqlite3", create_db=True)
+    db.drop_table("Command",if_exists=True, with_all_data=True)
+    db.generate_mapping(create_tables=True)
     install_commands()
