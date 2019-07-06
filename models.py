@@ -49,6 +49,11 @@ class AsmInstruction(db.Entity):
     url = Required(str)
 
 
+class File(db.Entity):
+    path = Required(str)
+    file_id = Required(str)
+
+
 def init_db(path):
     db.bind('sqlite', path, create_db=True)
     db.generate_mapping(create_tables=True)

@@ -28,6 +28,8 @@ def install_commands():
                 description="Sugiere un grupo de alguna de las materias optativas")
         Command(name="sugerirotro",
                 description="Sugiere un grupo de cualquier cosa donde predomine gente de Exactas")
+        Command(name="flan",
+                description="Muestra el grafo de materias de la carrera con correlatividades"),
         # Administration commands
         Command(name="togglecommand")
 
