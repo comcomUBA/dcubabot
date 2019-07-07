@@ -7,7 +7,7 @@ import logging
 import datetime
 
 # Non STL imports
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode
 from telegram.ext import (Updater, Filters, MessageHandler, CallbackQueryHandler)
 
 # Local imports
@@ -158,6 +158,10 @@ def listarlabos(update, context):
 	context.sent_messages.append(msg)
 
 
+def flan(update, context):
+    responder_imagen(update, context, 'files/Plandeestudios.png')
+
+
 def togglecommand(update, context):
 	if context.args and update.message.from_user.id in admin_ids:
 		command_name = context.args[0]
@@ -209,6 +213,22 @@ def sugerirNoticia(update, context):
 		update.message.reply_text(text="Ok, se lo pregunto a Rozen")
 	except Exception as inst:
 		logger.exception(inst)
+
+
+# Manda una imagen a partir de su path al chat del update dado
+def responder_imagen(update, context, file_path):
+    context.bot.sendChatAction(chat_id=update.message.chat_id,
+                               action=ChatAction.UPLOAD_PHOTO)
+    with db_session:
+        file = File.get(path=file_path)
+    if file:
+        msg = update.message.reply_photo(photo=file.file_id, quote=False)
+    else:
+        msg = update.message.reply_photo(photo=open(file_path, 'rb'), quote=False)
+        with db_session:
+            File(path=file_path, file_id=msg.photo[0].file_id)
+
+    context.sent_messages.append(msg)
 
 
 ''' La funcion button se encarga de tomar todos los botones que se apreten en el bot (y que no sean links)'''
