@@ -179,7 +179,8 @@ def togglecommand(update, context):
 				context.dispatcher.remove_handler(command_handlers[command_name])
 			update.message.reply_text(text=f"Comando /{command_name} {action}.", quote=False)
 
-
+def sugerir(update,context):
+	update.message.reply_text(text=f"Ahora en mas las sugerencias las vamos a tomar en github:\n https://github.com/rozen03/dcubabot/issues", quote=False)
 
 def sugerirNoticia(update, context):
 	user = update.message.from_user
