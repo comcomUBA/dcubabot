@@ -185,7 +185,6 @@ def sugerirNoticia(update, context):
 	user = update.message.from_user
 	name = user.first_name #Agarro el nombre para ver quien fue
 	# /sugerirNoticia <texto>
-	print(context.args)
 	texto = str.join(" ",context.args)
 	try:
 		if not (texto and isinstance(texto, str)): #Esto es re cabeza pero no me acuerdo por que está asi
@@ -197,15 +196,15 @@ def sugerirNoticia(update, context):
 	try:
 		with db_session:
 			noticia = Noticia(text=texto)
-			commit()
+			commit() #Hago el commmit para que tenga un id
 			idNoticia=noticia.id
 		keyboard = [
 			[
-					InlineKeyboardButton("Aceptar", callback_data="Noticia|" +
+				InlineKeyboardButton("Aceptar", callback_data="Noticia|" +
 																  str(noticia.id) + '|1'),
-					InlineKeyboardButton(
+				InlineKeyboardButton(
 						"Rechazar", callback_data="noticia|" + str(noticia.id) + '|0')
-				]
+			]
 		]
 		reply_markup = InlineKeyboardMarkup(keyboard)
 		context.bot.sendMessage(chat_id=137497264, text=f"Noticia-{name}: {texto}",
@@ -248,7 +247,7 @@ def button(update, context):
 			else:
 				group.delete()
 				action_text = "\n¡Rechazado!"
-				context.bot.editMessageText(chat_id=message.chat_id, message_id=message.message_id,
+			context.bot.editMessageText(chat_id=message.chat_id, message_id=message.message_id,
 								text=message.text + action_text)
 		if buttonType == "Noticia":
 			noticia = Noticia[int(id)]
