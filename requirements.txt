@@ -2,3 +2,4 @@ pony==0.7.10
 python_telegram_bot==12.0.0b1
 icalevents==0.1.19
 pytz==2018.9
+requests
