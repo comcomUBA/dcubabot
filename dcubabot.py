@@ -17,7 +17,7 @@ from deletablecommandhandler import DeletableCommandHandler
 from orga2Utils import noitip, asm
 from errors import error_callback
 import labos
-
+from river import getMatches
 # TODO:Move this out of here
 logging.basicConfig(
 	level=logging.INFO,
@@ -104,7 +104,6 @@ def felizdia_text(today):
 	mes = int(today.month)
 	mes = meses[mes - 1]
 	return "Feliz " + dia + " de " + mes
-
 
 def felizdia(context):
 	today = datetime.date.today()
@@ -262,6 +261,13 @@ def button(update, context):
 			context.bot.editMessageText(chat_id=message.chat_id, message_id=message.message_id,
 								text=message.text + action_text)
 
+def hoyJuegaRiver(context):
+	context.bot.sendMessage(chat_id="@dcfceynuba", text="Hoy Juega River")
+
+def actualizarRiver(context):
+	for matchTime in getMatches():
+		for h in [9,13,16]: #varios horarios por si las dudas
+			context.job_queue.run_once(callback=hoyJuegaRiver, when=matchTime.replace(hour=h))
 
 
 def add_all_handlers(dispatcher):
@@ -287,6 +293,8 @@ def main():
 		updater = Updater(token=token, use_context=True)
 		dispatcher = updater.dispatcher
 		updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
+		updater.job_queue.run_once(callback=actualizarRiver, when=0)
+		updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
 		updater.job_queue.run_repeating(callback=labos.update, interval=datetime.timedelta(hours=1))
 		dispatcher.add_error_handler(error_callback)
 		add_all_handlers(dispatcher)
