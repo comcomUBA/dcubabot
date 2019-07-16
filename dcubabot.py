@@ -215,19 +215,22 @@ def sugerirNoticia(update, context):
 
 
 # Manda una imagen a partir de su path al chat del update dado
-def responder_imagen(update, context, file_path):
-    context.bot.sendChatAction(chat_id=update.message.chat_id,
-                               action=ChatAction.UPLOAD_PHOTO)
+def mandar_imagen(chat_id, context, file_path):
+    context.bot.sendChatAction(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
     with db_session:
         file = File.get(path=file_path)
     if file:
-        msg = update.message.reply_photo(photo=file.file_id, quote=False)
+        msg = context.bot.send_photo(chat_id=chat_id, photo=file.file_id, quote=False)
     else:
-        msg = update.message.reply_photo(photo=open(file_path, 'rb'), quote=False)
+        msg = context.bot.send_photo(chat_id=chat_id, photo=open(file_path, 'rb'), quote=False)
         with db_session:
             File(path=file_path, file_id=msg.photo[0].file_id)
 
     context.sent_messages.append(msg)
+
+# Responde una imagen a partir de su path al chat del update dado
+def responder_imagen(update, context, file_path):
+	mandar_imagen(update.message.chat_id, context, file_path)
 
 
 ''' La funcion button se encarga de tomar todos los botones que se apreten en el bot (y que no sean links)'''
