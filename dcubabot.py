@@ -74,6 +74,10 @@ def listaroptativa(update, context):
 	list_buttons(update, context, Optativa)
 
 
+def listareci(update, context):
+	list_buttons(update, context, ECI)
+
+
 def listarotro(update, context):
 	list_buttons(update, context, Otro)
 
@@ -105,10 +109,10 @@ def felizdia_text(today):
 	mes = meses[mes - 1]
 	return "Feliz " + dia + " de " + mes
 
+
 def felizdia(context):
 	today = datetime.date.today()
 	context.bot.send_message(chat_id="@dcfceynuba", text=felizdia_text(today))
-
 
 
 def suggest_listable(update, context, listable_type):
@@ -142,6 +146,10 @@ def sugerirgrupo(update, context):
 
 def sugeriroptativa(update, context):
 	suggest_listable(update, context, Optativa)
+
+
+def sugerireci(update, context):
+	suggest_listable(update, context, ECI)
 
 
 def sugerirotro(update, context):

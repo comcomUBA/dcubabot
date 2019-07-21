@@ -15,6 +15,8 @@ def install_commands():
 				description="Muestra todos los grupos de materias obligatorias conocidos por el bot")
 		Command(name="listaroptativa",
 				description="Muestra todos los grupos de materias optativas conocidos por el bot")
+		Command(name="listareci",
+				description="Muestra todos los grupos de cursos de la ECI")
 		Command(name="listarotro", description="Muestra todos los grupos relacionados a la gente de este grupo "
 											   "(algo así como off-topics)")
 		Command(name="listarlabos", description="Lista las reservaciones de los laboratorios de la facultad")
@@ -25,6 +27,8 @@ def install_commands():
 				description="Sugiere un grupo de alguna de las materias obligatorias")
 		Command(name="sugeriroptativa",
 				description="Sugiere un grupo de alguna de las materias optativas")
+		Command(name="sugerireci",
+				description="Sugiere un grupo de alguno de los cursos de la ECI")
 		Command(name="sugerirotro",
 				description="Sugiere un grupo de cualquier cosa donde predomine gente de Exactas")
 		Command(name="flan",

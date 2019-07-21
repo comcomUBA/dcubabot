@@ -35,6 +35,10 @@ class Optativa(Listable):
     pass
 
 
+class ECI(Listable):
+    pass
+
+
 class Otro(Listable):
     pass
 
