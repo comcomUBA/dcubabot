@@ -40,7 +40,7 @@ def start(update, context):
 def help(update, context):
 	message_text = ""
 	with db_session:
-		for command in select(c for c in Command if c.description).order_by(lambda c: c.name):
+		for command in select(c for c in Command if c.description and c.enabled).order_by(lambda c: c.name):
 			message_text += "/" + command.name + " - " + command.description + "\n"
 	msg = update.message.reply_text(message_text, quote=False)
 	context.sent_messages.append(msg)
