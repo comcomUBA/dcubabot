@@ -15,7 +15,8 @@ class DeletableCommandHandler(CommandHandler):
         with db_session:
             # Delete previous messages sent with the command in the group
             for message in select(m for m in SentMessage
-                                  if m.command == self.command[0]):
+                                  if m.command == self.command[0]
+                                  and m.chat_id == update.effective_chat.id):
                 if datetime.datetime.utcnow() - message.timestamp < datetime.timedelta(hours=24):
                     context.bot.delete_message(chat_id=message.chat_id,
                                                message_id=message.message_id)
