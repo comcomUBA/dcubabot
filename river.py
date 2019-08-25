@@ -3,14 +3,15 @@
 
 # STL imports
 from datetime import datetime
-#Cuasi STL imports
+# Cuasi STL imports
 import requests
+
 
 def getMatches():
 	r = requests.get('http://il-divino-codino.herokuapp.com/riverLocalMatches')
 	matches = r.json()
 	for match in matches:
 		dateString = match['matchDate']
-		date = datetime.strptime(dateString,"%d/%m/%Y")
+		date = datetime.strptime(dateString, "%d/%m/%Y")
 		yield date
 	return

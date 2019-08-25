@@ -14,7 +14,8 @@ def noitip(update, context):
 
 def asm(update, context):
     if not context.args:
-        msg = update.message.reply_text("No me pasaste ninguna instrucción.", quote=False)
+        msg = update.message.reply_text(
+            "No me pasaste ninguna instrucción.", quote=False)
         context.sent_messages.append(msg)
         return
 
@@ -23,7 +24,8 @@ def asm(update, context):
         possibles = [i for i in list(AsmInstruction.select())
                      if levenshtein(mnemonic, i.mnemonic.upper()) < 2]
     if not possibles:
-        msg = update.message.reply_text("No pude encontrar esa instrucción.", quote=False)
+        msg = update.message.reply_text(
+            "No pude encontrar esa instrucción.", quote=False)
     else:
         instr_match = [i for i in possibles if i.mnemonic.upper() == mnemonic]
         if instr_match:
@@ -33,7 +35,7 @@ def asm(update, context):
             response_text = ("No pude encontrar esa instrucción.\n"
                              "Quizás quisiste decir:\n")
             response_text += "\n".join(getasminfo(i) for i in possibles)
-        msg =update.message.reply_text(response_text, quote=False)
+        msg = update.message.reply_text(response_text, quote=False)
     context.sent_messages.append(msg)
 
 
@@ -49,7 +51,8 @@ def levenshtein(string1, string2):
     for i in range(1, len1):
         for j in range(1, len2):
             cost = 0 if string1[i - 1] == string2[j - 1] else 1
-            tbl[i, j] = min(tbl[i, j - 1] + 1, tbl[i - 1, j] + 1, tbl[i - 1, j - 1] + cost)
+            tbl[i, j] = min(tbl[i, j - 1] + 1, tbl[i - 1, j] +
+                            1, tbl[i - 1, j - 1] + cost)
 
     return tbl[i, j]
 
