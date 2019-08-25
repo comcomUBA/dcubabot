@@ -13,5 +13,5 @@ def getMatches():
 	for match in matches:
 		dateString = match['matchDate']
 		date = datetime.strptime(dateString, "%d/%m/%Y")
-		yield date
+		if date.weekday() != 6: yield date
 	return
