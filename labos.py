@@ -2,14 +2,20 @@ from icalevents import icaldownload, icalparser
 from datetime import datetime, timedelta
 from pytz import timezone
 
+
+def __calendar_url(id):
+    return 'https://calendar.google.com/calendar/ical/' + str(id) + \
+        '%40group.calendar.google.com/public/basic.ics'
+
+
 urls = {
-    'Labo 1': 'https://calendar.google.com/calendar/ical/s57pjfhll16pqpu456eonvb760%40group.calendar.google.com/public/basic.ics',
-    'Labo 2': 'https://calendar.google.com/calendar/ical/bupjqrv2va0nb3bv3o1f1jqtc0%40group.calendar.google.com/public/basic.ics',
-    'Labo 3 (Graduados)': 'https://calendar.google.com/calendar/ical/n3sd0tpdt0o5855evq8uvsi3vo%40group.calendar.google.com/public/basic.ics',
-    'Labo 4': 'https://calendar.google.com/calendar/ical/4lbn08p17sv8s2pfqoophliag4%40group.calendar.google.com/public/basic.ics',
-    'Labo 5': 'https://calendar.google.com/calendar/ical/fu35kvoh4i2looi4drjf17k1ts%40group.calendar.google.com/public/basic.ics',
-    'Labo 6': 'https://calendar.google.com/calendar/ical/g3jdt9mmsrqllp7hqfotvttsck%40group.calendar.google.com/public/basic.ics',
-    'Labo 7 (Turing)': 'https://calendar.google.com/calendar/ical/krs8uvil4o36kd3a3ad5qs57dg%40group.calendar.google.com/public/basic.ics'
+    'Labo 1': __calendar_url('s57pjfhll16pqpu456eonvb760'),
+    'Labo 2': __calendar_url('bupjqrv2va0nb3bv3o1f1jqtc0'),
+    'Labo 3 (Graduados)': __calendar_url('n3sd0tpdt0o5855evq8uvsi3vo'),
+    'Labo 4': __calendar_url('4lbn08p17sv8s2pfqoophliag4'),
+    'Labo 5': __calendar_url('fu35kvoh4i2looi4drjf17k1ts'),
+    'Labo 6': __calendar_url('g3jdt9mmsrqllp7hqfotvttsck'),
+    'Labo 7 (Turing)': __calendar_url('krs8uvil4o36kd3a3ad5qs57dg')
 }
 
 calendars = {
