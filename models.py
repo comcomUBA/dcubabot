@@ -42,11 +42,13 @@ class ECI(Listable):
 class Otro(Listable):
     pass
 
-#TODO: Subclasificar con validable 
+
+# TODO: Subclasificar con validable
 class Noticia(db.Entity):
     text = Required(str)
     date = Required(datetime.date, default=datetime.date.today())
     validado = Required(bool, default=True)
+
 
 class Noitip(db.Entity):
     text = Required(str)
