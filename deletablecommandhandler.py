@@ -6,6 +6,10 @@ from models import *
 
 
 class DeletableCommandHandler(CommandHandler):
+    def _message_in_time_range(self, message):
+        time_ellapsed = datetime.datetime.utcnow() - message.timestamp
+        return time_ellapsed < datetime.timedelta(hours=24)
+
 
     def handle_update(self, update, dispatcher, check_result, context=None):
         context.dispatcher = dispatcher
@@ -17,7 +21,7 @@ class DeletableCommandHandler(CommandHandler):
             for message in select(m for m in SentMessage if
                                   m.command == self.command[0] and
                                   m.chat_id == update.effective_chat.id):
-                if _message_in_time_range(message):
+                if self._message_in_time_range(message):
                     context.bot.delete_message(chat_id=message.chat_id,
                                                message_id=message.message_id)
                 message.delete()
@@ -27,7 +31,3 @@ class DeletableCommandHandler(CommandHandler):
                 if message.chat.type != "private":
                     SentMessage(command=self.command[0], chat_id=message.chat.id,
                                 message_id=message.message_id)
-
-    def _message_in_time_range(self, message):
-        time_ellapsed = datetime.datetime.utcnow() - message.timestamp
-        return time_ellapsed < datetime.timedelta(hours=24)
