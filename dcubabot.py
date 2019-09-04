@@ -218,7 +218,6 @@ def sugerirNoticia(update, context):
             text="Loc@, pusisiste algo mal, la idea es q pongas:\n "
                  "/sugerirNoticia <texto>")
         return
-    print("texto", texto)
     try:
         with db_session:
             noticia = Noticia(text=texto)
