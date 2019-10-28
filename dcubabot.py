@@ -118,7 +118,7 @@ def felizdia_text(today):
 
 def felizdia(context):
     today = datetime.date.today()
-    context.bot.send_message(chat_id="@dcfceynuba", text=felizdia_text(today))
+    context.bot.send_message(chat_id=-1001067544716, text=felizdia_text(today))
 
 
 def suggest_listable(update, context, listable_type):
@@ -300,7 +300,7 @@ def button(update, context):
 
 
 def hoyJuegaRiver(context):
-    context.bot.sendMessage(chat_id="@dcfceynuba", text="Hoy Juega River")
+    context.bot.sendMessage(chat_id=-1001067544716, text="Hoy Juega River")
 
 
 def actualizarRiver(context):
