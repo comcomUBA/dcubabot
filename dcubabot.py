@@ -107,20 +107,6 @@ def log_message(update, context):
     logger.info(user_at_group + ": " + update.message.text)
 
 
-def felizdia_text(today):
-    meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
-             "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-    dia = str(today.day)
-    mes = int(today.month)
-    mes = meses[mes - 1]
-    return "Feliz " + dia + " de " + mes
-
-
-def felizdia(context):
-    today = datetime.date.today()
-    context.bot.send_message(chat_id=-1001067544716, text=felizdia_text(today))
-
-
 def suggest_listable(update, context, listable_type):
     try:
         name, url = " ".join(context.args).split("|")
@@ -332,7 +318,6 @@ def main():
         init_db("dcubabot.sqlite3")
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
-        updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
         updater.job_queue.run_once(callback=actualizarRiver, when=0)
         updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
         updater.job_queue.run_repeating(
