@@ -112,10 +112,11 @@ def felizdia_text(today):
              "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
     dia = str(today.day)
     mes = int(today.month)
-    mes = meses[mes - 1]
-    if mes == 3 and dia == 8:
+
+    if mes == 3 and today.day == 8:
         return "Hoy es 8 de Marzo"
     else:
+        mes = meses[mes - 1]
         return "Feliz " + dia + " de " + mes
 
 
