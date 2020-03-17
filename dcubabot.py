@@ -122,7 +122,10 @@ def felizdia_text(today):
 
 def felizdia(context):
     today = datetime.date.today()
+    msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones, SEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
     context.bot.send_message(chat_id=-1001067544716, text=felizdia_text(today))
+    context.bot.send_message(chat_id=-1001067544716, text=msg_coronavirus)
+    mandar_imagen(-1001067544716, context, "files/heman.jpg")
 
 
 def suggest_listable(update, context, listable_type):
