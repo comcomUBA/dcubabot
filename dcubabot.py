@@ -8,7 +8,8 @@ import datetime
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode
-from telegram.ext import (Updater, Filters, MessageHandler, CallbackQueryHandler)
+from telegram.ext import (
+    Updater, Filters, MessageHandler, CallbackQueryHandler)
 
 # Local imports
 # from tokenz import *
@@ -99,11 +100,13 @@ def cubawiki(update, context):
 
 def log_message(update, context):
     user = str(update.message.from_user.id)
+    chat = str(update.message.chat.id)
     # EAFP
     try:
         user_at_group = user + " @ " + update.message.chat.title
     except Exception:
         user_at_group = user
+    user_at_group = f"{user_at_group}({chat})"
     logger.info(user_at_group + ": " + update.message.text)
 
 
@@ -144,8 +147,10 @@ def suggest_listable(update, context, listable_type):
         group = listable_type(name=name, url=url)
     keyboard = [
         [
-            InlineKeyboardButton(text="Aceptar", callback_data=f"Listable|{group.id}|1"),
-            InlineKeyboardButton(text="Rechazar", callback_data=f"Listable|{group.id}|0")
+            InlineKeyboardButton(
+                text="Aceptar", callback_data=f"Listable|{group.id}|1"),
+            InlineKeyboardButton(
+                text="Rechazar", callback_data=f"Listable|{group.id}|0")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -200,7 +205,8 @@ def togglecommand(update, context):
                 context.dispatcher.add_handler(command_handlers[command_name])
             else:
                 action = "desactivado"
-                context.dispatcher.remove_handler(command_handlers[command_name])
+                context.dispatcher.remove_handler(
+                    command_handlers[command_name])
             update.message.reply_text(text=f"Comando /{command_name} {action}.",
                                       quote=False)
 
@@ -208,7 +214,7 @@ def togglecommand(update, context):
 def sugerir(update, context):
     update.message.reply_text(
         text=f"Ahora en mas las sugerencias las vamos a tomar en github:\n "
-              "https://github.com/rozen03/dcubabot/issues", quote=False)
+        "https://github.com/rozen03/dcubabot/issues", quote=False)
 
 
 def sugerirNoticia(update, context):
@@ -252,7 +258,8 @@ def mandar_imagen(chat_id, context, file_path):
     with db_session:
         file = File.get(path=file_path)
     if file:
-        msg = context.bot.send_photo(chat_id=chat_id, photo=file.file_id, quote=False)
+        msg = context.bot.send_photo(
+            chat_id=chat_id, photo=file.file_id, quote=False)
     else:
         msg = context.bot.send_photo(
             chat_id=chat_id, photo=open(file_path, 'rb'), quote=False)
@@ -322,7 +329,8 @@ def add_all_handlers(dispatcher):
         (Filters.text | Filters.command), log_message), group=1)
     with db_session:
         for command in select(c for c in Command):
-            handler = DeletableCommandHandler(command.name, globals()[command.name])
+            handler = DeletableCommandHandler(
+                command.name, globals()[command.name])
             command_handlers[command.name] = handler
             if command.enabled:
                 dispatcher.add_handler(handler)
@@ -339,9 +347,11 @@ def main():
         init_db("dcubabot.sqlite3")
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
-        updater.job_queue.run_daily(callback=felizdia, time=datetime.time(second=3))
+        updater.job_queue.run_daily(
+            callback=felizdia, time=datetime.time(second=3))
         updater.job_queue.run_once(callback=actualizarRiver, when=0)
-        updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
+        updater.job_queue.run_daily(
+            callback=actualizarRiver, time=datetime.time())
         updater.job_queue.run_repeating(
             callback=labos.update, interval=datetime.timedelta(hours=1))
         dispatcher.add_error_handler(error_callback)
