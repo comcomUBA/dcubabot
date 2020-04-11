@@ -1,5 +1,5 @@
-pony==0.7.10
-python_telegram_bot==12.0.0
-icalevents==0.1.22
-pytz==2018.9
+pony
+python_telegram_bot
+icalevents
+pytz
 requests

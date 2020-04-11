@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from telegram.ext import CommandHandler
+from telegram.error import BadRequest
 from models import *
+import logging
+logger = logging.getLogger("DCUBABOT")
 
 
 class DeletableCommandHandler(CommandHandler):
@@ -10,9 +13,8 @@ class DeletableCommandHandler(CommandHandler):
         time_ellapsed = datetime.datetime.utcnow() - message.timestamp
         return time_ellapsed < datetime.timedelta(hours=24)
 
-
     def handle_update(self, update, dispatcher, check_result, context=None):
-        context.dispatcher = dispatcher
+        #context.dispatcher = dispatcher
         context.sent_messages = []
         super().handle_update(update, dispatcher, check_result, context)
 
@@ -22,9 +24,12 @@ class DeletableCommandHandler(CommandHandler):
                                   m.command == self.command[0] and
                                   m.chat_id == update.effective_chat.id):
                 if self._message_in_time_range(message):
-                    context.bot.delete_message(chat_id=message.chat_id,
-                                               message_id=message.message_id)
-                message.delete()
+                    try:
+                        context.bot.delete_message(chat_id=message.chat_id,
+                                                   message_id=message.message_id)
+                    except BadRequest as e:
+                        logger.info("Menssage already deleted, tabunn")
+                    message.delete()
 
             # Insert new sent messages for later delete (only in groups)
             for message in context.sent_messages:
