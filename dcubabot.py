@@ -337,6 +337,24 @@ def add_all_handlers(dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(button))
 
 
+def checodepers(update, context):
+
+    user = update.message.from_user
+    try:
+        if not user.username:
+            raise "not userneim"
+        message = " ".join(context.args)
+        context.bot.sendMessage(
+            chat_id="-311333765", text=f"{user.first_name}(@{user.username}) : {message}")
+    except Exception:
+        context.bot.forward_message(
+            "-311333765", update.message.chat_id, update.message.message_id)
+        print("Malio sal", str(user))
+    msg = update.message.reply_text(
+        "OK, se lo mando a les codepers.", quote=False)
+    context.sent_messages.append(msg)
+
+
 def main():
     try:
         global update_id
