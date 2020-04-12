@@ -135,7 +135,7 @@ def suggest_listable(update, context, listable_type):
     try:
         name, url = " ".join(context.args).split("|")
         if not (name and url):
-            raise Exception
+            raise Exception("not userneim")
     except Exception:
         msg = update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
                                         update.message.text.split()[0] +
@@ -348,7 +348,7 @@ def checodepers(update, context):
     user = update.message.from_user
     try:
         if not user.username:
-            raise "not userneim"
+            raise Exception("not userneim")
         message = " ".join(context.args)
         context.bot.sendMessage(
             chat_id="-311333765", text=f"{user.first_name}(@{user.username}) : {message}")
@@ -362,6 +362,7 @@ def checodepers(update, context):
 
 
 def main():
+
     try:
         global update_id
         # Telegram bot Authorization Token
