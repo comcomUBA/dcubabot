@@ -338,7 +338,13 @@ def add_all_handlers(dispatcher):
 
 
 def checodepers(update, context):
-
+    if not context.args:
+        ejemplo = """ Ejemplo de uso: 
+  /checodeppers Hola, tengo un mensaje mucho muy importante que me gustaria que respondan
+"""
+        msg = update.message.reply_text(ejemplo, quote=False)
+        context.sent_messages.append(msg)
+        return
     user = update.message.from_user
     try:
         if not user.username:
