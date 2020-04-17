@@ -10,6 +10,7 @@ import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode
 from telegram.ext import (
     Updater, Filters, MessageHandler, CallbackQueryHandler)
+from pytz import timezone
 
 # Local imports
 # from tokenz import *
@@ -31,6 +32,7 @@ logging.basicConfig(
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [137497264, 187622583]  # @Rozen, @dgarro
 command_handlers = {}
+ar_timezone = timezone('America/Argentina/Buenos_Aires')
 
 
 def start(update, context):
@@ -373,7 +375,9 @@ def main():
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
         updater.job_queue.run_daily(
-            callback=felizdia, time=datetime.time(second=3))
+            callback=felizdia,
+            time=datetime.time(second=3, tzinfo=ar_timezone)
+        )
         #updater.job_queue.run_once(callback=actualizarRiver, when=0)
         #updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
         updater.job_queue.run_repeating(
