@@ -4,13 +4,13 @@
 # STL imports
 import sys
 import logging
+import pytz
 import datetime
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode
 from telegram.ext import (
     Updater, Filters, MessageHandler, CallbackQueryHandler)
-from pytz import timezone
 
 # Local imports
 # from tokenz import *
@@ -32,8 +32,6 @@ logging.basicConfig(
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [137497264, 187622583]  # @Rozen, @dgarro
 command_handlers = {}
-ar_timezone = timezone('America/Argentina/Buenos_Aires')
-
 
 def start(update, context):
     msg = update.message.reply_text(
@@ -125,12 +123,22 @@ def felizdia_text(today):
         return "Feliz " + dia + " de " + mes
 
 
+# https://stackoverflow.com/a/11236372/1576803
+def get_hora_feliz_dia():
+    tz = pytz.timezone("America/Argentina/Buenos_Aires")
+    now = datetime.datetime.now(tz).date()
+    midnight = tz.localize(datetime.datetime.combine(now,
+                                                     datetime.time(0, 0, 4)),
+                                                     is_dst=None)
+    return midnight.astimezone(pytz.utc).time()
+
 def felizdia(context):
     today = datetime.date.today()
     msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones, SEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
-    context.bot.send_message(chat_id=-1001067544716, text=felizdia_text(today))
-    context.bot.send_message(chat_id=-1001067544716, text=msg_coronavirus)
-    mandar_imagen(-1001067544716, context, "files/heman.jpg")
+    chat_id = -1001067544716
+    context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
+    context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
+    mandar_imagen(chat_id, context, "files/heman.jpg")
 
 
 def suggest_listable(update, context, listable_type):
@@ -341,7 +349,7 @@ def add_all_handlers(dispatcher):
 
 def checodepers(update, context):
     if not context.args:
-        ejemplo = """ Ejemplo de uso: 
+        ejemplo = """ Ejemplo de uso:
   /checodepers Hola, tengo un mensaje mucho muy importante que me gustaria que respondan
 """
         msg = update.message.reply_text(ejemplo, quote=False)
@@ -374,12 +382,15 @@ def main():
         init_db("dcubabot.sqlite3")
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
+
         updater.job_queue.run_daily(
             callback=felizdia,
-            time=datetime.time(second=3, tzinfo=ar_timezone)
+            time = get_hora_feliz_dia()
         )
+
         #updater.job_queue.run_once(callback=actualizarRiver, when=0)
         #updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
+
         updater.job_queue.run_repeating(
             callback=labos.update, interval=datetime.timedelta(hours=1))
         dispatcher.add_error_handler(error_callback)
