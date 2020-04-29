@@ -128,7 +128,7 @@ def get_hora_feliz_dia():
     tz = pytz.timezone("America/Argentina/Buenos_Aires")
     now = datetime.datetime.now(tz).date()
     midnight = tz.localize(datetime.datetime.combine(now,
-                                                     datetime.time(0, 0, 4)),
+                                                     datetime.time(0, 0, 3)),
                                                      is_dst=None)
     return midnight.astimezone(pytz.utc).time()
 
