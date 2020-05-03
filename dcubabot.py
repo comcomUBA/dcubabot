@@ -347,8 +347,10 @@ def add_all_handlers(dispatcher):
             command_handlers[command.name] = handler
             if command.enabled:
                 dispatcher.add_handler(handler)
-                descriptions.append((Command.name, command.description))
+                if command.description:
+                    descriptions.append((command.name, command.description))
     dispatcher.add_handler(CallbackQueryHandler(button))
+    print(descriptions)
     dispatcher.bot.set_my_commands(descriptions)
 
 
