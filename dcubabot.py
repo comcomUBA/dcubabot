@@ -33,6 +33,7 @@ logger = logging.getLogger("DCUBABOT")
 admin_ids = [137497264, 187622583]  # @Rozen, @dgarro
 command_handlers = {}
 
+
 def start(update, context):
     msg = update.message.reply_text(
         "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
@@ -129,8 +130,9 @@ def get_hora_feliz_dia():
     now = datetime.datetime.now(tz).date()
     midnight = tz.localize(datetime.datetime.combine(now,
                                                      datetime.time(0, 0, 3)),
-                                                     is_dst=None)
+                           is_dst=None)
     return midnight.astimezone(pytz.utc).time()
+
 
 def felizdia(context):
     today = datetime.date.today()
@@ -335,17 +337,17 @@ def actualizarRiver(context):
 
 
 def add_all_handlers(dispatcher):
-    descriptions=[]
+    descriptions = []
     dispatcher.add_handler(MessageHandler(
         (Filters.text | Filters.command), log_message), group=1)
     with db_session:
-        for command in select((c for c in Command):
+        for command in select(c for c in Command):
             handler = DeletableCommandHandler(
                 command.name, globals()[command.name])
             command_handlers[command.name] = handler
             if command.enabled:
                 dispatcher.add_handler(handler)
-                descriptions.append((Command.name,command.description))
+                descriptions.append((Command.name, command.description))
     dispatcher.add_handler(CallbackQueryHandler(button))
     dispatcher.bot.set_my_commands(descriptions)
 
@@ -388,7 +390,7 @@ def main():
 
         updater.job_queue.run_daily(
             callback=felizdia,
-            time = get_hora_feliz_dia()
+            time=get_hora_feliz_dia()
         )
 
         #updater.job_queue.run_once(callback=actualizarRiver, when=0)
