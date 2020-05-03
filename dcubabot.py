@@ -335,16 +335,19 @@ def actualizarRiver(context):
 
 
 def add_all_handlers(dispatcher):
+    descriptions=[]
     dispatcher.add_handler(MessageHandler(
         (Filters.text | Filters.command), log_message), group=1)
     with db_session:
-        for command in select(c for c in Command):
+        for command in select((c for c in Command):
             handler = DeletableCommandHandler(
                 command.name, globals()[command.name])
             command_handlers[command.name] = handler
             if command.enabled:
                 dispatcher.add_handler(handler)
+                descriptions.append((Command.name,command.description))
     dispatcher.add_handler(CallbackQueryHandler(button))
+    dispatcher.bot.set_my_commands(descriptions)
 
 
 def checodepers(update, context):
