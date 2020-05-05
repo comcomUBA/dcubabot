@@ -5,6 +5,7 @@
   # $ sudo apt install imagemagick
 
 import os
+from random import random, randint
 
 def abrir_imagen(ruta_imagen):
   return ImagenDibujable(ruta_imagen)
@@ -65,3 +66,15 @@ class ImagenDibujable:
       comando += dibujo
     comando += ruta
     os.system(comando)
+
+def random_text(filein, text, imgsize, n, fileout):
+  imagen = abrir_imagen(filein)
+  w = imgsize[0]
+  h = imgsize[1]
+  for i in range(n):
+    imagen.escribir(text,
+      [randint(-w/120,2*w/3),randint(h/6,5*h/6)],
+      tamanio=randint(w/60,w/10),
+      color=[randint(50,250),randint(50,250),randint(50,250),0.4+random()/2],
+      fuente="impact")
+  imagen.guardar_imagen(fileout)
