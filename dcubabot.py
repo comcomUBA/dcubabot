@@ -19,6 +19,8 @@ from deletablecommandhandler import DeletableCommandHandler
 from orga2Utils import noitip, asm
 from errors import error_callback
 import labos
+from imageDraw import abrir_imagen
+from ralondario import proximos_eventos_ralondario
 from river import getMatches
 # TODO:Move this out of here
 logging.basicConfig(
@@ -148,6 +150,7 @@ def felizdia(context):
     imagen.guardar_imagen(outfile)
     mandar_imagen(chat_id, context, outfile)
     #TODO: Eliminar el archivo outfile
+    context.bot.send_message(chat_id=chat_id, text=proximos_eventos_ralondario())
 
 
 def suggest_listable(update, context, listable_type):
