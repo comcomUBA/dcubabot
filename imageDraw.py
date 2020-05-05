@@ -73,8 +73,8 @@ def random_text(filein, text, imgsize, n, fileout):
   h = imgsize[1]
   for i in range(n):
     imagen.escribir(text,
-      [randint(-w/120,2*w/3),randint(h/6,5*h/6)],
-      tamanio=randint(w/60,w/10),
+      [randint(int(-w/120),int(2*w/3)),randint(int(h/6),int(5*h/6))],
+      tamanio=randint(int(w/60),int(w/10)),
       color=[randint(50,250),randint(50,250),randint(50,250),0.4+random()/2],
       fuente="impact")
   imagen.guardar_imagen(fileout)
