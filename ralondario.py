@@ -53,3 +53,13 @@ def proximos_eventos_ralondario(dias=7, monospace=False):
         mensaje += "\n[[ " + fecha + " ]]"
       mensaje += "\n * " + evento["texto"]
   return mensaje
+
+def proxima_tesis():
+  for evento in proximos_eventos(ID, 50, 1):
+    if evento.summary.startswith("Defensa de Tesis"):
+      hora = ""
+      inicio = str(evento.start)
+      if len(inicio) > 20:
+        hora = formatear_hora(inicio[11:16])
+      return [evento.summary[17:], hora]
+  return ["",""]
