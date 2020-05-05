@@ -136,11 +136,18 @@ def get_hora_feliz_dia():
 
 def felizdia(context):
     today = datetime.date.today()
-    msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones, SEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
+    msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones,\nSEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
     chat_id = -1001067544716
-    context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
-    context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
-    mandar_imagen(chat_id, context, "files/heman.jpg")
+    #context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
+    #context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
+    #mandar_imagen(chat_id, context, "files/heman.jpg")
+    outfile = "files/heman"+str(today)+".png"
+    imagen = imageDraw.abrir_imagen("files/heman.jpg")
+    imagen.escribir(felizdia_text(today), [150,50], tamanio=40, color=[255,255,255], fuente="impact")
+    imagen.escribir(msg_coronavirus, [20,130], tamanio=22, color=[255,255,255], fuente="impact")
+    imagen.guardar_imagen(outfile)
+    mandar_imagen(chat_id, context, outfile)
+    #TODO: Eliminar el archivo outfile
 
 
 def suggest_listable(update, context, listable_type):
