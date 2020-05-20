@@ -87,7 +87,10 @@ def install_check_or_install_commands():
         check_or_install_command(name="sugerir")
 
         check_or_install_command(name="sugerirNoticia")
-        check_or_install_command(name="checodepers")
+        check_or_install_command(
+            name="checodepers",
+            desciption="Envia un mensaje con tus consultas a los codepers" 
+                       "para que elles se pongan en contacto con vos")
 
         # Administration commands
         check_or_install_command(name="togglecommand")
