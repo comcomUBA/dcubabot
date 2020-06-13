@@ -19,6 +19,8 @@ from deletablecommandhandler import DeletableCommandHandler
 from orga2Utils import noitip, asm
 from errors import error_callback
 import labos
+from imageDraw import abrir_imagen, random_text
+from ralondario import proximos_eventos_ralondario, proxima_tesis
 from river import getMatches
 # TODO:Move this out of here
 logging.basicConfig(
@@ -136,11 +138,36 @@ def get_hora_feliz_dia():
 
 def felizdia(context):
     today = datetime.date.today()
-    msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones, SEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
+    msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones,\nSEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
     chat_id = -1001067544716
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
     context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
     mandar_imagen(chat_id, context, "files/heman.jpg")
+
+    ## Imagen de He-Man
+    #tesis = proxima_tesis()
+    #tesista = tesis[0]
+    #hora_tesis = tesis[1]
+    #outfile = "files/heman"+str(today)+".png"
+    #imagen = imageDraw.abrir_imagen("files/heman.jpg")
+    #imagen.escribir(felizdia_text(today), [150,50], tamanio=40, color=[255,255,255], fuente="impact")
+    #imagen.escribir(tesista, [120,120], tamanio=30, color=[255,255,255], fuente="impact")
+    #imagen.escribir(hora_tesis, [450,170], tamanio=40, color=[255,255,255], fuente="impact")
+    #imagen.escribir(msg_coronavirus, [20,220], tamanio=22, color=[255,255,255], fuente="impact")
+    #imagen.guardar_imagen(outfile)
+    #mandar_imagen(chat_id, context, outfile)
+    #TODO: Eliminar el archivo outfile
+
+    # Imagen de 2020
+    dia1 = datetime.date(2020, 3, 20)
+    dia = (today - dia1).days
+    outfile = "files/2020-"+str(dia)+".png"
+    imageDraw.random_text("files/2020.png", str(dia), [900,900], 50, outfile)
+    mandar_imagen(chat_id, context, outfile)
+    #TODO: Eliminar el archivo outfile
+
+    # Próximos eventos
+    context.bot.send_message(chat_id=chat_id, text=proximos_eventos_ralondario())
 
 
 def suggest_listable(update, context, listable_type):
