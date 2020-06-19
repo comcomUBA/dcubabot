@@ -91,7 +91,10 @@ def install_check_or_install_commands():
             name="checodepers",
             description="Envia un mensaje con tus consultas a los codepers" 
                        "para que elles se pongan en contacto con vos")
-
+        check_or_install_command(
+            name="checodeppers",
+            description="Envia un mensaje con tus consultas a los codepers" 
+                       "para que elles se pongan en contacto con vos")        
         # Administration commands
         check_or_install_command(name="togglecommand")
 

@@ -377,6 +377,8 @@ def checodepers(update, context):
         "OK, se lo mando a les codepers.", quote=False)
     context.sent_messages.append(msg)
 
+def checodeppers(update, context):
+    checodepers(update, context)
 
 def main():
 
