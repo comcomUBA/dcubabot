@@ -20,6 +20,8 @@ from orga2Utils import noitip, asm
 from errors import error_callback
 import labos
 from river import getMatches
+from campus import is_campus_up
+
 # TODO:Move this out of here
 logging.basicConfig(
     level=logging.INFO,
@@ -379,6 +381,18 @@ def checodepers(update, context):
 
 def checodeppers(update, context):
     checodepers(update, context)
+
+def campusvivo(update, context):
+  
+    msg = update.message.reply_text("Bancá que me fijo...", quote=False)
+
+    campus_response_text = is_campus_up()
+
+    context.bot.editMessageText(chat_id=msg.chat_id,
+                                message_id=msg.message_id,
+                                text=msg.text + "\n" + campus_response_text)
+
+    context.sent_messages.append(msg)
 
 def main():
 
