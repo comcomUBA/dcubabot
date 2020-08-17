@@ -101,6 +101,10 @@ def install_check_or_install_commands():
         check_or_install_command(
             name="campusvivo",
             description="Envia un mensaje al campus para ver si está funcionando.")
+        
+        check_or_install_command(
+            name="cuandovence",
+            description="Dada la fecha de aprobación de TPs te dice la última fecha de final a la que te podés presentar.")
                   
         # Administration commands
         check_or_install_command(name="togglecommand")

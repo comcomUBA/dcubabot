@@ -21,6 +21,7 @@ from errors import error_callback
 import labos
 from river import getMatches
 from campus import is_campus_up
+from vencimientoFinales import get_vencimiento, parse_cuatri_y_anio
 
 # TODO:Move this out of here
 logging.basicConfig(
@@ -392,6 +393,25 @@ def campusvivo(update, context):
                                 message_id=msg.message_id,
                                 text=msg.text + "\n" + campus_response_text)
 
+    context.sent_messages.append(msg)
+
+def cuandovence(update, context):
+    ejemplo = "\nCuatris: 1c, 2c, i, inv, invierno, v, ver, verano.\nEjemplo: /cuandovence verano2010"
+    if not context.args:
+        ayuda = "Pasame cuatri y año en que aprobaste los TPs." + ejemplo
+        msg = update.message.reply_text(ayuda, quote=False)
+        context.sent_messages.append(msg)
+        return
+    try:
+        linea_entrada = "".join(context.args).lower()
+        cuatri, anio = parse_cuatri_y_anio(linea_entrada)
+    except Exception:
+        msg = update.message.reply_text("¿Dale que me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
+        context.sent_messages.append(msg)
+        return
+    
+    vencimiento = get_vencimiento(cuatri, anio)
+    msg = update.message.reply_text(vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
     context.sent_messages.append(msg)
 
 def main():
