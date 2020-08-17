@@ -406,7 +406,7 @@ def cuandovence(update, context):
         linea_entrada = "".join(context.args).lower()
         cuatri, anio = parse_cuatri_y_anio(linea_entrada)
     except Exception:
-        msg = update.message.reply_text("¿Dale que me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
+        msg = update.message.reply_text("¿Me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
         context.sent_messages.append(msg)
         return
     
