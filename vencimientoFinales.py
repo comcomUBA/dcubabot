@@ -23,12 +23,13 @@ def parse_cuatri_y_anio(linea):
 
 def get_vencimiento (cuatri, anio) :
 
+    # Unificar strings de verano/invierno
     if cuatri in VERANOS:
         cuatri = VERANO
     elif cuatri in INVIERNOS:
         cuatri = INVIERNO
 
-    cuatri_string = {
+    cuatri_texto = {
         PCUAT : "1er cuatri", 
         SCUAT : "2do cuatri",
         VERANO : "verano",
@@ -44,7 +45,7 @@ def get_vencimiento (cuatri, anio) :
 
     anio_limite = int(anio) + 4
 
-    mje = f"""Materia aprobada en {cuatri_string[cuatri]} de {anio}.
+    mje = f"""Materia aprobada en {cuatri_texto[cuatri]} de {anio}.
     
 Última fecha en la cual podés rendir:
 *{cuatri_limite} de {anio_limite}.*
