@@ -42,6 +42,9 @@ class ECI(Listable):
 class Otro(Listable):
     pass
 
+class Donde(Listable):
+    pass
+
 
 # TODO: Subclasificar con validable
 class Noticia(db.Entity):
