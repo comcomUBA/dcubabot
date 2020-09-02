@@ -90,22 +90,30 @@ def install_check_or_install_commands():
 
         check_or_install_command(
             name="checodepers",
-            description="Envia un mensaje con tus consultas a los codepers" 
+            description="Envia un mensaje con tus consultas a los codepers"
                        "para que elles se pongan en contacto con vos")
 
         check_or_install_command(
             name="checodeppers",
-            description="Envia un mensaje con tus consultas a los codepers" 
+            description="Envia un mensaje con tus consultas a los codepers"
                        "para que elles se pongan en contacto con vos")
-                       
+
         check_or_install_command(
             name="campusvivo",
             description="Envia un mensaje al campus para ver si está funcionando.")
-        
+
         check_or_install_command(
             name="cuandovence",
             description="Dada la fecha de aprobación de TPs te dice la última fecha de final a la que te podés presentar.")
-                  
+
+        check_or_install_command(
+            name = "sugerirdonde",
+            description = "Sugiere posible ubicacion de un lugar dentro de la facultad")
+
+        check_or_install_command(
+            name = "donde",
+            description = "Muestra las posibles ubicaciones de lugares dentro de la facultad")
+
         # Administration commands
         check_or_install_command(name="togglecommand")
 

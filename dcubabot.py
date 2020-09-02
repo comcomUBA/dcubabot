@@ -168,6 +168,7 @@ def suggest_listable(update, context, listable_type):
                 text="Rechazar", callback_data=f"Listable|{group.id}|0")
         ]
     ]
+
     reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.sendMessage(chat_id=137497264,
                             text=listable_type.__name__ + ": " + name + "\n" + url,
@@ -284,8 +285,6 @@ def mandar_imagen(chat_id, context, file_path):
     context.sent_messages.append(msg)
 
 # Responde una imagen a partir de su path al chat del update dado
-
-
 def responder_imagen(update, context, file_path):
     mandar_imagen(update.message.chat_id, context, file_path)
 
@@ -326,6 +325,9 @@ def button(update, context):
             context.bot.editMessageText(chat_id=message.chat_id,
                                         message_id=message.message_id,
                                         text=message.text + action_text)
+        if buttonType == "Donde":
+            context.bot.sendMessage(chat_id = message.chat_id,
+                                    text = action)
 
 
 def hoyJuegaRiver(context):
@@ -384,7 +386,7 @@ def checodeppers(update, context):
     checodepers(update, context)
 
 def campusvivo(update, context):
-  
+
     msg = update.message.reply_text("Bancá que me fijo...", quote=False)
 
     campus_response_text = is_campus_up()
@@ -409,10 +411,36 @@ def cuandovence(update, context):
         msg = update.message.reply_text("¿Me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
         context.sent_messages.append(msg)
         return
-    
+
     vencimiento = get_vencimiento(cuatri, anio)
     msg = update.message.reply_text(vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
     context.sent_messages.append(msg)
+
+
+def list_response_buttons(update, context, listable_type):
+    with db_session:
+        buttons = select(l for l in listable_type if l.validated).order_by(
+            lambda l: l.name)
+        keyboard = []
+        columns = 3
+        for k in range(0, len(buttons), columns):
+            row = [InlineKeyboardButton(
+                text=button.name, callback_data='Donde|| ' + button.url )
+                for button in buttons[k:k + columns]]
+
+            keyboard.append(row)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        msg = update.message.reply_text(text="Lugares: ", disable_web_page_preview=True,
+                                        reply_markup=reply_markup, quote=False)
+        context.sent_messages.append(msg)
+
+def sugerirdonde(update, context):
+    suggest_listable(update, context, Donde)
+
+# Esta funcion presenta botones con las posibles ubicaciones de lugares dentro de
+# la facultad
+def donde(update, context):
+    list_response_buttons(update, context, Donde)
 
 def main():
 
