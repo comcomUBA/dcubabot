@@ -384,7 +384,7 @@ def checodeppers(update, context):
     checodepers(update, context)
 
 def campusvivo(update, context):
-  
+
     msg = update.message.reply_text("Bancá que me fijo...", quote=False)
 
     campus_response_text = is_campus_up()
@@ -409,9 +409,13 @@ def cuandovence(update, context):
         msg = update.message.reply_text("¿Me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
         context.sent_messages.append(msg)
         return
-    
+
     vencimiento = get_vencimiento(cuatri, anio)
     msg = update.message.reply_text(vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
+    context.sent_messages.append(msg)
+
+def colaborar(update, context):
+    msg = update.message.reply_text("Se puede colaborar con el DCUBA bot en https://github.com/rozen03/dcubabot", quote=False)
     context.sent_messages.append(msg)
 
 def main():
