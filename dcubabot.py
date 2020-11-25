@@ -139,7 +139,7 @@ def get_hora_feliz_dia():
 
 def felizdia(context):
     today = datetime.date.today()
-    msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones, SEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
+    msg_coronavirus = "Y recuerden amigues, ya no hay ASPO pero ahora hay DISPO. Usen tapabocas, guarden distancia, laven sus manitos, \nSEAN RESPONSABLES Y NO SALGAN POR CUALQUIER COSA COMO FORRES"
     chat_id = -1001067544716
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
     context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
