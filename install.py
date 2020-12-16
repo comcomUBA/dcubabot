@@ -90,22 +90,26 @@ def install_check_or_install_commands():
 
         check_or_install_command(
             name="checodepers",
-            description="Envia un mensaje con tus consultas a los codepers" 
+            description="Envia un mensaje con tus consultas a los codepers"
                        "para que elles se pongan en contacto con vos")
 
         check_or_install_command(
             name="checodeppers",
-            description="Envia un mensaje con tus consultas a los codepers" 
+            description="Envia un mensaje con tus consultas a los codepers"
                        "para que elles se pongan en contacto con vos")
-                       
+
         check_or_install_command(
             name="campusvivo",
             description="Envia un mensaje al campus para ver si está funcionando.")
-        
+
         check_or_install_command(
             name="cuandovence",
             description="Dada la fecha de aprobación de TPs te dice la última fecha de final a la que te podés presentar.")
-                  
+
+        check_or_install_command(
+            name="colaborar",
+            description="Devuelve el repositorio donde se desarrolla el DCUBABOT.")
+
         # Administration commands
         check_or_install_command(name="togglecommand")
 

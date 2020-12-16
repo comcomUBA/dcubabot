@@ -139,7 +139,7 @@ def get_hora_feliz_dia():
 
 def felizdia(context):
     today = datetime.date.today()
-    msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones, SEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
+    msg_coronavirus = "Y recuerden amigues, ya no hay ASPO pero ahora hay DISPO. Usen tapabocas, guarden distancia, laven sus manitos, \nSEAN RESPONSABLES Y NO SALGAN POR CUALQUIER COSA COMO FORRES"
     chat_id = -1001067544716
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
     context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
@@ -384,7 +384,7 @@ def checodeppers(update, context):
     checodepers(update, context)
 
 def campusvivo(update, context):
-  
+
     msg = update.message.reply_text("Bancá que me fijo...", quote=False)
 
     campus_response_text = is_campus_up()
@@ -409,9 +409,13 @@ def cuandovence(update, context):
         msg = update.message.reply_text("¿Me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
         context.sent_messages.append(msg)
         return
-    
+
     vencimiento = get_vencimiento(cuatri, anio)
     msg = update.message.reply_text(vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
+    context.sent_messages.append(msg)
+
+def colaborar(update, context):
+    msg = update.message.reply_text("Se puede colaborar con el DCUBA bot en https://github.com/rozen03/dcubabot", quote=False)
     context.sent_messages.append(msg)
 
 def main():
