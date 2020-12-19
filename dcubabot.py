@@ -21,7 +21,7 @@ from errors import error_callback
 import labos
 from river import getMatches
 from campus import is_campus_up
-from vencimientoFinales import get_vencimiento, parse_cuatri_y_anio
+from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
 
 # TODO:Move this out of here
 logging.basicConfig(
@@ -410,7 +410,7 @@ def cuandovence(update, context):
         context.sent_messages.append(msg)
         return
 
-    vencimiento = get_vencimiento(cuatri, anio)
+    vencimiento = calcular_vencimiento(cuatri, anio)
     msg = update.message.reply_text(vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
     context.sent_messages.append(msg)
 
