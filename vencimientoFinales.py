@@ -19,8 +19,9 @@ EXT_SEP_TXT = "Septiembre de "
 
 ## CARGAR EXCEPCIONES
 #               año : cuatrimestres de validez (default 8)
-EXCEPCIONES = { "2016": 12,
-                "2017": 10}
+EXCEPCIONES = { "2016": 11,
+                "2017": 10,
+                "2018": 9}
 
 class Cursada():
     @classmethod
@@ -44,14 +45,14 @@ class PrimerSemestre(Cursada):
         return cuatri in PRIMEROS
     
     def set_vencimientos(self):
-        self.anio_venc = str(self.anio + (self.validez-1)//2)
+        self.anio_venc = self.anio + self.validez//2
         
         if self.validez % 2 == 0:
-            self.fecha_vencimiento = VENC_JUL_TXT + self.anio_venc
-            self.fecha_extension = EXT_SEP_TXT + self.anio_venc
+            self.fecha_vencimiento = VENC_FEB_TXT + str(self.anio_venc)
+            self.fecha_extension = EXT_ABR_TXT + str(self.anio_venc)
         else:
-            self.fecha_vencimiento = VENC_FEB_TXT + self.anio_venc
-            self.fecha_extension = EXT_ABR_TXT + self.anio_venc
+            self.fecha_vencimiento = VENC_JUL_TXT + str(self.anio_venc)
+            self.fecha_extension = EXT_SEP_TXT + str(self.anio_venc)
 
 class SegundoSemestre(Cursada):
 
@@ -60,14 +61,15 @@ class SegundoSemestre(Cursada):
         return cuatri in SEGUNDOS
     
     def set_vencimientos(self):
-        self.anio_venc = str(self.anio + (self.validez//2))
+        self.anio_venc = self.anio + self.validez//2
         
         if self.validez % 2 == 0:
-            self.fecha_vencimiento = VENC_JUL_TXT + self.anio_venc
-            self.fecha_extension = EXT_SEP_TXT + self.anio_venc
+            self.fecha_vencimiento = VENC_JUL_TXT + str(self.anio_venc)
+            self.fecha_extension = EXT_SEP_TXT + str(self.anio_venc)
         else:
-            self.fecha_vencimiento = VENC_FEB_TXT + self.anio_venc
-            self.fecha_extension = EXT_ABR_TXT + self.anio_venc
+            self.anio_venc += 1
+            self.fecha_vencimiento = VENC_FEB_TXT + str(self.anio_venc)
+            self.fecha_extension = EXT_ABR_TXT + str(self.anio_venc)
 
 def parse_cuatri_y_anio(linea):
     # regex para parametros.
