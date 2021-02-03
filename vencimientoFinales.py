@@ -93,7 +93,7 @@ def calcular_vencimiento(cuatri, anio):
 
     if anio in EXCEPCIONES:
         cuatris_validez = EXCEPCIONES[anio]
-        txt_excepcion = "\n\n*Tu cursada se encuentra dentro de las excepciones establecidas por Consejo Directivo.*"
+        txt_excepcion = "\n\n*El vencimiento de tu cursada fue extendido por resolución del Consejo Directivo. Por esta razón la fecha que te muestra el bot es superior a los 8 cuatrimestres desde la cursada.*"
     
     cursada = Cursada.nueva(cuatri, anio, cuatris_validez)
 
