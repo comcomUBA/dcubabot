@@ -437,13 +437,18 @@ def agregargrupo(update: Update, context: CallbackContext):
         url = context.bot.export_chat_invite_link(
             chat_id=update.message.chat.id)
         name = update.message.chat.title
+        chat_id = update.message.chat.id
     except:  # TODO: filter excepts
         update.message.reply_text(
             text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin", quote=False)
         return
 
     with db_session:
-        group = Grupo(name=name, url=url)
+        group = Grupo.get(id=chat_id)
+        if group:
+            update.message.reply_text(
+                text=f"ya esta este grupo agregado", quote=False)
+        group = Grupo(name=name, url=url, chat_id=chat_id)
     keyboard = [
         [
             InlineKeyboardButton(
