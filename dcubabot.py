@@ -437,7 +437,7 @@ def agregargrupo(update: Update, context: CallbackContext):
         url = context.bot.export_chat_invite_link(
             chat_id=update.message.chat.id)
         name = update.message.chat.title
-        chat_id = update.message.chat.id
+        chat_id = str(update.message.chat.id)
     except:  # TODO: filter excepts
         update.message.reply_text(
             text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin", quote=False)

@@ -23,7 +23,7 @@ class SentMessage(db.Entity):
 class Listable(db.Entity):
     name = Required(str)
     url = Required(str)
-    chat_id = Optional(int, size=64)
+    chat_id = Optional(str)
     validated = Required(bool, default=False)
 
 
