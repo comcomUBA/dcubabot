@@ -444,7 +444,7 @@ def agregargrupo(update: Update, context: CallbackContext):
         return
 
     with db_session:
-        group = Grupo.get(id=chat_id)
+        group = Grupo.get(chat_id=chat_id)
         if group:
             update.message.reply_text(
                 text=f"ya esta este grupo agregado", quote=False)
