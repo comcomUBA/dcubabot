@@ -448,6 +448,7 @@ def agregargrupo(update: Update, context: CallbackContext):
         if group:
             update.message.reply_text(
                 text=f"ya esta este grupo agregado", quote=False)
+            return
         group = Grupo(name=name, url=url, chat_id=chat_id)
     keyboard = [
         [
