@@ -386,8 +386,10 @@ def checodepers(update, context):
         "OK, se lo mando a les codepers.", quote=False)
     context.sent_messages.append(msg)
 
+
 def checodeppers(update, context):
     checodepers(update, context)
+
 
 def campusvivo(update, context):
 
@@ -401,6 +403,7 @@ def campusvivo(update, context):
 
     context.sent_messages.append(msg)
 
+
 def cuandovence(update, context):
     ejemplo = "\nCuatris: 1c, 2c, i, inv, invierno, v, ver, verano.\nEjemplo: /cuandovence verano2010"
     if not context.args:
@@ -412,19 +415,24 @@ def cuandovence(update, context):
         linea_entrada = "".join(context.args).lower()
         cuatri, anio = parse_cuatri_y_anio(linea_entrada)
     except Exception:
-        msg = update.message.reply_text("¿Me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
+        msg = update.message.reply_text(
+            "¿Me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
         context.sent_messages.append(msg)
         return
 
     vencimiento = calcular_vencimiento(cuatri, anio)
-    msg = update.message.reply_text(vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
+    msg = update.message.reply_text(
+        vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
     context.sent_messages.append(msg)
+
 
 def colaborar(update, context):
-    msg = update.message.reply_text("Se puede colaborar con el DCUBA bot en https://github.com/rozen03/dcubabot", quote=False)
+    msg = update.message.reply_text(
+        "Se puede colaborar con el DCUBA bot en https://github.com/rozen03/dcubabot", quote=False)
     context.sent_messages.append(msg)
 
-def agregar_grupo(update: Update, context: CallbackContext):
+
+def agregargrupo(update: Update, context: CallbackContext):
     try:
         url = context.bot.export_chat_invite_link(
             chat_id=update.message.chat.id)
