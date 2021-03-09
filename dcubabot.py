@@ -22,6 +22,9 @@ from orga2Utils import noitip, asm
 from errors import error_callback
 import labos
 from river import getMatches
+from campus import is_campus_up
+from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
+
 # TODO:Move this out of here
 logging.basicConfig(
     level=logging.INFO,
@@ -142,7 +145,7 @@ def get_hora_feliz_dia():
 
 def felizdia(context):
     today = datetime.date.today()
-    msg_coronavirus = "Y recuerden amigos, cuarentena no es lo mismo que vacaciones, SEAN RESPONSABLES Y QUÉDENSE EN SUS CASITAS!"
+    msg_coronavirus = "Y recuerden amigues, ya no hay ASPO pero ahora hay DISPO. Usen tapabocas, guarden distancia, laven sus manitos, \nSEAN RESPONSABLES Y NO SALGAN POR CUALQUIER COSA COMO FORRES"
     chat_id = -1001067544716
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
     context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
@@ -383,6 +386,43 @@ def checodepers(update, context):
         "OK, se lo mando a les codepers.", quote=False)
     context.sent_messages.append(msg)
 
+def checodeppers(update, context):
+    checodepers(update, context)
+
+def campusvivo(update, context):
+
+    msg = update.message.reply_text("Bancá que me fijo...", quote=False)
+
+    campus_response_text = is_campus_up()
+
+    context.bot.editMessageText(chat_id=msg.chat_id,
+                                message_id=msg.message_id,
+                                text=msg.text + "\n" + campus_response_text)
+
+    context.sent_messages.append(msg)
+
+def cuandovence(update, context):
+    ejemplo = "\nCuatris: 1c, 2c, i, inv, invierno, v, ver, verano.\nEjemplo: /cuandovence verano2010"
+    if not context.args:
+        ayuda = "Pasame cuatri y año en que aprobaste los TPs." + ejemplo
+        msg = update.message.reply_text(ayuda, quote=False)
+        context.sent_messages.append(msg)
+        return
+    try:
+        linea_entrada = "".join(context.args).lower()
+        cuatri, anio = parse_cuatri_y_anio(linea_entrada)
+    except Exception:
+        msg = update.message.reply_text("¿Me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
+        context.sent_messages.append(msg)
+        return
+
+    vencimiento = calcular_vencimiento(cuatri, anio)
+    msg = update.message.reply_text(vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
+    context.sent_messages.append(msg)
+
+def colaborar(update, context):
+    msg = update.message.reply_text("Se puede colaborar con el DCUBA bot en https://github.com/rozen03/dcubabot", quote=False)
+    context.sent_messages.append(msg)
 
 def agregar_grupo(update: Update, context: CallbackContext):
     try:
