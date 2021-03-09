@@ -8,9 +8,11 @@ import pytz
 import datetime
 
 # Non STL imports
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode, Update
 from telegram.ext import (
-    Updater, Filters, MessageHandler, CallbackQueryHandler)
+    Updater, Filters, MessageHandler, CallbackQueryHandler, CallbackContext)
+from typing import Dict
+
 
 # Local imports
 # from tokenz import *
@@ -88,6 +90,10 @@ def listareci(update, context):
 
 def listarotro(update, context):
     list_buttons(update, context, Otro)
+
+
+def listargrupo(update, context):
+    list_buttons(update, context, Grupo)
 
 
 def cubawiki(update, context):
@@ -378,8 +384,35 @@ def checodepers(update, context):
     context.sent_messages.append(msg)
 
 
-def main():
+def agregar_grupo(update: Update, context: CallbackContext):
+    try:
+        url = context.bot.export_chat_invite_link(
+            chat_id=update.message.chat.id)
+        name = update.message.chat.title
+    except:  # TODO: filter excepts
+        update.message.reply_text(
+            text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin", quote=False)
+        return
 
+    with db_session:
+        group = Grupo(name=name, url=url)
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="Aceptar", callback_data=f"Listable|{group.id}|1"),
+            InlineKeyboardButton(
+                text="Rechazar", callback_data=f"Listable|{group.id}|0")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    context.bot.sendMessage(chat_id=137497264,
+                            text="grupo" + ": " + name + "\n" + url,
+                            reply_markup=reply_markup)
+    msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+    context.sent_messages.append(msg)
+
+
+def main():
     try:
         global update_id
         # Telegram bot Authorization Token

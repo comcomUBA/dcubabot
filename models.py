@@ -43,6 +43,10 @@ class Otro(Listable):
     pass
 
 
+class Grupo(Listable):
+    pass
+
+
 # TODO: Subclasificar con validable
 class Noticia(db.Entity):
     text = Required(str)

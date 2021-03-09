@@ -52,6 +52,10 @@ def install_check_or_install_commands():
             name="listarlabos",
             description="Lista las reservaciones de los laboratorios de la facultad")
 
+        check_or_install_command(
+            name="listargrupo",
+            description="Lista loss grupos (prueba de regeneracion")
+
         check_or_install_command(name="cubawiki")
 
         check_or_install_command(
@@ -65,6 +69,10 @@ def install_check_or_install_commands():
         check_or_install_command(
             name="sugerirgrupo",
             description="Sugiere un grupo de alguna de las materias obligatorias")
+
+        check_or_install_command(
+            name="agregargrupo",
+            description="Sugiere este grupoa la lista de grupos (prueba de regeneracion)")
 
         check_or_install_command(
             name="sugeriroptativa",
