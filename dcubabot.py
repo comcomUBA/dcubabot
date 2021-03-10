@@ -433,12 +433,6 @@ def colaborar(update, context):
 
 
 def agregargrupo(update: Update, context: CallbackContext):
-    with db_session:
-        group = Grupo.get(chat_id=chat_id)
-        if group:
-            update.message.reply_text(
-                text=f"ya esta este grupo agregado", quote=False)
-            return
     try:
         url = context.bot.export_chat_invite_link(
             chat_id=update.message.chat.id)
@@ -450,6 +444,13 @@ def agregargrupo(update: Update, context: CallbackContext):
         return
 
     with db_session:
+        group = Grupo.get(chat_id=chat_id)
+        if group:
+            group.url = url
+            group.name = name
+            update.message.reply_text(
+                text=f"Datos del grupo actualizados", quote=False)
+            return
         group = Grupo(name=name, url=url, chat_id=chat_id)
     keyboard = [
         [
