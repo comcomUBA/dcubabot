@@ -289,7 +289,7 @@ def mandar_imagen(chat_id, context, file_path):
         with db_session:
             File(path=file_path, file_id=msg.photo[0].file_id)
 
-    context.sent_messages.append(msg)
+    # context.sent_messages.append(msg)
 
 # Responde una imagen a partir de su path al chat del update dado
 
