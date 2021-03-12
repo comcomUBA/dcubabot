@@ -150,6 +150,8 @@ def felizdia(context):
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
     context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
     mandar_imagen(chat_id, context, "files/heman.jpg")
+    context.bot.send_message(
+        chat_id=chat_id, text="Este mensaje fue patrocinado por @comcollectbot ! \n (si, estoy al pedo y yo mantengo el bot, denme mi serotonina (?)")
 
 
 def suggest_listable(update, context, listable_type):
