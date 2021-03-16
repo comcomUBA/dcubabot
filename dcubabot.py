@@ -98,6 +98,11 @@ def listarotro(update, context):
 def listargrupo(update, context):
     list_buttons(update, context, Grupo)
 
+def listargrupooptativa(update, context):
+    list_buttons(update, context, GrupoOptativa)
+
+def listargrupootros(update, context):
+    list_buttons(update, context, GrupoOtros)
 
 def cubawiki(update, context):
     with db_session:
