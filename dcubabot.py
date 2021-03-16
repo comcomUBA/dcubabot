@@ -470,6 +470,78 @@ def agregargrupo(update: Update, context: CallbackContext):
     context.sent_messages.append(msg)
 
 
+def agregaroptativa(update: Update, context: CallbackContext):
+    try:
+        url = context.bot.export_chat_invite_link(
+            chat_id=update.message.chat.id)
+        name = update.message.chat.title
+        chat_id = str(update.message.chat.id)
+    except:  # TODO: filter excepts
+        update.message.reply_text(
+            text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin", quote=False)
+        return
+
+    with db_session:
+        group = GrupoOptativa.get(chat_id=chat_id)
+        if group:
+            group.url = url
+            group.name = name
+            update.message.reply_text(
+                text=f"Datos del grupo actualizados", quote=False)
+            return
+        group = GrupoOptativa(name=name, url=url, chat_id=chat_id)
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="Aceptar", callback_data=f"Listable|{group.id}|1"),
+            InlineKeyboardButton(
+                text="Rechazar", callback_data=f"Listable|{group.id}|0")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    context.bot.sendMessage(chat_id=137497264,
+                            text="grupo" + ": " + name + "\n" + url,
+                            reply_markup=reply_markup)
+    msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+    context.sent_messages.append(msg)
+
+
+def agregarotros(update: Update, context: CallbackContext):
+    try:
+        url = context.bot.export_chat_invite_link(
+            chat_id=update.message.chat.id)
+        name = update.message.chat.title
+        chat_id = str(update.message.chat.id)
+    except:  # TODO: filter excepts
+        update.message.reply_text(
+            text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin", quote=False)
+        return
+
+    with db_session:
+        group = GrupoOtros.get(chat_id=chat_id)
+        if group:
+            group.url = url
+            group.name = name
+            update.message.reply_text(
+                text=f"Datos del grupo actualizados", quote=False)
+            return
+        group = GrupoOptativa(name=name, url=url, chat_id=chat_id)
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="Aceptar", callback_data=f"Listable|{group.id}|1"),
+            InlineKeyboardButton(
+                text="Rechazar", callback_data=f"Listable|{group.id}|0")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    context.bot.sendMessage(chat_id=137497264,
+                            text="grupo" + ": " + name + "\n" + url,
+                            reply_markup=reply_markup)
+    msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+    context.sent_messages.append(msg)
+
+    
 def main():
     try:
         global update_id

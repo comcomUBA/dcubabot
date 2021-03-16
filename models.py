@@ -46,6 +46,11 @@ class Otro(Listable):
 class Grupo(Listable):
     pass
 
+class GrupoOptativa(Listable):
+    pass
+
+class GrupoOtros(Listable):
+    pass
 
 # TODO: Subclasificar con validable
 class Noticia(db.Entity):
