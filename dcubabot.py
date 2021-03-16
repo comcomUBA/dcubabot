@@ -525,7 +525,7 @@ def agregarotros(update: Update, context: CallbackContext):
             update.message.reply_text(
                 text=f"Datos del grupo actualizados", quote=False)
             return
-        group = GrupoOptativa(name=name, url=url, chat_id=chat_id)
+        group = GrupoOtros(name=name, url=url, chat_id=chat_id)
     keyboard = [
         [
             InlineKeyboardButton(
@@ -541,7 +541,7 @@ def agregarotros(update: Update, context: CallbackContext):
     msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
     context.sent_messages.append(msg)
 
-    
+
 def main():
     try:
         global update_id
