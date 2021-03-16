@@ -505,7 +505,7 @@ def agregaroptativa(update: Update, context: CallbackContext):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.sendMessage(chat_id=137497264,
-                            text="grupo" + ": " + name + "\n" + url,
+                            text="Optativa" + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
     msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
     context.sent_messages.append(msg)
@@ -541,7 +541,7 @@ def agregarotros(update: Update, context: CallbackContext):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.sendMessage(chat_id=137497264,
-                            text="grupo" + ": " + name + "\n" + url,
+                            text="Otros" + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
     msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
     context.sent_messages.append(msg)
