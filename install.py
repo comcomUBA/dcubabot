@@ -54,7 +54,15 @@ def install_check_or_install_commands():
 
         check_or_install_command(
             name="listargrupo",
-            description="Lista loss grupos (prueba de regeneracion")
+            description="Lista los grupos (prueba de regeneracion")
+
+        check_or_install_command(
+            name="listargrupooptativa",
+            description="Lista los grupos de optativas (prueba de regeneracion")
+
+        check_or_install_command(
+            name="listargrupootros",
+            description="Lista los grupos off-topic (prueba de regeneracion")
 
         check_or_install_command(name="cubawiki")
 
