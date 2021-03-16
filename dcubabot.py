@@ -13,7 +13,6 @@ from telegram.ext import (
     Updater, Filters, MessageHandler, CallbackQueryHandler, CallbackContext)
 from typing import Dict
 
-
 # Local imports
 # from tokenz import *
 from models import *
@@ -31,7 +30,6 @@ logging.basicConfig(
     # level=logging.DEBUG,
     format='[%(asctime)s] - [%(name)s] - [%(levelname)s] - %(message)s',
     filename="bots.log")
-
 
 # Globals ...... yes, globals
 logger = logging.getLogger("DCUBABOT")
@@ -98,11 +96,14 @@ def listarotro(update, context):
 def listargrupo(update, context):
     list_buttons(update, context, Grupo)
 
+
 def listargrupooptativa(update, context):
     list_buttons(update, context, GrupoOptativa)
 
+
 def listargrupootros(update, context):
     list_buttons(update, context, GrupoOtros)
+
 
 def cubawiki(update, context):
     with db_session:
@@ -156,7 +157,8 @@ def felizdia(context):
     context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
     mandar_imagen(chat_id, context, "files/heman.jpg")
     context.bot.send_message(
-        chat_id=chat_id, text="Este mensaje fue patrocinado por @comcollectbot ! \n (si, estoy al pedo y yo mantengo el bot, denme mi serotonina (?)")
+        chat_id=chat_id,
+        text="Este mensaje fue patrocinado por @comcollectbot ! \n (si, estoy al pedo y yo mantengo el bot, denme mi serotonina (?)")
 
 
 def suggest_listable(update, context, listable_type):
@@ -242,7 +244,7 @@ def togglecommand(update, context):
 def sugerir(update, context):
     update.message.reply_text(
         text=f"Ahora en mas las sugerencias las vamos a tomar en github:\n "
-        "https://github.com/rozen03/dcubabot/issues", quote=False)
+             "https://github.com/rozen03/dcubabot/issues", quote=False)
 
 
 def sugerirNoticia(update, context):
@@ -267,7 +269,7 @@ def sugerirNoticia(update, context):
         keyboard = [
             [
                 InlineKeyboardButton("Aceptar", callback_data="Noticia|" +
-                                     str(noticia.id) + '|1'),
+                                                              str(noticia.id) + '|1'),
                 InlineKeyboardButton(
                     "Rechazar", callback_data="noticia|" + str(noticia.id) + '|0')
             ]
@@ -296,6 +298,7 @@ def mandar_imagen(chat_id, context, file_path):
 
     # context.sent_messages.append(msg)
 
+
 # Responde una imagen a partir de su path al chat del update dado
 
 
@@ -305,6 +308,7 @@ def responder_imagen(update, context, file_path):
 
 ''' La funcion button se encarga de tomar todos los botones
     que se apreten en el bot (y que no sean links)'''
+
 
 # TODO: Posiblemente usar Double Dispatch para ver como
 # Cada Boton de validacion hace lo mismo o no
@@ -399,7 +403,6 @@ def checodeppers(update, context):
 
 
 def campusvivo(update, context):
-
     msg = update.message.reply_text("Bancá que me fijo...", quote=False)
 
     campus_response_text = is_campus_up()
@@ -423,7 +426,7 @@ def cuandovence(update, context):
         cuatri, anio = parse_cuatri_y_anio(linea_entrada)
     except Exception:
         msg = update.message.reply_text(
-            "¿Me pasás las cosas bien? Es cuatri+año."+ejemplo, quote=False)
+            "¿Me pasás las cosas bien? Es cuatri+año." + ejemplo, quote=False)
         context.sent_messages.append(msg)
         return
 
@@ -439,7 +442,7 @@ def colaborar(update, context):
     context.sent_messages.append(msg)
 
 
-def agregargrupo(update: Update, context: CallbackContext):
+def agregar(update: Update, context: CallbackContext, grouptype, groupString):
     try:
         url = context.bot.export_chat_invite_link(
             chat_id=update.message.chat.id)
@@ -449,16 +452,15 @@ def agregargrupo(update: Update, context: CallbackContext):
         update.message.reply_text(
             text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin", quote=False)
         return
-
     with db_session:
-        group = Grupo.get(chat_id=chat_id)
+        group = grouptype.get(chat_id=chat_id)
         if group:
             group.url = url
             group.name = name
             update.message.reply_text(
                 text=f"Datos del grupo actualizados", quote=False)
             return
-        group = Grupo(name=name, url=url, chat_id=chat_id)
+        group = grouptype(name=name, url=url, chat_id=chat_id)
     keyboard = [
         [
             InlineKeyboardButton(
@@ -469,82 +471,22 @@ def agregargrupo(update: Update, context: CallbackContext):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.sendMessage(chat_id=137497264,
-                            text="grupo" + ": " + name + "\n" + url,
+                            text=f"{groupString}: {name}\n{url}",
                             reply_markup=reply_markup)
     msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
     context.sent_messages.append(msg)
+
+
+def agregargrupo(update: Update, context: CallbackContext):
+    agregar(update, context, Grupo, "grupo")
 
 
 def agregaroptativa(update: Update, context: CallbackContext):
-    try:
-        url = context.bot.export_chat_invite_link(
-            chat_id=update.message.chat.id)
-        name = update.message.chat.title
-        chat_id = str(update.message.chat.id)
-    except:  # TODO: filter excepts
-        update.message.reply_text(
-            text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin", quote=False)
-        return
-
-    with db_session:
-        group = GrupoOptativa.get(chat_id=chat_id)
-        if group:
-            group.url = url
-            group.name = name
-            update.message.reply_text(
-                text=f"Datos del grupo actualizados", quote=False)
-            return
-        group = GrupoOptativa(name=name, url=url, chat_id=chat_id)
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                text="Aceptar", callback_data=f"Listable|{group.id}|1"),
-            InlineKeyboardButton(
-                text="Rechazar", callback_data=f"Listable|{group.id}|0")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.sendMessage(chat_id=137497264,
-                            text="Optativa" + ": " + name + "\n" + url,
-                            reply_markup=reply_markup)
-    msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
-    context.sent_messages.append(msg)
+    agregar(update, context, GrupoOptativa, "optativa")
 
 
 def agregarotros(update: Update, context: CallbackContext):
-    try:
-        url = context.bot.export_chat_invite_link(
-            chat_id=update.message.chat.id)
-        name = update.message.chat.title
-        chat_id = str(update.message.chat.id)
-    except:  # TODO: filter excepts
-        update.message.reply_text(
-            text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin", quote=False)
-        return
-
-    with db_session:
-        group = GrupoOtros.get(chat_id=chat_id)
-        if group:
-            group.url = url
-            group.name = name
-            update.message.reply_text(
-                text=f"Datos del grupo actualizados", quote=False)
-            return
-        group = GrupoOtros(name=name, url=url, chat_id=chat_id)
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                text="Aceptar", callback_data=f"Listable|{group.id}|1"),
-            InlineKeyboardButton(
-                text="Rechazar", callback_data=f"Listable|{group.id}|0")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.sendMessage(chat_id=137497264,
-                            text="Otros" + ": " + name + "\n" + url,
-                            reply_markup=reply_markup)
-    msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
-    context.sent_messages.append(msg)
+    agregar(update, context, GrupoOtros, "otro")
 
 
 def main():
@@ -563,8 +505,8 @@ def main():
             time=get_hora_feliz_dia()
         )
 
-        #updater.job_queue.run_once(callback=actualizarRiver, when=0)
-        #updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
+        # updater.job_queue.run_once(callback=actualizarRiver, when=0)
+        # updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
 
         updater.job_queue.run_repeating(
             callback=labos.update, interval=datetime.timedelta(hours=1))
@@ -581,4 +523,5 @@ def main():
 
 if __name__ == '__main__':
     from tokenz import *
+
     main()
