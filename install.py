@@ -72,7 +72,15 @@ def install_check_or_install_commands():
 
         check_or_install_command(
             name="agregargrupo",
-            description="Sugiere este grupoa la lista de grupos (prueba de regeneracion)")
+            description="Sugiere este grupo a la lista de grupos (prueba de regeneracion)")
+
+        check_or_install_command(
+            name="agregaroptativa",
+            description="Sugiere este grupo a la lista de grupos off-topic")
+
+        check_or_install_command(
+            name="agregarotros",
+            description="Sugiere este grupo a la lista de optativas (prueba de regeneracion)")
 
         check_or_install_command(
             name="sugeriroptativa",
