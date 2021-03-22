@@ -78,11 +78,11 @@ def list_buttons(update, context, listable_type):
 
 
 def listar(update, context):
-    list_buttons(update, context, Obligatoria)
+    list_buttons(update, context, Grupo)
 
 
 def listaroptativa(update, context):
-    list_buttons(update, context, Optativa)
+    list_buttons(update, context, GrupoOptativa)
 
 
 def listareci(update, context):
@@ -90,18 +90,6 @@ def listareci(update, context):
 
 
 def listarotro(update, context):
-    list_buttons(update, context, Otro)
-
-
-def listargrupo(update, context):
-    list_buttons(update, context, Grupo)
-
-
-def listargrupooptativa(update, context):
-    list_buttons(update, context, GrupoOptativa)
-
-
-def listargrupootros(update, context):
     list_buttons(update, context, GrupoOtros)
 
 
