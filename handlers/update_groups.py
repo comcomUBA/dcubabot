@@ -17,11 +17,13 @@ def update_group_url(context: CallbackContext, chat_id: str) -> (str, str, bool)
 
 def update_groups(context: CallbackContext):
     with db_session:
-        chat_ids = select(l.id for l in Listable if l.validated)
-    for chat_id, url, validated in [update_group_url(context, chat_id) for chat_id in chat_ids]:
+        chats = select((l.id, l.name) for l in Listable if l.validated)
+    for (chat_id, url, validated), name in [(update_group_url(context, chat_id), name) for chat_id, name in chats]:
         with db_session:
             if not validated:
                 Listable[chat_id].validated = False
+                chat_id = -1001067544716
+                context.bot.send_message(chat_id=chat_id, text=f"El grupo {name} murió 💀")
             else:
                 Listable[chat_id].url = url
 
