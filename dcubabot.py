@@ -483,7 +483,7 @@ def main():
         updater.job_queue.run_daily(callback=update_groups, time=get_hora_update_groups())
         # updater.job_queue.run_once(callback=actualizarRiver, when=0)
         # updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
-        dispatcher.add_handler(CommandHandler("actualizar_grupos", actualizar_grupos, Filters.user(user_id=admin_ids[0]) |  Filters.user(user_id=admin_ids[1])))
+        dispatcher.add_handler(CommandHandler("actualizar_grupos", actualizar_grupos, Filters.user(user_id=137497264) ))
 
         updater.job_queue.run_repeating(
             callback=labos.update, interval=datetime.timedelta(hours=1))
