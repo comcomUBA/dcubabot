@@ -19,8 +19,8 @@ def update_groups(context: CallbackContext):
     print("voy a actualizar grupos")
     with db_session:
         chats = list(select((l.id, l.chat_id, l.name) for l in Listable if l.validated))
-    print(f"voy a actualizar {chats}")
-    for id, (chat_id, url, validated), name in [(update_group_url(context, chat_id), name) for id, chat_id, name in
+    print(f"voy a actualizar {len(chats)}")
+    for id, (chat_id, url, validated), name in [(id,update_group_url(context, chat_id), name) for id, chat_id, name in
                                                 chats]:
         print(f"lo que va pasar es que {((chat_id, url, validated), name)} ")
         if not validated:
