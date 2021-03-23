@@ -28,7 +28,6 @@ def update_groups(context: CallbackContext):
                 Listable[id].validated = False
             context.bot.send_message(chat_id="-1001067544716", text=f"El grupo {name} murió 💀")
         else:
-            print(f"nuevo link de {name} es {url}")
             with db_session:
                 Listable[id].url = url
 
