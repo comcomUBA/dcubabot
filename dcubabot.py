@@ -10,24 +10,24 @@ import datetime
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode, Update
 from telegram.ext import (
-    Updater, Filters, MessageHandler, CallbackQueryHandler, CallbackContext)
+    Updater, Filters, MessageHandler, CallbackQueryHandler, CallbackContext, CommandHandler)
 from typing import Dict
 
 # Local imports
 # from tokenz import *
+from handlers.update_groups import update_groups, actualizar_grupos
 from models import *
 from deletablecommandhandler import DeletableCommandHandler
-from orga2Utils import noitip, asm
 from errors import error_callback
 import labos
 from river import getMatches
 from campus import is_campus_up
+from utils.hora_feliz_dia import get_hora_feliz_dia, get_hora_update_groups
 from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
 
 # TODO:Move this out of here
 logging.basicConfig(
     level=logging.INFO,
-    # level=logging.DEBUG,
     format='[%(asctime)s] - [%(name)s] - [%(levelname)s] - %(message)s',
     filename="bots.log")
 
@@ -125,16 +125,6 @@ def felizdia_text(today):
     else:
         mes = meses[mes - 1]
         return "Feliz " + dia + " de " + mes
-
-
-# https://stackoverflow.com/a/11236372/1576803
-def get_hora_feliz_dia():
-    tz = pytz.timezone("America/Argentina/Buenos_Aires")
-    now = datetime.datetime.now(tz).date()
-    midnight = tz.localize(datetime.datetime.combine(now,
-                                                     datetime.time(0, 0, 3)),
-                           is_dst=None)
-    return midnight.astimezone(pytz.utc).time()
 
 
 def felizdia(context):
@@ -488,13 +478,11 @@ def main():
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
 
-        updater.job_queue.run_daily(
-            callback=felizdia,
-            time=get_hora_feliz_dia()
-        )
-
+        updater.job_queue.run_daily(callback=felizdia, time=get_hora_feliz_dia())
+        updater.job_queue.run_daily(callback=update_groups, time=get_hora_update_groups())
         # updater.job_queue.run_once(callback=actualizarRiver, when=0)
         # updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
+        dispatcher.add_handler(CommandHandler("actualizar_grupos", actualizar_grupos, Filters.user(user_id=admin_ids[0]) |  Filters.user(user_id=admin_ids[1])))
 
         updater.job_queue.run_repeating(
             callback=labos.update, interval=datetime.timedelta(hours=1))
