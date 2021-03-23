@@ -63,33 +63,16 @@ def install_check_or_install_commands():
             description="Información sobre una instrucción de Intel 64 o IA-32")
 
         check_or_install_command(
-            name="sugerirgrupo",
-            description="Sugiere un grupo de alguna de las materias obligatorias")
-
-        check_or_install_command(
             name="agregargrupo",
-            description="Sugiere este grupo a la lista de grupos (prueba de regeneracion)")
+            description="Sugiere este grupo a la lista de grupos")
 
         check_or_install_command(
             name="agregaroptativa",
-            description="Sugiere este grupo a la lista de grupos off-topic")
+            description="Sugiere este grupo a la lista de optativas")
 
         check_or_install_command(
             name="agregarotros",
-            description="Sugiere este grupo a la lista de optativas (prueba de regeneracion)")
-
-        check_or_install_command(
-            name="sugeriroptativa",
-            description="Sugiere un grupo de alguna de las materias optativas")
-
-        check_or_install_command(
-            name="sugerireci",
-            description="Sugiere un grupo de alguno de los cursos de la ECI")
-
-        check_or_install_command(
-            name="sugerirotro",
-            description="Sugiere un grupo de cualquier cosa "
-                        "donde predomine gente de Exactas")
+            description="Sugiere este grupo a la lista de grupos off-topic")
 
         check_or_install_command(
             name="flan",
