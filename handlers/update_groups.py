@@ -24,8 +24,12 @@ def update_groups(context: CallbackContext):
         print(f"lo que va pasar es que {((chat_id, url, validated), name)} ")
         if not validated:
             with db_session:
+                print("mira q lo borro")
                 Listable[chat_id].validated = False
+                print("lo borre")
+            print("mira q lo mando")
             context.bot.send_message(chat_id="-1001067544716", text=f"El grupo {name} murió 💀")
+            print("lo mandé")
         else:
             with db_session:
                 Listable[chat_id].url = url
