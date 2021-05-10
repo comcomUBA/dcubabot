@@ -491,7 +491,7 @@ def main():
         add_all_handlers(dispatcher)
         # Start running the bot
 
-        print([(j.name, j.interval) for j in updater.job_queue.jobs()])
+        print([j for j in updater.job_queue.jobs()])
         updater.start_polling(clean=True)
     except Exception as inst:
         logger.critical("ERROR AL INICIAR EL DCUBABOT")
