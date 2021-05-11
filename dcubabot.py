@@ -268,10 +268,10 @@ def mandar_imagen(chat_id, context, file_path):
         file = File.get(path=file_path)
     if file:
         msg = context.bot.send_photo(
-            chat_id=chat_id, photo=file.file_id, quote=False)
+            chat_id=chat_id, photo=file.file_id, allow_sending_without_reply=True)
     else:
         msg = context.bot.send_photo(
-            chat_id=chat_id, photo=open(file_path, 'rb'), quote=False)
+            chat_id=chat_id, photo=open(file_path, 'rb'), allow_sending_without_reply=True)
         with db_session:
             File(path=file_path, file_id=msg.photo[0].file_id)
 
