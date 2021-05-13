@@ -479,7 +479,7 @@ def main():
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
 
-        updater.job_queue.run_daily(callback=felizdia, time=get_hora_feliz_dia())
+        # updater.job_queue.run_daily(callback=felizdia, time=get_hora_feliz_dia())
         updater.job_queue.run_daily(callback=update_groups, time=get_hora_update_groups())
         # updater.job_queue.run_once(callback=actualizarRiver, when=0)
         # updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
