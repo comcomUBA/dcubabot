@@ -11,8 +11,9 @@ def is_campus_up():
         response_time = response.elapsed.total_seconds() 
         
         msg = ""
-        
-        if response_time > response_threshold :
+        if  400 <= response.status_code:
+            msg = "El campus está caído :("
+        elif response_time > response_threshold :
             msg = "El campus pareciera estar andando medio lenteja :/"
         else:
             msg = "El campus pareciera estar andando :)"      
