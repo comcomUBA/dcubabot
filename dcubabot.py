@@ -6,6 +6,7 @@ import sys
 import logging
 import pytz
 import datetime
+import random
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode, Update
@@ -129,16 +130,12 @@ def felizdia_text(today):
 
 
 def felizdia(context):
+    if uniform(0,7)>1:
+        return
     today = datetime.date.today()
-    msg_coronavirus = "Y recuerden amigues, ya no hay ASPO pero ahora hay DISPO. Usen tapabocas, guarden distancia, laven sus manitos, \nSEAN RESPONSABLES Y NO SALGAN POR CUALQUIER COSA COMO FORRES"
     chat_id = -1001067544716
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
-    context.bot.send_message(chat_id=chat_id, text=msg_coronavirus)
-    mandar_imagen(chat_id, context, "files/heman.jpg")
-    context.bot.send_message(
-        chat_id=chat_id,
-        text="Este mensaje fue patrocinado por @comcollectbot ! \n (si, estoy al pedo y yo mantengo el bot, denme mi serotonina (?)")
-
+    
 
 def suggest_listable(update, context, listable_type):
     try:
@@ -475,6 +472,7 @@ def main():
         botname = "DCUBABOT"
         print("Iniciando DCUBABOT")
         logger.info("Iniciando")
+        random.seed()
         init_db("dcubabot.sqlite3")
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
