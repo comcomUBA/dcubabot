@@ -366,9 +366,14 @@ def checodepers(update, context):
         context.bot.sendMessage(
             chat_id="-311333765", text=f"{user.first_name}(@{user.username}) : {message}")
     except Exception:
-        context.bot.forward_message(
-            "-311333765", update.message.chat_id, update.message.message_id)
-        print("Malio sal", str(user))
+        try:
+            context.bot.forward_message(
+                "-311333765", update.message.chat_id, update.message.message_id)
+            logger.info(f"Malio sal {str(user)}")
+        except Exception as e:
+            update.message.reply_text("La verdad me re rompí, avisale a roz asi ve que onda", quote=False)
+            logger.error(e)
+            return
     msg = update.message.reply_text(
         "OK, se lo mando a les codepers.", quote=False)
     context.sent_messages.append(msg)
