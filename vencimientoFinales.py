@@ -19,9 +19,10 @@ EXT_SEP_TXT = "Septiembre de "
 
 ## CARGAR EXCEPCIONES
 #               año : cuatrimestres de validez (default 8)
-EXCEPCIONES = { "2016": 11,
-                "2017": 10,
-                "2018": 9}
+EXCEPCIONES = { "2016": 12,
+                "2017": 11,
+                "2018": 10,
+                "2019": 9}
 
 class Cursada():
     @classmethod
