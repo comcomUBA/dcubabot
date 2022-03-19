@@ -3,3 +3,5 @@ python_telegram_bot
 icalevents
 pytz
 requests
+DateTime
+beautifulsoup4

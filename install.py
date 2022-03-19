@@ -105,6 +105,14 @@ def install_check_or_install_commands():
             name="colaborar",
             description="Devuelve el repositorio donde se desarrolla el DCUBABOT.")
 
+        check_or_install_command(
+            name="final",
+            description="Dado un mes, te da la información de la/s fecha/s de final.")
+
+        check_or_install_command(
+            name="cuatrimestre",
+            description="Dado un cuatrimestre (o verano), te da la información de info del calendario.")
+
         # Administration commands
         check_or_install_command(name="togglecommand")
 
