@@ -223,7 +223,7 @@ def togglecommand(update, context):
 def sugerir(update, context):
     update.message.reply_text(
         text=f"Ahora en mas las sugerencias las vamos a tomar en github:\n "
-             "https://github.com/rozen03/dcubabot/issues", quote=False)
+             "https://github.com/comcomUBA/dcubabot/issues", quote=False)
 
 
 def sugerirNoticia(update, context):
@@ -439,7 +439,7 @@ def cuandovence(update, context):
 
 def colaborar(update, context):
     msg = update.message.reply_text(
-        "Se puede colaborar con el DCUBA bot en https://github.com/rozen03/dcubabot", quote=False)
+        "Se puede colaborar con el DCUBA bot en https://github.com/comcomUBA/dcubabot", quote=False)
     context.sent_messages.append(msg)
 
 
