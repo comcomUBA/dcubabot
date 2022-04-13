@@ -26,6 +26,7 @@ from campus import is_campus_up
 from utils.hora_feliz_dia import get_hora_feliz_dia, get_hora_update_groups
 from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
 from orga2Utils import noitip, asm
+from tg_ids import DC_GROUP_CHATID, ROZEN_CHATID, DGARRO_CHATID
 
 # TODO:Move this out of here
 logging.basicConfig(
@@ -35,7 +36,7 @@ logging.basicConfig(
 
 # Globals ...... yes, globals
 logger = logging.getLogger("DCUBABOT")
-admin_ids = [137497264, 187622583]  # @Rozen, @dgarro
+admin_ids = [ROZEN_CHATID, DGARRO_CHATID]  # @Rozen, @dgarro
 command_handlers = {}
 
 
@@ -133,7 +134,7 @@ def felizdia(context):
     if uniform(0,7)>1:
         return
     today = datetime.date.today()
-    chat_id = -1001067544716
+    chat_id = DC_GROUP_CHATID
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
     
 
@@ -160,7 +161,7 @@ def suggest_listable(update, context, listable_type):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.sendMessage(chat_id=137497264,
+    context.bot.sendMessage(chat_id=ROZEN_CHATID,
                             text=listable_type.__name__ + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
     msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
@@ -251,7 +252,7 @@ def sugerirNoticia(update, context):
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        context.bot.sendMessage(chat_id=137497264, text=f"Noticia-{name}: {texto}",
+        context.bot.sendMessage(chat_id=ROZEN_CHATID, text=f"Noticia-{name}: {texto}",
                                 reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
         update.message.reply_text(text="Ok, se lo pregunto a Rozen")
     except Exception as inst:
@@ -311,7 +312,7 @@ def button(update, context):
             if action == "1":
                 noticia.validated = True
                 action_text = "\n¡Aceptado!"
-                context.bot.sendMessage(chat_id="@NoticiasDC",
+                context.bot.sendMessage(chat_id=NOTICIAS_CHATID,
                                         text=noticia.text, parse_mode=ParseMode.MARKDOWN)
             else:
                 noticia.delete()
@@ -338,7 +339,7 @@ def actualizarRiver(context):
         msg = f"Hoy juega River, {horario}"
         msg += f"\n(contra {partido.equipo_visitante}, {partido.copa})"
 
-        context.bot.sendMessage(chat_id=-1001067544716, text=msg)
+        context.bot.sendMessage(chat_id=DC_GROUP_CHATID, text=msg)
 
 
     for h in [9, 13, 16]:  # varios horarios por si las dudas
@@ -381,11 +382,11 @@ def checodepers(update, context):
             raise Exception("not userneim")
         message = " ".join(context.args)
         context.bot.sendMessage(
-            chat_id="-1001625164045", text=f"{user.first_name}(@{user.username}) : {message}")
+            chat_id=CODEPERS_CHATID, text=f"{user.first_name}(@{user.username}) : {message}")
     except Exception:
         try:
             context.bot.forward_message(
-                "-1001625164045", update.message.chat_id, update.message.message_id)
+                CODEPERS_CHATID, update.message.chat_id, update.message.message_id)
             logger.info(f"Malio sal {str(user)}")
         except Exception as e:
             update.message.reply_text("La verdad me re rompí, avisale a roz asi ve que onda", quote=False)
@@ -468,7 +469,7 @@ def agregar(update: Update, context: CallbackContext, grouptype, groupString):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.sendMessage(chat_id=137497264,
+    context.bot.sendMessage(chat_id=ROZEN_CHATID,
                             text=f"{groupString}: {name}\n{url}",
                             reply_markup=reply_markup)
     msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
