@@ -19,7 +19,6 @@ from typing import Dict
 from handlers.update_groups import update_groups, actualizar_grupos
 from models import *
 from deletablecommandhandler import DeletableCommandHandler
-from errors import error_callback
 import labos
 import river
 from campus import is_campus_up
@@ -38,6 +37,9 @@ logging.basicConfig(
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [ROZEN_CHATID, DGARRO_CHATID]  # @Rozen, @dgarro
 command_handlers = {}
+
+def error_callback(update, context):
+    logger.exception(context.error)
 
 
 def start(update, context):
