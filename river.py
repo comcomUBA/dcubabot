@@ -77,9 +77,9 @@ def es_local(dt: datetime.datetime):
         if not p.es_local:
             continue
 
-        return True
+        return True, p
 
-    return False
+    return False, None
 
 
 if __name__ == "__main__":

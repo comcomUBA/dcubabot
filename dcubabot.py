@@ -21,7 +21,7 @@ from models import *
 from deletablecommandhandler import DeletableCommandHandler
 from errors import error_callback
 import labos
-from river import getMatches
+import river
 from campus import is_campus_up
 from utils.hora_feliz_dia import get_hora_feliz_dia, get_hora_update_groups
 from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
@@ -321,15 +321,32 @@ def button(update, context):
                                         text=message.text + action_text)
 
 
-def hoyJuegaRiver(context):
-    context.bot.sendMessage(chat_id=-1001067544716, text="Hoy Juega River")
 
 
 def actualizarRiver(context):
-    for matchTime in getMatches():
-        for h in [9, 13, 16]:  # varios horarios por si las dudas
-            context.job_queue.run_once(callback=hoyJuegaRiver,
-                                       when=matchTime.replace(hour=h))
+    matchTime = datetime.datetime.now()
+    local, partido = river.es_local(matchTime)
+    if not local:
+        return
+
+    def river_msg(context):
+        if partido.hora is None:
+            horario = "hora a confirmar"
+        else:
+            horario = partido.hora.strftime("a las %H:%M")
+
+        msg = f"Hoy juega River, {horario}"
+        msg += f"\n(contra {partido.equipo_visitante}, {partido.copa})"
+
+        context.bot.sendMessage(chat_id=-1001067544716, text=msg)
+
+
+    for h in [9, 13, 16]:  # varios horarios por si las dudas
+        context.job_queue.run_once(callback=river_msg,
+                                   when=matchTime.replace(hour=h))
+
+    # para testearlo
+    # river_msg(context)
 
 
 def add_all_handlers(dispatcher):
@@ -484,8 +501,10 @@ def main():
 
         updater.job_queue.run_daily(callback=felizdia, time=get_hora_feliz_dia())
         updater.job_queue.run_daily(callback=update_groups, time=get_hora_update_groups())
-        # updater.job_queue.run_once(callback=actualizarRiver, when=0)
-        # updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
+
+        updater.job_queue.run_once(callback=actualizarRiver, when=0)
+        updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
+
         dispatcher.add_handler(CommandHandler("actualizar_grupos", actualizar_grupos )) #, Filters.user(user_id=137497264) ))
 
         updater.job_queue.run_repeating(
