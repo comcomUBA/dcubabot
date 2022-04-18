@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 
+from tg_ids import DC_GROUP_CHATID
+
 from pony.orm import db_session, select
 from telegram import Update
 from telegram.ext import Updater, CallbackContext
@@ -26,7 +28,7 @@ def update_groups(context: CallbackContext):
         if not validated:
             with db_session:
                 Listable[id].validated = False
-            context.bot.send_message(chat_id="-1001067544716", text=f"El grupo {name} murió 💀")
+            context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {name} murió 💀")
         else:
             with db_session:
                 Listable[id].url = url
