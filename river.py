@@ -71,7 +71,7 @@ def es_local(dt: datetime.datetime):
     partidos = fetch()
 
     for p in partidos:
-        if p.fecha == fecha:
+        if p.fecha != fecha:
             continue
 
         if not p.es_local:
