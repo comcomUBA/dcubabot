@@ -25,7 +25,7 @@ from campus import is_campus_up
 from utils.hora_feliz_dia import get_hora_feliz_dia, get_hora_update_groups
 from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
 from orga2Utils import noitip, asm
-from tg_ids import DC_GROUP_CHATID, ROZEN_CHATID, DGARRO_CHATID
+from tg_ids import DC_GROUP_CHATID, ROZEN_CHATID, DGARRO_CHATID, CODEPERS_CHATID, NOTICIAS_CHATID
 
 # TODO:Move this out of here
 logging.basicConfig(
