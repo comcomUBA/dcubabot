@@ -343,10 +343,11 @@ def actualizarRiver(context):
 
         context.bot.sendMessage(chat_id=DC_GROUP_CHATID, text=msg)
 
-
-    for h in [9, 13, 16]:  # varios horarios por si las dudas
-        context.job_queue.run_once(callback=river_msg,
-                                   when=matchTime.replace(hour=h))
+    for h in [
+        # horas en UTC!
+        (11 + 3),  # 11am argentina
+    ]:
+        context.job_queue.run_once(callback=river_msg, when=matchTime.replace(hour=h))
 
     # para testearlo
     # river_msg(context)
