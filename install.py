@@ -111,6 +111,6 @@ def install_check_or_install_commands():
 
 if __name__ == '__main__':
     db.bind('sqlite', "dcubabot.sqlite3", create_db=True)
-    db.drop_table("Command",if_exists=True, with_all_data=True)
+    db.drop_table("Command", if_exists=True, with_all_data=True)
     db.generate_mapping(create_tables=True)
     install_check_or_install_commands()
