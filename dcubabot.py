@@ -492,6 +492,10 @@ def agregarotros(update: Update, context: CallbackContext):
     agregar(update, context, GrupoOtros, "otro")
 
 
+def agregareci(update: Update, context: CallbackContext):
+    agregar(update, context, ECI, "eci")
+
+
 def main():
     try:
         global update_id
