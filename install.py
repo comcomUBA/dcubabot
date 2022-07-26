@@ -75,6 +75,10 @@ def install_check_or_install_commands():
             description="Sugiere este grupo a la lista de grupos off-topic")
 
         check_or_install_command(
+            name="agregareci",
+            description="Sugiere este grupo a la lista de grupos de la ECI")
+
+        check_or_install_command(
             name="flan",
             description="Muestra el grafo de materias de la carrera "
                         "con correlatividades")
