@@ -75,6 +75,10 @@ def install_check_or_install_commands():
             description="Sugiere este grupo a la lista de grupos off-topic")
 
         check_or_install_command(
+            name="agregareci",
+            description="Sugiere este grupo a la lista de grupos de la ECI")
+
+        check_or_install_command(
             name="flan",
             description="Muestra el grafo de materias de la carrera "
                         "con correlatividades")
@@ -111,6 +115,6 @@ def install_check_or_install_commands():
 
 if __name__ == '__main__':
     db.bind('sqlite', "dcubabot.sqlite3", create_db=True)
-    db.drop_table("Command",if_exists=True, with_all_data=True)
+    db.drop_table("Command", if_exists=True, with_all_data=True)
     db.generate_mapping(create_tables=True)
     install_check_or_install_commands()
