@@ -38,6 +38,7 @@ logger = logging.getLogger("DCUBABOT")
 admin_ids = [ROZEN_CHATID, DGARRO_CHATID]  # @Rozen, @dgarro
 command_handlers = {}
 
+
 def error_callback(update, context):
     logger.exception(context.error)
 
@@ -133,12 +134,12 @@ def felizdia_text(today):
 
 
 def felizdia(context):
-    if uniform(0,7)>1:
+    if uniform(0, 7) > 1:
         return
     today = datetime.date.today()
     chat_id = DC_GROUP_CHATID
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
-    
+
 
 def suggest_listable(update, context, listable_type):
     try:
@@ -324,8 +325,6 @@ def button(update, context):
                                         text=message.text + action_text)
 
 
-
-
 def actualizarRiver(context):
     matchTime = datetime.datetime.now()
     local, partido = river.es_local(matchTime)
@@ -347,7 +346,8 @@ def actualizarRiver(context):
         # horas en UTC!
         (11 + 3),  # 11am argentina
     ]:
-        context.job_queue.run_once(callback=river_msg, when=matchTime.replace(hour=h))
+        context.job_queue.run_once(
+            callback=river_msg, when=matchTime.replace(hour=h))
 
     # para testearlo
     # river_msg(context)
@@ -392,7 +392,8 @@ def checodepers(update, context):
                 CODEPERS_CHATID, update.message.chat_id, update.message.message_id)
             logger.info(f"Malio sal {str(user)}")
         except Exception as e:
-            update.message.reply_text("La verdad me re rompí, avisale a roz asi ve que onda", quote=False)
+            update.message.reply_text(
+                "La verdad me re rompí, avisale a roz asi ve que onda", quote=False)
             logger.error(e)
             return
     msg = update.message.reply_text(
@@ -503,13 +504,18 @@ def main():
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
 
-        updater.job_queue.run_daily(callback=felizdia, time=get_hora_feliz_dia())
-        updater.job_queue.run_daily(callback=update_groups, time=get_hora_update_groups())
+        updater.job_queue.run_daily(
+            callback=felizdia, time=get_hora_feliz_dia())
+        updater.job_queue.run_daily(
+            callback=update_groups, time=get_hora_update_groups())
 
         updater.job_queue.run_once(callback=actualizarRiver, when=0)
-        updater.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
+        updater.job_queue.run_daily(
+            callback=actualizarRiver, time=datetime.time())
 
-        dispatcher.add_handler(CommandHandler("actualizar_grupos", actualizar_grupos )) #, Filters.user(user_id=137497264) ))
+        # , Filters.user(user_id=137497264) ))
+        dispatcher.add_handler(CommandHandler(
+            "actualizar_grupos", actualizar_grupos))
 
         updater.job_queue.run_repeating(
             callback=labos.update, interval=datetime.timedelta(hours=1))
