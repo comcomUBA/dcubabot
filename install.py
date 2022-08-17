@@ -83,6 +83,10 @@ def install_check_or_install_commands():
             description="Muestra el grafo de materias de la carrera "
                         "con correlatividades")
 
+        check_or_install_command(
+            name="aulas",
+            description="Mostrar las aulas de cero mas infinito")
+
         check_or_install_command(name="sugerir")
 
         check_or_install_command(name="sugerirNoticia")
