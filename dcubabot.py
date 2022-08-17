@@ -200,6 +200,10 @@ def flan(update, context):
     responder_imagen(update, context, 'files/Plandeestudios.png')
 
 
+def aulas(update, context):
+    responder_imagen(update, context, 'files/0I-aulas.pdf')
+
+
 def togglecommand(update, context):
     if context.args and update.message.from_user.id in admin_ids:
         command_name = context.args[0]
@@ -279,9 +283,23 @@ def mandar_imagen(chat_id, context, file_path):
     # context.sent_messages.append(msg)
 
 
+# Manda un documento a partir de su path al chat del update dado
+def mandar_pdf(chat_id, context, file_path):
+    context.bot.sendChatAction(
+        chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
+    with db_session:
+        file = File.get(path=file_path)
+    if file:
+        msg = context.bot.send_document(
+            chat_id=chat_id, document=file.file_id, allow_sending_without_reply=True)
+    else:
+        msg = context.bot.send_photo(
+            chat_id=chat_id, document=open(file_path, 'rb'), allow_sending_without_reply=True)
+        with db_session:
+            File(path=file_path, file_id=msg.document[0].file_id)
+
+
 # Responde una imagen a partir de su path al chat del update dado
-
-
 def responder_imagen(update, context, file_path):
     mandar_imagen(update.message.chat_id, context, file_path)
 
@@ -292,6 +310,10 @@ def responder_imagen(update, context, file_path):
 
 # TODO: Posiblemente usar Double Dispatch para ver como
 # Cada Boton de validacion hace lo mismo o no
+
+# Responde un documento a partir de su path al chat del update dado
+def reponder_documento(update, context, file_path):
+    mandar_pdf(update.message.chat_id, context, file_path)
 
 
 def button(update, context):
