@@ -201,7 +201,7 @@ def flan(update, context):
 
 
 def aulas(update, context):
-    responder_imagen(update, context, 'files/0I-aulas.pdf')
+    reponder_documento(update, context, 'files/0I-aulas.pdf')
 
 
 def togglecommand(update, context):
