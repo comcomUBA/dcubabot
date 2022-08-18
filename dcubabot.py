@@ -293,7 +293,7 @@ def mandar_pdf(chat_id, context, file_path):
         msg = context.bot.send_document(
             chat_id=chat_id, document=file.file_id, allow_sending_without_reply=True)
     else:
-        msg = context.bot.send_photo(
+        msg = context.bot.send_document(
             chat_id=chat_id, document=open(file_path, 'rb'), allow_sending_without_reply=True)
         with db_session:
             File(path=file_path, file_id=msg.document[0].file_id)
