@@ -201,7 +201,7 @@ def flan(update, context):
 
 
 def aulas(update, context):
-    reponder_documento(update, context, 'files/0I-aulas.pdf')
+    responder_documento(update, context, 'files/0I-aulas.pdf')
 
 
 def togglecommand(update, context):
@@ -312,7 +312,7 @@ def responder_imagen(update, context, file_path):
 # Cada Boton de validacion hace lo mismo o no
 
 # Responde un documento a partir de su path al chat del update dado
-def reponder_documento(update, context, file_path):
+def responder_documento(update, context, file_path):
     mandar_pdf(update.message.chat_id, context, file_path)
 
 
