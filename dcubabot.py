@@ -6,13 +6,14 @@ import sys
 import logging
 import pytz
 import datetime
+from zoneinfo import ZoneInfo
 import random
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode, Update
 from telegram.ext import (
     Updater, Filters, MessageHandler, CallbackQueryHandler, CallbackContext, CommandHandler)
-from typing import Dict
+from typing import Dict, Final
 
 # Local imports
 # from tokenz import *
@@ -37,6 +38,7 @@ logging.basicConfig(
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [ROZEN_CHATID, DGARRO_CHATID]  # @Rozen, @dgarro
 command_handlers = {}
+bsasTz: Final = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 def error_callback(update, context):
@@ -348,8 +350,9 @@ def button(update, context):
 
 
 def actualizarRiver(context):
-    matchTime = datetime.datetime.now()
-    local, partido = river.es_local(matchTime)
+    hoy = datetime.datetime.now()
+    mañana = hoy + datetime.timedelta(days=1)
+    local, partido = river.es_local(mañana)
     if not local:
         return
 
@@ -359,17 +362,14 @@ def actualizarRiver(context):
         else:
             horario = partido.hora.strftime("a las %H:%M")
 
-        msg = f"Hoy juega River, {horario}"
+        msg = f"Mañana juega River, {horario}"
         msg += f"\n(contra {partido.equipo_visitante}, {partido.copa})"
 
-        context.bot.sendMessage(chat_id=DC_GROUP_CHATID, text=msg)
+        context.bot.sendMessage(chat_id=NOTICIAS_CHATID, text=msg)
 
-    for h in [
-        # horas en UTC!
-        (11 + 3),  # 11am argentina
-    ]:
-        context.job_queue.run_once(
-            callback=river_msg, when=matchTime.replace(hour=h))
+    # la hora local es UTC así que especificamos el timezone que corresponde para el aviso acá
+    avisoHora = hoy.replace(hour=20, tzinfo=bsasTz)  # 8pm argentina, buenos aires
+    context.job_queue.run_once(callback=river_msg, when=avisoHora)
 
     # para testearlo
     # river_msg(context)
