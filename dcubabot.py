@@ -199,8 +199,10 @@ def listarlabos(update, context):
 
 
 def flan(update, context):
-    responder_imagen(update, context, 'files/Plandeestudios.png')
+  responder_imagen(update, context, 'files/PlanDeEstudios.png');
 
+def flanv(update, context):
+  responder_imagen(update, context, 'files/PlanDeEstudios_viejo.png');
 
 def aulas(update, context):
     responder_documento(update, context, 'files/0I-aulas.pdf')
