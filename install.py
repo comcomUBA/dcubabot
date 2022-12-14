@@ -84,6 +84,11 @@ def install_check_or_install_commands():
                         "con correlatividades")
 
         check_or_install_command(
+            name="flanv",
+            description="Muestra el grafo viejo de materias de la carrera "
+                        "con correlatividades")
+
+        check_or_install_command(
             name="aulas",
             description="Mostrar las aulas de cero mas infinito")
 
