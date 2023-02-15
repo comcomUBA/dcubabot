@@ -4,4 +4,4 @@ icalevents
 pytz
 requests
 robobrowser==0.5.3
-Werkzeug==0.15.5
+Werkzeug==2.2.3
