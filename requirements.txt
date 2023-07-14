@@ -1,5 +1,5 @@
 pony
-python_telegram_bot
+python_telegram_bot==13.5
 icalevents
 pytz
 requests
