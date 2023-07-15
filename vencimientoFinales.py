@@ -94,14 +94,14 @@ def calcular_vencimiento(cuatri, anio):
 
     if anio in EXCEPCIONES:
         cuatris_validez = EXCEPCIONES[anio]
-        txt_excepcion = "\n\n*El vencimiento de tu cursada fue extendido por resolución del Consejo Directivo. Por esta razón la fecha que te muestra el bot es superior a los 8 cuatrimestres desde la cursada.*"
-    
+        txt_excepcion = "\n\n*El vencimiento de tu cursada fue extendido por resolución* [1082/21](http://www.fcen.uba.ar/ConsejoDirectivo/index/ver_resolucion?url=2021-7-12) *del Consejo Directivo. Por esta razón la fecha que te muestra el bot es superior a los 8 cuatrimestres habituales, contando el cuatrimestre cursado.*\n\n"
+
     cursada = Cursada.nueva(cuatri, anio, cuatris_validez)
 
     mje = armar_texto(cursada, txt_excepcion)
 
     return mje
-    
+
 def unificar_especiales(cuatri):
     if cuatri in VERANOS:
         cuatri = VERANO
