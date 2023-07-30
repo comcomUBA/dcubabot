@@ -457,7 +457,7 @@ def cuandovence(update, context):
 
     vencimiento = calcular_vencimiento(cuatri, anio)
     msg = update.message.reply_text(
-        vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN)
+        vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN,disable_web_page_preview=True)
     context.sent_messages.append(msg)
 
 
