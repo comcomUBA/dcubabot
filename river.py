@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import re
 
 from dataclasses import dataclass
@@ -44,7 +44,7 @@ class Partido:
             raise ValueError
 
         _dow, dmy = _fecha.split(" ")
-        fecha = datetime.datetime.strptime(dmy, "%d/%m/%Y").date()
+        fecha = datetime.strptime(dmy, "%d/%m/%Y").date()
 
         hora = None
         if _hora not in UNSPECIFIED_TIMES:
@@ -54,7 +54,7 @@ class Partido:
             else:
                 fmt = "%H"
 
-            hora = datetime.datetime.strptime(_hora, fmt).time()
+            hora = datetime.strptime(_hora, fmt).time()
 
         return Partido(
             equipos[0],
@@ -121,7 +121,7 @@ def fetch_conciertos():
     
     return conciertos
 
-def es_local(dt: datetime.datetime):
+def es_local(dt: datetime):
     fecha = dt.date()
 
     partidos = fetch_partidos()
@@ -137,7 +137,7 @@ def es_local(dt: datetime.datetime):
 
     return False, None
 
-def hay_concierto(dt: datetime.datetime):
+def hay_concierto(dt: datetime):
     fecha = dt.date()
 
     conciertos = fetch_conciertos()
@@ -151,5 +151,5 @@ def hay_concierto(dt: datetime.datetime):
     return False, None
     
 if __name__ == "__main__":
-    print(es_local(datetime.datetime.today()))
-    print(hay_concierto(datetime.datetime.today()))
+    print(es_local(datetime.today()))
+    print(hay_concierto(datetime.today()))
