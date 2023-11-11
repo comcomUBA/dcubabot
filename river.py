@@ -117,8 +117,10 @@ def fetch_conciertos():
     conciertos = []
     
     for el in browser.select(".gws-horizon-textlists__tl-lif"):
-        conciertos.append(Concierto.parse(el))
-    
+        concierto = Concierto.parse(el)
+        if concierto:
+            conciertos.append(concierto)
+
     return conciertos
 
 def es_local(dt: datetime):
