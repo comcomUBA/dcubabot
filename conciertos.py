@@ -38,9 +38,9 @@ class Concierto:
         if not es_en_river:
             return None
         
-        # Si el titulo tiene "vs" entonces es un partido de futbol (heuristica)
+        # Si el titulo tiene " vs " entonces es un partido de futbol (heuristica)
         # y ya lo cubre la otra funcion
-        if "vs" in titulo.lower():
+        if " vs " in titulo.lower():
             return None
         
         return Concierto(
