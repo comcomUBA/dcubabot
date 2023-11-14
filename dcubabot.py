@@ -22,6 +22,7 @@ from models import *
 from deletablecommandhandler import DeletableCommandHandler
 import labos
 import river
+import conciertos
 from campus import is_campus_up
 from utils.hora_feliz_dia import get_hora_feliz_dia, get_hora_update_groups
 from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
@@ -377,7 +378,7 @@ def actualizarPartidos(context):
 def actualizarConciertos(context):
     hoy = datetime.datetime.now()
     mañana = hoy + datetime.timedelta(days=1)
-    hay_concierto, concierto = river.hay_concierto(mañana)
+    hay_concierto, concierto = conciertos.hay_concierto(mañana)
     
     if not hay_concierto:
         return
