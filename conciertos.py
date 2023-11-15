@@ -11,16 +11,19 @@ class Concierto:
     
     @staticmethod
     def parse(evento):
-        info = json.loads(evento.select("script")[0].text)[0]
-        titulo = info["name"]
-        fecha = info["startDate"].split("T")[0]
-        
-        fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
-                
-        return Concierto(
-            titulo,
-            fecha,
-        )
+        try:
+            info = json.loads(evento.select("script")[0].text)[0]
+            titulo = info["name"]
+            fecha = info["startDate"].split("T")[0]
+            
+            fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
+                    
+            return Concierto(
+                titulo,
+                fecha,
+            )
+        except:
+            return None
         
 def fetch_conciertos():
     browser = RoboBrowser(parser="html.parser")
