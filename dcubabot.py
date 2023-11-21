@@ -22,6 +22,7 @@ from models import *
 from deletablecommandhandler import DeletableCommandHandler
 import labos
 import river
+import conciertos
 from campus import is_campus_up
 from utils.hora_feliz_dia import get_hora_feliz_dia, get_hora_update_groups
 from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
@@ -349,14 +350,14 @@ def button(update, context):
                                         text=message.text + action_text)
 
 
-def actualizarRiver(context):
+def actualizarPartidos(context):
     hoy = datetime.datetime.now()
     mañana = hoy + datetime.timedelta(days=1)
     local, partido = river.es_local(mañana)
     if not local:
         return
 
-    def river_msg(context):
+    def partido_msg(context):
         if partido.hora is None:
             horario = "hora a confirmar"
         else:
@@ -369,11 +370,29 @@ def actualizarRiver(context):
 
     # la hora local es UTC así que especificamos el timezone que corresponde para el aviso acá
     avisoHora = hoy.replace(hour=20, tzinfo=bsasTz)  # 8pm argentina, buenos aires
-    context.job_queue.run_once(callback=river_msg, when=avisoHora)
+    context.job_queue.run_once(callback=partido_msg, when=avisoHora)
 
     # para testearlo
-    # river_msg(context)
+    # partido_msg(context)
 
+def actualizarConciertos(context):
+    hoy = datetime.datetime.now()
+    mañana = hoy + datetime.timedelta(days=1)
+    hay_concierto, concierto = conciertos.hay_concierto(mañana)
+    
+    if not hay_concierto:
+        return
+    
+    def concierto_msg(context):
+        msg = f"Mañana hay un concierto en River\n{concierto.titulo}"
+        context.bot.sendMessage(chat_id=NOTICIAS_CHATID, text=msg)
+        
+    avisoHora = hoy.replace(hour=20, tzinfo=bsasTz)  # 8pm argentina, buenos aires
+    context.job_queue.run_once(callback=concierto_msg, when=avisoHora)
+
+def actualizarRiver(context):
+    actualizarPartidos(context)
+    actualizarConciertos(context)
 
 def add_all_handlers(dispatcher):
     descriptions = []

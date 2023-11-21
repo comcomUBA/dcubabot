@@ -1,12 +1,9 @@
-import datetime
-
+from datetime import datetime
 from dataclasses import dataclass
-
 from robobrowser import RoboBrowser
 
 RIVER = "River Plate"
 UNSPECIFIED_TIMES = {"A confirmar", ""}
-
 
 @dataclass
 class Partido:
@@ -21,7 +18,7 @@ class Partido:
         return self.equipo_local == RIVER
 
     @staticmethod
-    def from_d_calendario(el):
+    def parse(el):
         equipos = [e.strip() for e in el.select("b")[0].text.split("vs.")]
         line2 = el.select("p")[0].text
         copa, _, line2 = line2.partition(" • ")
@@ -32,7 +29,7 @@ class Partido:
             raise ValueError
 
         _dow, dmy = _fecha.split(" ")
-        fecha = datetime.datetime.strptime(dmy, "%d/%m/%Y").date()
+        fecha = datetime.strptime(dmy, "%d/%m/%Y").date()
 
         hora = None
         if _hora not in UNSPECIFIED_TIMES:
@@ -42,7 +39,7 @@ class Partido:
             else:
                 fmt = "%H"
 
-            hora = datetime.datetime.strptime(_hora, fmt).time()
+            hora = datetime.strptime(_hora, fmt).time()
 
         return Partido(
             equipos[0],
@@ -52,23 +49,21 @@ class Partido:
             hora,
         )
 
-
-def fetch():
+def fetch_partidos():
     browser = RoboBrowser(parser="html.parser")
     browser.open("https://www.cariverplate.com.ar/calendario-de-partidos")
 
-    res = []
+    partidos = []
 
     for el in browser.select(".d_calendario"):
-        res.append(Partido.from_d_calendario(el))
+        partidos.append(Partido.parse(el))
+        
+    return partidos
 
-    return res
-
-
-def es_local(dt: datetime.datetime):
+def es_local(dt: datetime):
     fecha = dt.date()
 
-    partidos = fetch()
+    partidos = fetch_partidos()
 
     for p in partidos:
         if p.fecha != fecha:
@@ -81,8 +76,5 @@ def es_local(dt: datetime.datetime):
 
     return False, None
 
-
 if __name__ == "__main__":
-    partidos = fetch()
-
-    print(es_local(datetime.datetime.today()))
+    print(es_local(datetime.today()))
