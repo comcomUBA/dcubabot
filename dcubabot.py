@@ -6,7 +6,6 @@ import sys
 import logging
 import pytz
 import datetime
-from zoneinfo import ZoneInfo
 import random
 
 # Non STL imports
@@ -39,7 +38,7 @@ logging.basicConfig(
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [ROZEN_CHATID, DGARRO_CHATID]  # @Rozen, @dgarro
 command_handlers = {}
-bsasTz: Final = ZoneInfo("America/Argentina/Buenos_Aires")
+bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 
 
 def error_callback(update, context):
@@ -354,6 +353,7 @@ def actualizarPartidos(context):
     hoy = datetime.datetime.now()
     mañana = hoy + datetime.timedelta(days=1)
     local, partido = river.es_local(mañana)
+
     if not local:
         return
 
@@ -386,7 +386,7 @@ def actualizarConciertos(context):
     def concierto_msg(context):
         msg = f"Mañana hay un concierto en River\n{concierto.titulo}"
         context.bot.sendMessage(chat_id=NOTICIAS_CHATID, text=msg)
-        
+
     avisoHora = hoy.replace(hour=20, tzinfo=bsasTz)  # 8pm argentina, buenos aires
     context.job_queue.run_once(callback=concierto_msg, when=avisoHora)
 
