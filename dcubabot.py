@@ -201,6 +201,8 @@ def listarlabos(update, context):
 def flan(update, context):
     responder_imagen(update, context, 'files/Plandeestudios.png')
 
+def flan93(update, context):
+    responder_imagen(update, context, 'files/Plandeestudios-93.png')
 
 def aulas(update, context):
     responder_documento(update, context, 'files/0I-aulas.pdf')
