@@ -191,7 +191,12 @@ def sugerirotro(update, context):
 
 def listarlabos(update, context):
     args = context.args
-    mins = int(args[0]) if len(args) > 0 else 0
+    if len(args) == 1:
+        mins = int(args[0])
+        if mins > datetime.timedelta.max.total_seconds() / 60:
+            mins = 0
+    else:
+        mins = 0
     instant = labos.aware_now() + datetime.timedelta(minutes=mins)
     respuesta = '\n'.join(labos.events_at(instant))
     msg = update.message.reply_text(text=respuesta, quote=False)
