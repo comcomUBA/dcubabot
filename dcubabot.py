@@ -199,7 +199,7 @@ def listarlabos(update, context):
 
 
 def flan(update, context):
-    responder_imagen(update, context, 'files/Plandeestudios.png')
+    responder_imagen(update, context, 'files/Plandeestudios-23.png')
 
 def flanviejo(update, context):
     responder_imagen(update, context, 'files/Plandeestudios-93.png')
