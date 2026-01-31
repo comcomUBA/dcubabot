@@ -1,4 +1,3 @@
-pony
 icalevents
 pytz
 requests
@@ -7,3 +6,5 @@ robobrowser==0.5.3
 Werkzeug==0.15.5
 Flask
 MarkupSafe==2.0.1
+psycopg2-binary
+SQLAlchemy

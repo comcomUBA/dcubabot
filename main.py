@@ -6,7 +6,7 @@ from models import init_db
 
 app = Flask(__name__)
 bot = telegram.Bot(os.environ["TELEGRAM_BOT_TOKEN"])
-init_db("dcubabot.sqlite3")
+init_db()
 
 @app.route('/webhook', methods=['POST'])
 def webhook():

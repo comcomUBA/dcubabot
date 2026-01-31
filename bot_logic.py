@@ -14,7 +14,8 @@ from telegram.ext import (
 from typing import Dict, Final
 
 # Local imports
-from models import *
+from models import (Session, Command, Grupo, GrupoOptativa, ECI, GrupoOtros,
+                    Obligatoria, Optativa, Otro, File)
 from deletablecommandhandler import DeletableCommandHandler
 import labos
 import river
@@ -48,10 +49,13 @@ def start(update, context):
 
 def help(update, context):
     message_text = ""
-    with db_session:
-        for command in select(c for c in Command
-                              if c.description and c.enabled).order_by(lambda c: c.name):
+    session = Session()
+    try:
+        commands = session.query(Command).filter(Command.description != None, Command.enabled == True).order_by(Command.name).all()
+        for command in commands:
             message_text += "/" + command.name + " - " + command.description + "\n"
+    finally:
+        session.close()
     msg = update.message.reply_text(message_text, quote=False)
     context.sent_messages.append(msg)
 
@@ -62,9 +66,9 @@ def estasvivo(update, context):
 
 
 def list_buttons(update, context, listable_type):
-    with db_session:
-        buttons = select(l for l in listable_type if l.validated).order_by(
-            lambda l: l.name)
+    session = Session()
+    try:
+        buttons = session.query(listable_type).filter_by(validated=True).order_by(listable_type.name).all()
         keyboard = []
         columns = 3
         for k in range(0, len(buttons), columns):
@@ -77,6 +81,8 @@ def list_buttons(update, context, listable_type):
         msg = update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
                                         reply_markup=reply_markup, quote=False)
         context.sent_messages.append(msg)
+    finally:
+        session.close()
 
 
 def listar(update, context):
@@ -96,12 +102,17 @@ def listarotro(update, context):
 
 
 def cubawiki(update, context):
-    with db_session:
-        group = select(o for o in Obligatoria if o.chat_id == update.message.chat.id and
-                       o.cubawiki_url is not None).first()
+    session = Session()
+    try:
+        group = session.query(Obligatoria).filter(
+            Obligatoria.chat_id == str(update.message.chat.id),
+            Obligatoria.cubawiki_url != None
+        ).first()
         if group:
             msg = update.message.reply_text(group.cubawiki_url, quote=False)
             context.sent_messages.append(msg)
+    finally:
+        session.close()
 
 
 def suggest_listable(update, context, listable_type):
@@ -116,14 +127,22 @@ def suggest_listable(update, context, listable_type):
                                         quote=False)
         context.sent_messages.append(msg)
         return
-    with db_session:
+
+    session = Session()
+    try:
         group = listable_type(name=name, url=url)
+        session.add(group)
+        session.commit()
+        group_id = group.id
+    finally:
+        session.close()
+
     keyboard = [
         [
             InlineKeyboardButton(
-                text="Aceptar", callback_data=f"Listable|{group.id}|1"),
+                text="Aceptar", callback_data=f"Listable|{group_id}|1"),
             InlineKeyboardButton(
-                text="Rechazar", callback_data=f"Listable|{group.id}|0")
+                text="Rechazar", callback_data=f"Listable|{group_id}|0")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -232,31 +251,42 @@ def colaborar(update, context):
 # Manda una imagen a partir de su path al chat del update dado
 def mandar_imagen(chat_id, context, file_path):
     context.bot.sendChatAction(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
-    with db_session:
-        file = File.get(path=file_path)
-    if file:
-        msg = context.bot.send_photo(
-            chat_id=chat_id, photo=file.file_id, allow_sending_without_reply=True)
-    else:
-        msg = context.bot.send_photo(
-            chat_id=chat_id, photo=open(file_path, 'rb'), allow_sending_without_reply=True)
-        with db_session:
-            File(path=file_path, file_id=msg.photo[0].file_id)
+    session = Session()
+    try:
+        file = session.query(File).filter_by(path=file_path).first()
+        if file:
+            msg = context.bot.send_photo(
+                chat_id=chat_id, photo=file.file_id, allow_sending_without_reply=True)
+        else:
+            with open(file_path, 'rb') as f:
+                msg = context.bot.send_photo(
+                    chat_id=chat_id, photo=f, allow_sending_without_reply=True)
+            new_file = File(path=file_path, file_id=msg.photo[0].file_id)
+            session.add(new_file)
+            session.commit()
+    finally:
+        session.close()
+
 
 # Manda un documento a partir de su path al chat del update dado
 def mandar_pdf(chat_id, context, file_path):
     context.bot.sendChatAction(
         chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
-    with db_session:
-        file = File.get(path=file_path)
-    if file:
-        msg = context.bot.send_document(
-            chat_id=chat_id, document=file.file_id, allow_sending_without_reply=True)
-    else:
-        msg = context.bot.send_document(
-            chat_id=chat_id, document=open(file_path, 'rb'), allow_sending_without_reply=True)
-        with db_session:
-            File(path=file_path, file_id=msg.document[0].file_id)
+    session = Session()
+    try:
+        file = session.query(File).filter_by(path=file_path).first()
+        if file:
+            msg = context.bot.send_document(
+                chat_id=chat_id, document=file.file_id, allow_sending_without_reply=True)
+        else:
+            with open(file_path, 'rb') as f:
+                msg = context.bot.send_document(
+                    chat_id=chat_id, document=f, allow_sending_without_reply=True)
+            new_file = File(path=file_path, file_id=msg.document.file_id)
+            session.add(new_file)
+            session.commit()
+    finally:
+        session.close()
 
 
 # Responde una imagen a partir de su path al chat del update dado
