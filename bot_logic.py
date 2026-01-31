@@ -286,7 +286,7 @@ COMMANDS = {
     'asm': asm,
     'flan': flan,
     'flanviejo': flanviejo,
-    'aulas': aulas,
+#    'aulas': aulas, lo comente por q se me rompio mandar pdf y no se por q
     'checodepers': checodepers,
     'checodeppers': checodeppers,
     'cuandovence': cuandovence,
