@@ -19,6 +19,9 @@ jobs:
     name: Build and Push to Artifact Registry
     runs-on: ubuntu-latest
     environment: prod
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     
     steps:
       - name: Checkout
@@ -27,7 +30,15 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ vars.GCP_SA_EMAIL }}'
+          create_credentials_file: true
+          export_environment_variables: true
+          universe: 'googleapis.com'
+          cleanup_credentials: true
+          access_token_lifetime: '3600s'
+          access_token_scopes: 'https://www.googleapis.com/auth/cloud-platform'
+          id_token_include_email: false
 
       - name: Set up Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
@@ -51,12 +62,23 @@ jobs:
     environment: prod
     #if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     if: github.event_name == 'push'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - name: Authenticate to Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ vars.GCP_SA_EMAIL }}'
+          create_credentials_file: true
+          export_environment_variables: true
+          universe: 'googleapis.com'
+          cleanup_credentials: true
+          access_token_lifetime: '3600s'
+          access_token_scopes: 'https://www.googleapis.com/auth/cloud-platform'
+          id_token_include_email: false
 
       - name: Set up Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
