@@ -1,9 +1,6 @@
 name: Build and Deploy to Cloud Run
 on:
   push:
-    branches:
-      - master
-      - *
   pull_request:
     branches:
       - master
