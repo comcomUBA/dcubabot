@@ -27,7 +27,6 @@ COPY --from=builder /usr/local/lib/python3.9/site-packages /app/packages
 
 COPY . .
 
-
 ENV PYTHONPATH /app/packages
 
 
