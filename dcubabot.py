@@ -17,6 +17,7 @@ from typing import Dict, Final
 # Local imports
 # from tokenz import *
 from handlers.update_groups import update_groups, actualizar_grupos
+from handlers.new_commands import ping
 from models import *
 from deletablecommandhandler import DeletableCommandHandler
 import labos
@@ -410,6 +411,7 @@ def add_all_handlers(dispatcher):
                 if command.description:
                     descriptions.append((command.name, command.description))
     dispatcher.add_handler(CallbackQueryHandler(button))
+    dispatcher.add_handler(CommandHandler("ping", ping))
     print(descriptions)
     dispatcher.bot.set_my_commands(descriptions)
 
