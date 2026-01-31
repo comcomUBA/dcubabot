@@ -74,7 +74,7 @@ jobs:
             --region ${{ env.PROJECT_REGION }} \
             --service-account ${{ vars.GCP_SA_EMAIL }} \
             --max-instances=${{ vars.GCP_SERVICE_API_MAX_INSTANCES }} \
-            --set-secrets=TELEGRAM_BOT_TOKEN=${{ vars.GCP_DCUBABOT_SECRET_TG_BOT_TOKEN }}:latest \
+            --set-secrets=TELEGRAM_BOT_TOKEN=${{ vars.GCP_SECRET_TG_BOT_TOKEN }}:latest \
             --set-secrets=DB_URL=${{ vars.GCP_SECRET_DB_URL }}:latest \
             --set-secrets=DB_USER=${{ vars.GCP_SECRET_DB_USER }}:latest \
             --set-secrets=DB_PASSWORD=${{ vars.GCP_SECRET_DB_PASSWORD }}:latest \
