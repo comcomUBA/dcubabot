@@ -3,6 +3,9 @@ FROM python:3.9-slim as builder
 
 RUN pip install uv
 
+# Install psycopg2 system dependencies
+RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+
 # Configure UV for container environment
 ENV UV_SYSTEM_PYTHON=1 UV_COMPILE_BYTECODE=1
 
