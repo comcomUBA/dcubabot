@@ -5,3 +5,5 @@ requests
 python_telegram_bot==13.11
 robobrowser==0.5.3
 Werkzeug==0.15.5
+Flask
+gunicorn
