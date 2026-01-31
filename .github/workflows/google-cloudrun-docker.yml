@@ -45,33 +45,9 @@ jobs:
 
   deploy-to-cloud-run:
     name: Deploy to Cloud Run
-    needs: [build-and-push]
+    needs: build-and-push
     runs-on: ubuntu-latest
     environment: GCP-Rozen
-    env:
-      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-      PROJECT_REGION: ${{ vars.GCP_PROJECT_REGION }}
-      SERVICE_ACCOUNT: ${{ vars.GCP_SA_EMAIL }}
-      API_SERVICE: ${{ vars.GCP_SERVICE_API_NAME }}
-      API_MAX_INSTANCES: ${{ vars.GCP_SERVICE_API_MAX_INSTANCES }}
-      API_IMAGE: ${{ vars.GCP_PROJECT_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY }}/${{ vars.GCP_SERVICE_API_NAME }}:${{  github.sha }}
-      #UI_SERVICE: ${{ vars.GCP_SERVICE_UI_NAME }}
-      #UI_MAX_INSTANCES: ${{ vars.GCP_SERVICE_UI_MAX_INSTANCES }}
-      #UI_IMAGE: ${{ vars.GCP_PROJECT_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REGISTRY }}/${{ vars.GCP_SERVICE_UI_NAME }}:${{  github.sha }}
-      #SQL_INSTANCE_NAME: ${{ vars.GCP_SQL_INSTANCE_CONNECTION_NAME }}
-      TG_TOKEN_SECRET: ${{ vars.GCP_SECRET_TG_BOT_TOKEN }}
-      DB_URL_SECRET: ${{ vars.GCP_SECRET_DB_URL }}
-      DB_USER_SECRET: ${{ vars.GCP_SECRET_DB_USER }}
-      DB_PASSWORD_SECRET: ${{ vars.GCP_SECRET_DB_PASSWORD }}
-      DB_PORT: ${{ vars.GCP_DB_PORT }}
-      #TG_PAYMENTS_SECRET: ${{ vars.GCP_SECRET_TG_PAYMENTS_TOKEN }}
-      #JWT_SECRET: ${{ vars.GCP_SECRET_JWT_SECRET }}
-      #DB_URL_SECRET: ${{ vars.GCP_SECRET_DB_URL }}
-      #S3_URL_SECRET: ${{ vars.GCP_SECRET_S3_URL }}
-      S3_ACCESS_ID: ${{ vars.GCP_SECRET_S3_ACCESS_ID }}
-      S3_ACCESS_SECRET: ${{ vars.GCP_SECRET_S3_ACCESS_SECRET }}
-      S3_HOST: ${{ vars.GCP_SECRET_S3_HOST }}
-      S3_BUCKET: ${{ vars.GCP_S3_BUCKET }}
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     permissions:
       contents: 'read'
@@ -92,20 +68,20 @@ jobs:
         run: echo "TAG=${{ env.PROJECT_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Deploy to Cloud Run
-
         run: |-
-          gcloud --quiet run deploy ${{ env.API_SERVICE }} \
-          --image=${{ env.API_IMAGE }} \
-          --region=${{ env.PROJECT_REGION }} \
-          --service-account=${{ env.SERVICE_ACCOUNT }} \
-          --max-instances=${{ env.API_MAX_INSTANCES }} \
-          --set-secrets=TELEGRAM_BOT_TOKEN=${{ env.TG_TOKEN_SECRET }}:latest \
-          --set-secrets=DB_URL=${{ env.DB_URL_SECRET }}:latest \
-          --set-secrets=DB_USER=${{ env.DB_USER_SECRET }}:latest \
-          --set-secrets=DB_PASSWORD=${{ env.DB_PASSWORD_SECRET }}:latest \
-          --set-env-vars=DB_PORT=${{ env.DB_PORT }} \
-          --set-secrets=S3_ACCESS_ID=${{ env.S3_ACCESS_ID }}:latest \
-          --set-secrets=S3_ACCESS_SECRET=${{ env.S3_ACCESS_SECRET }}:latest \
-          --set-secrets=S3_HOST=${{ env.S3_HOST }}:latest \
-          --set-env-vars=S3_BUCKET=${{ env.S3_BUCKET }} \
-          --allow-unauthenticated
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image $TAG \
+            --region ${{ env.PROJECT_REGION }} \
+            --service-account ${{ vars.GCP_SA_EMAIL }} \
+            --max-instances=${{ vars.GCP_SERVICE_API_MAX_INSTANCES }} \
+            --set-secrets=TELEGRAM_BOT_TOKEN=${{ vars.GCP_DCUBABOT_SECRET_TG_BOT_TOKEN }}:latest \
+            --set-secrets=DB_URL=${{ vars.GCP_SECRET_DB_URL }}:latest \
+            --set-secrets=DB_USER=${{ vars.GCP_SECRET_DB_USER }}:latest \
+            --set-secrets=DB_PASSWORD=${{ vars.GCP_SECRET_DB_PASSWORD }}:latest \
+            --set-env-vars=DB_PORT=${{ vars.GCP_DB_PORT }} \
+            --set-secrets=S3_ACCESS_ID=${{ vars.GCP_SECRET_S3_ACCESS_ID }}:latest \
+            --set-secrets=S3_ACCESS_SECRET=${{ vars.GCP_SECRET_S3_ACCESS_SECRET }}:latest \
+            --set-secrets=S3_HOST=${{ vars.GCP_SECRET_S3_HOST }}:latest \
+            --set-env-vars=S3_BUCKET=${{ vars.GCP_S3_BUCKET }} \
+            --platform managed \
+            --allow-unauthenticated
