@@ -30,4 +30,4 @@ COPY . .
 ENV PYTHONPATH /app/packages
 
 
-CMD ["python", "main.py"]
+CMD ["main.py"]
