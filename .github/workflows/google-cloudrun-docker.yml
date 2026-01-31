@@ -18,7 +18,7 @@ jobs:
   build-and-push:
     name: Build and Push to Artifact Registry
     runs-on: ubuntu-latest
-    environment: prod
+    environment: GCP-Rozen
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -59,7 +59,7 @@ jobs:
     name: Deploy to Cloud Run
     needs: build-and-push
     runs-on: ubuntu-latest
-    environment: prod
+    environment: GCP-Rozen
     #if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     if: github.event_name == 'push'
     permissions:
