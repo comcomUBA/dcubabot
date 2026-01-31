@@ -17,9 +17,9 @@ def init_db():
     db_url = "cockroachdb://{user}:{password}@{host}:{port}/{database}".format(
         user=os.environ["DB_USER"],
         password=os.environ["DB_PASSWORD"],
-        host=os.environ["DB_HOST"],
+        host=os.environ["DB_URL"],
         port=os.environ["DB_PORT"],
-        database=os.environ["DB_NAME"]
+        database="defaultdb"
     )
     engine = create_engine(db_url)
     Session = sessionmaker(bind=engine)
