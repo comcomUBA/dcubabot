@@ -3,7 +3,7 @@
 
 import os
 import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Date, Text
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Date, Text, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.types import BigInteger
 
@@ -50,6 +50,7 @@ class Listable(Base):
     chat_id = Column(String)
     validated = Column(Boolean, default=False)
     type = Column(String(50))
+    cubawiki_url = Column(String, nullable=True) # Specific to Obligatoria, null for others
 
     __mapper_args__ = {
         'polymorphic_identity': 'listable',
@@ -57,58 +58,36 @@ class Listable(Base):
     }
 
 class Obligatoria(Listable):
-    __tablename__ = 'obligatorias'
-    id = Column(Integer, primary_key=True)
-    listable_id = Column(Integer, autoincrement=True)
-    cubawiki_url = Column(String)
     __mapper_args__ = {
         'polymorphic_identity': 'obligatoria',
     }
 
 class Optativa(Listable):
-    __tablename__ = 'optativas'
-    id = Column(Integer, primary_key=True)
-    listable_id = Column(Integer, autoincrement=True)
     __mapper_args__ = {
         'polymorphic_identity': 'optativa',
     }
 
 class ECI(Listable):
-    __tablename__ = 'ecis'
-    id = Column(Integer, primary_key=True)
-    listable_id = Column(Integer, autoincrement=True)
     __mapper_args__ = {
         'polymorphic_identity': 'eci',
     }
 
 class Otro(Listable):
-    __tablename__ = 'otros'
-    id = Column(Integer, primary_key=True)
-    listable_id = Column(Integer, autoincrement=True)
     __mapper_args__ = {
         'polymorphic_identity': 'otro',
     }
 
 class Grupo(Listable):
-    __tablename__ = 'grupos'
-    id = Column(Integer, primary_key=True)
-    listable_id = Column(Integer, autoincrement=True)
     __mapper_args__ = {
         'polymorphic_identity': 'grupo',
     }
 
 class GrupoOptativa(Listable):
-    __tablename__ = 'grupo_optativas'
-    id = Column(Integer, primary_key=True)
-    listable_id = Column(Integer, autoincrement=True)
     __mapper_args__ = {
         'polymorphic_identity': 'grupo_optativa',
     }
 
 class GrupoOtros(Listable):
-    __tablename__ = 'grupo_otros'
-    id = Column(Integer, primary_key=True)
-    listable_id = Column(Integer, autoincrement=True)
     __mapper_args__ = {
         'polymorphic_identity': 'grupo_otros',
     }
