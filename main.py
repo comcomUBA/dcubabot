@@ -1,15 +1,21 @@
 import telegram
 import os
 from flask import Flask, request
+from bot_logic import handle_command
+from models import init_db
 
 app = Flask(__name__)
 bot = telegram.Bot(os.environ["TELEGRAM_BOT_TOKEN"])
+init_db("dcubabot.sqlite3")
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     update = telegram.Update.de_json(request.get_json(force=True), bot)
-    chat_id = update.message.chat.id
-    bot.sendMessage(chat_id=chat_id, text=update.message.text)
+    if update.message and update.message.text.startswith('/'):
+        handle_command(update, bot)
+    else:
+        # Handle non-command messages if necessary
+        pass
     return "OK"
 
 if __name__ == "__main__":
