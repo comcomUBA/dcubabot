@@ -36,7 +36,6 @@ from tg_ids import DC_GROUP_CHATID, ROZEN_CHATID, DGARRO_CHATID, CODEPERS_CHATID
 # Globals ...... yes, globals
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [ROZEN_CHATID, DGARRO_CHATID]  # @Rozen, @dgarro
-command_handlers = {}
 bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 
 
@@ -59,7 +58,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
 
-async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = "Comandos disponibles:\n"
     with get_session() as session:
         commands = session.query(Command).filter_by(enabled=True).order_by(Command.name).all()
@@ -324,7 +323,7 @@ COMMANDS = {
         'description': 'Inicia el bot.'
     },
     'help': {
-        'handler': help,
+        'handler': help_command,
         'description': 'Muestra este mensaje de ayuda.'
     },
     'estasvivo': {

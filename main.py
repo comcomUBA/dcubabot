@@ -1,25 +1,46 @@
 import telegram
 import os
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler
-from bot_logic import COMMANDS, button  # Assuming 'button' is now in bot_logic
+import logging
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+
+from bot_logic import COMMANDS, button
 from models import init_db
+
+async def log_update(update, context):
+    """Log every update received by the bot."""
+    logger = logging.getLogger("DCUBABOT")
+    user = update.effective_user
+    chat = update.effective_chat
+    
+    log_message = f"Update received. User: {user.id} ({user.username}) in chat: {chat.id} ({chat.title})."
+    if update.message and update.message.text:
+        log_message += f" Message: {update.message.text}"
+    elif update.callback_query:
+        log_message += f" Callback Query: {update.callback_query.data}"
+        
+    logger.info(log_message)
+
 
 def main():
     """Start the bot."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='[%(asctime)s] - [%(name)s] - [%(levelname)s] - %(message)s',
+        filename="bots.log"
+    )
+    
+    init_db()
 
     application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
 
+    # Add the logging middleware handler with a high priority
+    application.add_handler(MessageHandler(filters.ALL, log_update), group=-1)
 
     for command_name, command_info in COMMANDS.items():
-            application.add_handler(CommandHandler(command_name, command_info['handler']))
+        application.add_handler(CommandHandler(command_name, command_info['handler']))
 
-    # Register the callback query handler for buttons
     application.add_handler(CallbackQueryHandler(button))
 
-
-    init_db()
-
-    # The WEBHOOK_URL is now guaranteed to be set by the CI/CD pipeline.
     webhook_url = os.environ["WEBHOOK_URL"]
     
     # Start the Bot
