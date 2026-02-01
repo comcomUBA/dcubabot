@@ -5,15 +5,14 @@ from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
 # Local imports
-from models import AsmInstruction, Noitip, Session, init_db
+import models
 
 @contextmanager
 def get_session():
     """Provide a transactional scope around a series of operations."""
-    global Session
-    if Session is None:
-        init_db()
-    session = Session()
+    if models.Session is None:
+        models.init_db()
+    session = models.Session()
     try:
         yield session
         session.commit()
@@ -26,7 +25,7 @@ def get_session():
 
 def noitip(update, context):
     with get_session() as session:
-        random_noitip = session.query(Noitip).order_by(func.random()).first().text
+        random_noitip = session.query(models.Noitip).order_by(func.random()).first().text
     msg = update.message.reply_text(random_noitip, quote=False)
     context.sent_messages.append(msg)
 
@@ -40,7 +39,7 @@ def asm(update, context):
 
     mnemonic = " ".join(context.args).upper()
     with get_session() as session:
-        all_instructions = session.query(AsmInstruction).all()
+        all_instructions = session.query(models.AsmInstruction).all()
         possibles = [i for i in all_instructions
                      if levenshtein(mnemonic, i.mnemonic.upper()) < 2]
     if not possibles:
