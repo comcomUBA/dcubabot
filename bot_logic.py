@@ -8,7 +8,8 @@ import datetime
 import random
 
 # Non STL imports
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.constants import ChatAction, ParseMode
 from telegram.ext import (
     ContextTypes,
     CallbackQueryHandler,
