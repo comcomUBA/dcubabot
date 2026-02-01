@@ -16,21 +16,15 @@ def main():
     # Initialize the database
     init_db()
 
-    # Get webhook URL from environment.
-    webhook_url_from_env = os.environ.get("WEBHOOK_URL")
+    # The WEBHOOK_URL is now guaranteed to be set by the CI/CD pipeline.
+    webhook_url = os.environ["WEBHOOK_URL"]
     
-    # Prepare the webhook_url parameter. It must be None if the env var is missing or empty.
-    webhook_url_param = None
-    if webhook_url_from_env: # This is only true if the string is not None and not empty.
-        webhook_url_param = f'{webhook_url_from_env}/{os.environ["TELEGRAM_BOT_TOKEN"]}'
-
     # Start the Bot
-    # If webhook_url_param is None, run_webhook will only start the webserver without setting a webhook.
     application.run_webhook(
         listen="0.0.0.0",
         port=int(os.environ.get("PORT", 8080)),
-        #url_path=os.environ["TELEGRAM_BOT_TOKEN"],
-        #webhook_url=webhook_url_param,
+        url_path=os.environ["TELEGRAM_BOT_TOKEN"],
+        webhook_url=f'{webhook_url.rstrip("/")}/{os.environ["TELEGRAM_BOT_TOKEN"]}',
     )
 
 if __name__ == "__main__":

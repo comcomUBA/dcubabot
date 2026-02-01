@@ -59,13 +59,16 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-
       - name: Set up Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
       
       - name: Define image tag for deployment
         id: image_tag
         run: echo "TAG=${{ env.PROJECT_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Get existing service URL
+        id: get_url
+        run: echo "URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --platform managed --region ${{ env.PROJECT_REGION }} --format 'value(status.url)')" >> $GITHUB_ENV
 
       - name: Deploy to Cloud Run
         run: |-
@@ -83,15 +86,6 @@ jobs:
             --set-secrets=S3_ACCESS_SECRET=${{ vars.GCP_SECRET_S3_ACCESS_SECRET }}:latest \
             --set-secrets=S3_HOST=${{ vars.GCP_SECRET_S3_HOST }}:latest \
             --set-env-vars=S3_BUCKET=${{ vars.GCP_S3_BUCKET }} \
+            --update-env-vars=WEBHOOK_URL=${{ env.URL }} \
             --platform managed \
             --allow-unauthenticated
-
-      - name: Get service URL
-        id: service_url
-        run: echo "URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --platform managed --region ${{ env.PROJECT_REGION }} --format 'value(status.url)')" >> $GITHUB_ENV
-
-      - name: Set webhook URL environment variable
-        run: |-
-          gcloud run services update ${{ env.SERVICE_NAME }} \
-            --region ${{ env.PROJECT_REGION }} \
-            --update-env-vars=WEBHOOK_URL=${{ env.URL }}
