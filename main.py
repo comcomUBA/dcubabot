@@ -16,12 +16,20 @@ def main():
     # Initialize the database
     init_db()
 
+    # Get webhook URL from environment, but don't fail if it's not there
+    webhook_url = os.environ.get("WEBHOOK_URL")
+    if webhook_url:
+        webhook_url = f'{webhook_url}/{os.environ["TELEGRAM_BOT_TOKEN"]}'
+
+
     # Start the Bot
+    # On the first deploy, webhook_url will be None, and the bot will just start listening.
+    # On the second deploy (after the workflow updates the env var), it will be set correctly.
     application.run_webhook(
         listen="0.0.0.0",
         port=int(os.environ.get("PORT", 8080)),
         url_path=os.environ["TELEGRAM_BOT_TOKEN"],
-        #webhook_url='https://' + os.environ['HEROKU_APP_NAME'] + '.herokuapp.com/' + os.environ["TELEGRAM_BOT_TOKEN"]
+        webhook_url=webhook_url,
     )
 
 if __name__ == "__main__":

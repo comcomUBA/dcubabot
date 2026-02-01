@@ -85,3 +85,13 @@ jobs:
             --set-env-vars=S3_BUCKET=${{ vars.GCP_S3_BUCKET }} \
             --platform managed \
             --allow-unauthenticated
+
+      - name: Get service URL
+        id: service_url
+        run: echo "URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --platform managed --region ${{ env.PROJECT_REGION }} --format 'value(status.url)')" >> $GITHUB_ENV
+
+      - name: Set webhook URL environment variable
+        run: |-
+          gcloud run services update ${{ env.SERVICE_NAME }} \
+            --region ${{ env.PROJECT_REGION }} \
+            --update-env-vars=WEBHOOK_URL=${{ env.URL }}
