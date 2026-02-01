@@ -180,7 +180,7 @@ def campusvivo(update, context):
     context.sent_messages.append(msg)
 
 def flan(update, context):
-    responder_imagen(update, context, 'files/Plandeestudios.png')
+    responder_imagen(update, context, 'files/Plandeestudios-23.png')
 
 def flanviejo(update, context):
     responder_imagen(update, context, 'files/Plandeestudios-93.png')
