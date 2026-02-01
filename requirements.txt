@@ -1,11 +1,8 @@
 icalevents
 pytz
 requests
-python_telegram_bot==13.11
+python-telegram-bot==22.0
 robobrowser==0.5.3
-Werkzeug==0.15.5
-Flask
-MarkupSafe==2.0.1
 psycopg2-binary
 SQLAlchemy
 sqlalchemy-cockroachdb

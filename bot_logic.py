@@ -10,7 +10,12 @@ import random
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode, Update
 from telegram.ext import (
-    Updater, Filters, MessageHandler, CallbackQueryHandler, CallbackContext, CommandHandler)
+    ContextTypes,
+    CallbackQueryHandler,
+    CommandHandler,
+    MessageHandler,
+    filters,
+)
 from typing import Dict, Final
 
 # Local imports
@@ -33,13 +38,13 @@ command_handlers = {}
 bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 
 
-def start(update: Update, context: CallbackContext):
-    msg = update.message.reply_text(
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
         "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
         quote=False)
 
 
-def help(update: Update, context: CallbackContext):
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = ""
     session = Session()
     try:
@@ -48,14 +53,14 @@ def help(update: Update, context: CallbackContext):
             message_text += "/" + command.name + " - " + command.description + "\n"
     finally:
         session.close()
-    msg = update.message.reply_text(message_text, quote=False)
+    await update.message.reply_text(message_text, quote=False)
 
 
-def estasvivo(update: Update, context: CallbackContext):
-    msg = update.message.reply_text("Sí, estoy vivo.", quote=False)
+async def estasvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Sí, estoy vivo.", quote=False)
 
 
-def list_buttons(update: Update, context: CallbackContext, listable_type):
+async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
     session = Session()
     try:
         buttons = session.query(listable_type).filter_by(validated=True).order_by(listable_type.name).all()
@@ -68,29 +73,29 @@ def list_buttons(update: Update, context: CallbackContext, listable_type):
 
             keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
-        msg = update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
+        await update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
                                         reply_markup=reply_markup, quote=False)
     finally:
         session.close()
 
 
-def listar(update: Update, context: CallbackContext):
-    list_buttons(update, context, Grupo)
+async def listar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await list_buttons(update, context, Grupo)
 
 
-def listaroptativa(update: Update, context: CallbackContext):
-    list_buttons(update, context, GrupoOptativa)
+async def listaroptativa(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await list_buttons(update, context, GrupoOptativa)
 
 
-def listareci(update: Update, context: CallbackContext):
-    list_buttons(update, context, ECI)
+async def listareci(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await list_buttons(update, context, ECI)
 
 
-def listarotro(update: Update, context: CallbackContext):
-    list_buttons(update, context, GrupoOtros)
+async def listarotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await list_buttons(update, context, GrupoOtros)
 
 
-def cubawiki(update: Update, context: CallbackContext):
+async def cubawiki(update: Update, context: ContextTypes.DEFAULT_TYPE):
     session = Session()
     try:
         group = session.query(Obligatoria).filter(
@@ -98,18 +103,18 @@ def cubawiki(update: Update, context: CallbackContext):
             Obligatoria.cubawiki_url != None
         ).first()
         if group:
-            msg = update.message.reply_text(group.cubawiki_url, quote=False)
+            await update.message.reply_text(group.cubawiki_url, quote=False)
     finally:
         session.close()
 
 
-def suggest_listable(update: Update, context: CallbackContext, listable_type):
+async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
     try:
         name, url = " ".join(context.args).split("|")
         if not (name and url):
             raise Exception("not userneim")
     except Exception:
-        msg = update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
+        await update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
                                         update.message.text.split()[0] +
                                         " <nombre>|<link>",
                                         quote=False)
@@ -133,112 +138,112 @@ def suggest_listable(update: Update, context: CallbackContext, listable_type):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.sendMessage(chat_id=ROZEN_CHATID,
+    await context.bot.send_message(chat_id=ROZEN_CHATID,
                             text=listable_type.__name__ + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
-    msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+    await update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
 
 
-def sugerirgrupo(update: Update, context: CallbackContext):
-    suggest_listable(update, context, Obligatoria)
+async def sugerirgrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await suggest_listable(update, context, Obligatoria)
 
 
-def sugeriroptativa(update: Update, context: CallbackContext):
-    suggest_listable(update, context, Optativa)
+async def sugeriroptativa(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await suggest_listable(update, context, Optativa)
 
 
-def sugerireci(update: Update, context: CallbackContext):
-    suggest_listable(update, context, ECI)
+async def sugerireci(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await suggest_listable(update, context, ECI)
 
 
-def sugerirotro(update: Update, context: CallbackContext):
-    suggest_listable(update, context, Otro)
+async def sugerirotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await suggest_listable(update, context, Otro)
 
-def campusvivo(update: Update, context: CallbackContext):
-    msg = update.message.reply_text("Bancá que me fijo...", quote=False)
+async def campusvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = await update.message.reply_text("Bancá que me fijo...", quote=False)
 
     campus_response_text = is_campus_up()
 
-    context.bot.editMessageText(chat_id=msg.chat_id,
+    await context.bot.edit_message_text(chat_id=msg.chat_id,
                                 message_id=msg.message_id,
                                 text=msg.text + "\n" + campus_response_text)
 
 
-def flan(update: Update, context: CallbackContext):
-    responder_imagen(update, context, 'files/Plandeestudios-23.png')
+async def flan(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await responder_imagen(update, context, 'files/Plandeestudios-23.png')
 
-def flanviejo(update: Update, context: CallbackContext):
-    responder_imagen(update, context, 'files/Plandeestudios-93.png')
+async def flanviejo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await responder_imagen(update, context, 'files/Plandeestudios-93.png')
 
-def aulas(update: Update, context: CallbackContext):
-    responder_documento(update, context, 'files/0I-aulas.pdf')
+async def aulas(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await responder_documento(update, context, 'files/0I-aulas.pdf')
 
-def checodepers(update: Update, context: CallbackContext):
+async def checodepers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         ejemplo = """ Ejemplo de uso:
   /checodepers Hola, tengo un mensaje mucho muy importante que me gustaria que respondan
 """
-        msg = update.message.reply_text(ejemplo, quote=False)
+        await update.message.reply_text(ejemplo, quote=False)
         return
     user = update.message.from_user
     try:
         if not user.username:
             raise Exception("not userneim")
         message = " ".join(context.args)
-        context.bot.sendMessage(
+        await context.bot.send_message(
             chat_id=CODEPERS_CHATID, text=f"{user.first_name}(@{user.username}) : {message}")
     except Exception:
         try:
-            context.bot.forward_message(
+            await context.bot.forward_message(
                 CODEPERS_CHATID, update.message.chat_id, update.message.message_id)
             logger.info(f"Malio sal {str(user)}")
         except Exception as e:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "La verdad me re rompí, avisale a roz asi ve que onda", quote=False)
             logger.error(e)
             return
-    msg = update.message.reply_text(
+    await update.message.reply_text(
         "OK, se lo mando a les codepers.", quote=False)
 
 
-def checodeppers(update: Update, context: CallbackContext):
-    checodepers(update, context)
+async def checodeppers(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await checodepers(update, context)
 
-def cuandovence(update: Update, context: CallbackContext):
+async def cuandovence(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ejemplo = "\nCuatris: 1c, 2c, i, inv, invierno, v, ver, verano.\nEjemplo: /cuandovence verano2010"
     if not context.args:
         ayuda = "Pasame cuatri y año en que aprobaste los TPs." + ejemplo
-        msg = update.message.reply_text(ayuda, quote=False)
+        await update.message.reply_text(ayuda, quote=False)
         return
     try:
         linea_entrada = "".join(context.args).lower()
         cuatri, anio = parse_cuatri_y_anio(linea_entrada)
     except Exception:
-        msg = update.message.reply_text(
+        await update.message.reply_text(
             "¿Me pasás las cosas bien? Es cuatri+año." + ejemplo, quote=False)
         return
 
     vencimiento = calcular_vencimiento(cuatri, anio)
-    msg = update.message.reply_text(
+    await update.message.reply_text(
         vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN,disable_web_page_preview=True)
 
 
-def colaborar(update: Update, context: CallbackContext):
-    msg = update.message.reply_text(
+async def colaborar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
         "Se puede colaborar con el DCUBA bot en https://github.com/comcomUBA/dcubabot", quote=False)
 
 # Manda una imagen a partir de su path al chat del update dado
-def mandar_imagen(chat_id, context: CallbackContext, file_path):
-    context.bot.sendChatAction(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+async def mandar_imagen(chat_id, context: ContextTypes.DEFAULT_TYPE, file_path):
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
     session = Session()
     try:
         file = session.query(File).filter_by(path=file_path).first()
         if file:
-            msg = context.bot.send_photo(
+            msg = await context.bot.send_photo(
                 chat_id=chat_id, photo=file.file_id, allow_sending_without_reply=True)
         else:
             with open(file_path, 'rb') as f:
-                msg = context.bot.send_photo(
+                msg = await context.bot.send_photo(
                     chat_id=chat_id, photo=f, allow_sending_without_reply=True)
             new_file = File(path=file_path, file_id=msg.photo[0].file_id)
             session.add(new_file)
@@ -248,18 +253,18 @@ def mandar_imagen(chat_id, context: CallbackContext, file_path):
 
 
 # Manda un documento a partir de su path al chat del update dado
-def mandar_pdf(chat_id, context: CallbackContext, file_path):
-    context.bot.sendChatAction(
+async def mandar_pdf(chat_id, context: ContextTypes.DEFAULT_TYPE, file_path):
+    await context.bot.send_chat_action(
         chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
     session = Session()
     try:
         file = session.query(File).filter_by(path=file_path).first()
         if file:
-            msg = context.bot.send_document(
+            msg = await context.bot.send_document(
                 chat_id=chat_id, document=file.file_id, allow_sending_without_reply=True)
         else:
             with open(file_path, 'rb') as f:
-                msg = context.bot.send_document(
+                msg = await context.bot.send_document(
                     chat_id=chat_id, document=f, allow_sending_without_reply=True)
             new_file = File(path=file_path, file_id=msg.document.file_id)
             session.add(new_file)
@@ -269,12 +274,12 @@ def mandar_pdf(chat_id, context: CallbackContext, file_path):
 
 
 # Responde una imagen a partir de su path al chat del update dado
-def responder_imagen(update: Update, context: CallbackContext, file_path):
-    mandar_imagen(update.message.chat_id, context, file_path)
+async def responder_imagen(update: Update, context: ContextTypes.DEFAULT_TYPE, file_path):
+    await mandar_imagen(update.message.chat_id, context, file_path)
 
 # Responde un documento a partir de su path al chat del update dado
-def responder_documento(update: Update, context: CallbackContext, file_path):
-    mandar_pdf(update.message.chat_id, context, file_path)
+async def responder_documento(update: Update, context: ContextTypes.DEFAULT_TYPE, file_path):
+    await mandar_pdf(update.message.chat_id, context, file_path)
 
 
 COMMANDS = {
