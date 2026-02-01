@@ -6,6 +6,7 @@ import logging
 import pytz
 import datetime
 import random
+from contextlib import contextmanager
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -39,6 +40,20 @@ command_handlers = {}
 bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 
 
+@contextmanager
+def get_session():
+    """Provide a transactional scope around a series of operations."""
+    session = Session()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
@@ -46,9 +61,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = "Comandos disponibles:\n"
-    for name, command_info in sorted(COMMANDS.items()):
-        if 'description' in command_info and command_info['description']:
-            message_text += f"/{name} - {command_info['description']}\n"
+    with get_session() as session:
+        commands = session.query(Command).filter_by(enabled=True).order_by(Command.name).all()
+        for command in commands:
+            message_text += f"/{command.name} - {command.description}\n"
     await update.message.reply_text(message_text)
 
 
@@ -57,8 +73,7 @@ async def estasvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
-    session = Session()
-    try:
+    with get_session() as session:
         buttons = session.query(listable_type).filter_by(validated=True).order_by(listable_type.name).all()
         keyboard = []
         columns = 3
@@ -71,8 +86,6 @@ async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, lista
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
                                         reply_markup=reply_markup)
-    finally:
-        session.close()
 
 
 async def listar(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -92,16 +105,13 @@ async def listarotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cubawiki(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    session = Session()
-    try:
+    with get_session() as session:
         group = session.query(Obligatoria).filter(
             Obligatoria.chat_id == str(update.message.chat.id),
             Obligatoria.cubawiki_url != None
         ).first()
         if group:
             await update.message.reply_text(group.cubawiki_url)
-    finally:
-        session.close()
 
 
 async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
@@ -115,14 +125,11 @@ async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, l
                                         " <nombre>|<link>")
         return
 
-    session = Session()
-    try:
+    with get_session() as session:
         group = listable_type(name=name, url=url)
         session.add(group)
-        session.commit()
+        session.flush()
         group_id = group.id
-    finally:
-        session.close()
 
     keyboard = [
         [
@@ -240,8 +247,7 @@ async def colaborar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Manda una imagen a partir de su path al chat del update dado
 async def mandar_imagen(chat_id, context: ContextTypes.DEFAULT_TYPE, file_path):
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
-    session = Session()
-    try:
+    with get_session() as session:
         file = session.query(File).filter_by(path=file_path).first()
         if file:
             msg = await context.bot.send_photo(
@@ -252,17 +258,13 @@ async def mandar_imagen(chat_id, context: ContextTypes.DEFAULT_TYPE, file_path):
                     chat_id=chat_id, photo=f, allow_sending_without_reply=True)
             new_file = File(path=file_path, file_id=msg.photo[0].file_id)
             session.add(new_file)
-            session.commit()
-    finally:
-        session.close()
 
 
 # Manda un documento a partir de su path al chat del update dado
 async def mandar_pdf(chat_id, context: ContextTypes.DEFAULT_TYPE, file_path):
     await context.bot.send_chat_action(
         chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
-    session = Session()
-    try:
+    with get_session() as session:
         file = session.query(File).filter_by(path=file_path).first()
         if file:
             msg = await context.bot.send_document(
@@ -273,9 +275,6 @@ async def mandar_pdf(chat_id, context: ContextTypes.DEFAULT_TYPE, file_path):
                     chat_id=chat_id, document=f, allow_sending_without_reply=True)
             new_file = File(path=file_path, file_id=msg.document.file_id)
             session.add(new_file)
-            session.commit()
-    finally:
-        session.close()
 
 
 # Responde una imagen a partir de su path al chat del update dado
@@ -293,18 +292,15 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = query.message
     buttonType, id, action = query.data.split("|")
     
-    session = Session()
-    try:
+    with get_session() as session:
         if buttonType == "Listable":
             group = session.query(Listable).filter_by(id=int(id)).first()
             if group:
                 if action == "1":
                     group.validated = True
-                    session.commit()
                     action_text = "\n¡Aceptado!"
                 else:
                     session.delete(group)
-                    session.commit()
                     action_text = "\n¡Rechazado!"
                 await query.edit_message_text(text=message.text + action_text)
         
@@ -313,17 +309,13 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if noticia:
                 if action == "1":
                     noticia.validated = True
-                    session.commit()
                     action_text = "\n¡Aceptado!"
                     await context.bot.send_message(chat_id=NOTICIAS_CHATID,
                                                    text=noticia.text, parse_mode=ParseMode.MARKDOWN)
                 else:
                     session.delete(noticia)
-                    session.commit()
                     action_text = "\n¡Rechazado!"
                 await query.edit_message_text(text=message.text + action_text)
-    finally:
-        session.close()
 
 
 COMMANDS = {
@@ -374,6 +366,10 @@ COMMANDS = {
     'sugerirotro': {
         'handler': sugerirotro,
         'description': 'Sugiere un grupo de otra categoría.'
+    },
+    'agregargrupo': {
+        'handler': agregargrupo,
+        'description': 'Muestra ayuda para sugerir un grupo.'
     },
     'campusvivo': {
         'handler': campusvivo,

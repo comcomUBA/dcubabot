@@ -1,13 +1,29 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from contextlib import contextmanager
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import func
 # Local imports
-from models import *
+from models import AsmInstruction, Noitip, Session
+
+@contextmanager
+def get_session():
+    """Provide a transactional scope around a series of operations."""
+    session = Session()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def noitip(update, context):
-    with db_session:
-        random_noitip = Noitip.select_random(1)[0].text
+    with get_session() as session:
+        random_noitip = session.query(Noitip).order_by(func.random()).first().text
     msg = update.message.reply_text(random_noitip, quote=False)
     context.sent_messages.append(msg)
 
@@ -20,8 +36,9 @@ def asm(update, context):
         return
 
     mnemonic = " ".join(context.args).upper()
-    with db_session:
-        possibles = [i for i in list(AsmInstruction.select())
+    with get_session() as session:
+        all_instructions = session.query(AsmInstruction).all()
+        possibles = [i for i in all_instructions
                      if levenshtein(mnemonic, i.mnemonic.upper()) < 2]
     if not possibles:
         msg = update.message.reply_text(
