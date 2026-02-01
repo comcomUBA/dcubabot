@@ -41,8 +41,7 @@ bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
-        quote=False)
+        "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!")
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -54,11 +53,11 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message_text += "/" + command.name + " - " + command.description + "\n"
     finally:
         session.close()
-    await update.message.reply_text(message_text, quote=False)
+    await update.message.reply_text(message_text)
 
 
 async def estasvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Sí, estoy vivo.", quote=False)
+    await update.message.reply_text("Sí, estoy vivo.")
 
 
 async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
@@ -75,7 +74,7 @@ async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, lista
             keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
-                                        reply_markup=reply_markup, quote=False)
+                                        reply_markup=reply_markup)
     finally:
         session.close()
 
@@ -104,7 +103,7 @@ async def cubawiki(update: Update, context: ContextTypes.DEFAULT_TYPE):
             Obligatoria.cubawiki_url != None
         ).first()
         if group:
-            await update.message.reply_text(group.cubawiki_url, quote=False)
+            await update.message.reply_text(group.cubawiki_url)
     finally:
         session.close()
 
@@ -117,8 +116,7 @@ async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, l
     except Exception:
         await update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
                                         update.message.text.split()[0] +
-                                        " <nombre>|<link>",
-                                        quote=False)
+                                        " <nombre>|<link>")
         return
 
     session = Session()
@@ -142,7 +140,7 @@ async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, l
     await context.bot.send_message(chat_id=ROZEN_CHATID,
                             text=listable_type.__name__ + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
-    await update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
+    await update.message.reply_text("OK, se lo mando a Rozen.")
 
 
 async def sugerirgrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -161,7 +159,7 @@ async def sugerirotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await suggest_listable(update, context, Otro)
 
 async def campusvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg = await update.message.reply_text("Bancá que me fijo...", quote=False)
+    msg = await update.message.reply_text("Bancá que me fijo...")
 
     campus_response_text = is_campus_up()
 
@@ -184,7 +182,7 @@ async def checodepers(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ejemplo = """ Ejemplo de uso:
   /checodepers Hola, tengo un mensaje mucho muy importante que me gustaria que respondan
 """
-        await update.message.reply_text(ejemplo, quote=False)
+        await update.message.reply_text(ejemplo)
         return
     user = update.message.from_user
     try:
@@ -200,11 +198,11 @@ async def checodepers(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.info(f"Malio sal {str(user)}")
         except Exception as e:
             await update.message.reply_text(
-                "La verdad me re rompí, avisale a roz asi ve que onda", quote=False)
+                "La verdad me re rompí, avisale a roz asi ve que onda")
             logger.error(e)
             return
     await update.message.reply_text(
-        "OK, se lo mando a les codepers.", quote=False)
+        "OK, se lo mando a les codepers.")
 
 
 async def checodeppers(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -214,24 +212,24 @@ async def cuandovence(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ejemplo = "\nCuatris: 1c, 2c, i, inv, invierno, v, ver, verano.\nEjemplo: /cuandovence verano2010"
     if not context.args:
         ayuda = "Pasame cuatri y año en que aprobaste los TPs." + ejemplo
-        await update.message.reply_text(ayuda, quote=False)
+        await update.message.reply_text(ayuda)
         return
     try:
         linea_entrada = "".join(context.args).lower()
         cuatri, anio = parse_cuatri_y_anio(linea_entrada)
     except Exception:
         await update.message.reply_text(
-            "¿Me pasás las cosas bien? Es cuatri+año." + ejemplo, quote=False)
+            "¿Me pasás las cosas bien? Es cuatri+año." + ejemplo)
         return
 
     vencimiento = calcular_vencimiento(cuatri, anio)
     await update.message.reply_text(
-        vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN,disable_web_page_preview=True)
+        vencimiento, parse_mode=ParseMode.MARKDOWN,disable_web_page_preview=True)
 
 
 async def colaborar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Se puede colaborar con el DCUBA bot en https://github.com/comcomUBA/dcubabot", quote=False)
+        "Se puede colaborar con el DCUBA bot en https://github.com/comcomUBA/dcubabot")
 
 # Manda una imagen a partir de su path al chat del update dado
 async def mandar_imagen(chat_id, context: ContextTypes.DEFAULT_TYPE, file_path):
