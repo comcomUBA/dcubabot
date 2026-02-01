@@ -33,7 +33,7 @@ from tg_ids import DC_GROUP_CHATID, ROZEN_CHATID, DGARRO_CHATID, CODEPERS_CHATID
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] - [%(name)s] - [%(levelname)s] - %(message)s',
-    filename="bots.log")
+)
 
 # Globals ...... yes, globals
 logger = logging.getLogger("DCUBABOT")
