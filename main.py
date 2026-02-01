@@ -11,7 +11,7 @@ init_db()
 @app.route('/webhook', methods=['POST'])
 def webhook():
     update = telegram.Update.de_json(request.get_json(force=True), bot)
-    if update.message and update.message.text.startswith('/'):
+    if update.message and update.message.text and update.message.text.startswith('/'):
         handle_command(update, bot)
     else:
         # Handle non-command messages if necessary
