@@ -8,3 +8,4 @@ Flask
 MarkupSafe==2.0.1
 psycopg2-binary
 SQLAlchemy
+sqlalchemy-cockroachdb
