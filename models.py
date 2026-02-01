@@ -14,7 +14,7 @@ Session = None
 
 def init_db():
     global engine, Session
-    db_url = "postgresql://{user}:{password}@{host}:{port}/{database}".format(
+    db_url = "cockroachdb://{user}:{password}@{host}:{port}/{database}".format(
         user=os.environ["DB_USER"],
         password=os.environ["DB_PASSWORD"],
         host=os.environ["DB_URL"],
@@ -94,7 +94,7 @@ class GrupoOtros(Listable):
 
 class Noticia(Base):
     __tablename__ = 'noticias'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=T)
     text = Column(Text, nullable=False)
     date = Column(Date, nullable=False, default=datetime.date.today)
     validado = Column(Boolean, default=True)
