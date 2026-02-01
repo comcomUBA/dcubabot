@@ -21,7 +21,7 @@ from typing import Dict, Final
 
 # Local imports
 from models import (Session, Command, Grupo, GrupoOptativa, ECI, GrupoOtros,
-                    Obligatoria, Optativa, Otro, File)
+                    Obligatoria, Optativa, Otro, File, Listable, Noticia)
 from deletablecommandhandler import DeletableCommandHandler
 import labos
 import river
@@ -45,14 +45,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message_text = ""
-    session = Session()
-    try:
-        commands = session.query(Command).filter(Command.description != None, Command.enabled == True).order_by(Command.name).all()
-        for command in commands:
-            message_text += "/" + command.name + " - " + command.description + "\n"
-    finally:
-        session.close()
+    message_text = "Comandos disponibles:\n"
+    for name, command_info in sorted(COMMANDS.items()):
+        if 'description' in command_info and command_info['description']:
+            message_text += f"/{name} - {command_info['description']}\n"
     await update.message.reply_text(message_text)
 
 
@@ -157,6 +153,16 @@ async def sugerireci(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def sugerirotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await suggest_listable(update, context, Otro)
+
+async def agregargrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Para sugerir un grupo, usá uno de los siguientes comandos, dependiendo de la categoría del grupo:\n"
+        "/sugerirgrupo - Materia obligatoria\n"
+        "/sugeriroptativa - Materia optativa\n"
+        "/sugerireci - ECI\n"
+        "/sugerirotro - Otra categoría\n\n"
+        "El formato es: /comando <nombre>|<link>"
+    )
 
 async def campusvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text("Bancá que me fijo...")
@@ -281,27 +287,132 @@ async def responder_documento(update: Update, context: ContextTypes.DEFAULT_TYPE
     await mandar_pdf(update.message.chat_id, context, file_path)
 
 
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    message = query.message
+    buttonType, id, action = query.data.split("|")
+    
+    session = Session()
+    try:
+        if buttonType == "Listable":
+            group = session.query(Listable).filter_by(id=int(id)).first()
+            if group:
+                if action == "1":
+                    group.validated = True
+                    session.commit()
+                    action_text = "\n¡Aceptado!"
+                else:
+                    session.delete(group)
+                    session.commit()
+                    action_text = "\n¡Rechazado!"
+                await query.edit_message_text(text=message.text + action_text)
+        
+        elif buttonType == "Noticia":
+            noticia = session.query(Noticia).filter_by(id=int(id)).first()
+            if noticia:
+                if action == "1":
+                    noticia.validated = True
+                    session.commit()
+                    action_text = "\n¡Aceptado!"
+                    await context.bot.send_message(chat_id=NOTICIAS_CHATID,
+                                                   text=noticia.text, parse_mode=ParseMode.MARKDOWN)
+                else:
+                    session.delete(noticia)
+                    session.commit()
+                    action_text = "\n¡Rechazado!"
+                await query.edit_message_text(text=message.text + action_text)
+    finally:
+        session.close()
+
+
 COMMANDS = {
-    'start': start,
-    'help': help,
-    'estasvivo': estasvivo,
-    'listar': listar,
-    'listaroptativa': listaroptativa,
-    'listareci': listareci,
-    'listarotro': listarotro,
-    'cubawiki': cubawiki,
-    'sugerirgrupo': sugerirgrupo,
-    'sugeriroptativa': sugeriroptativa,
-    'sugerireci': sugerireci,
-    'sugerirotro': sugerirotro,
-    'campusvivo': campusvivo,
-    'noitip': noitip,
-    'asm': asm,
-    'flan': flan,
-    'flanviejo': flanviejo,
-#    'aulas': aulas, lo comente por q se me rompio mandar pdf y no se por q
-    'checodepers': checodepers,
-    'checodeppers': checodeppers,
-    'cuandovence': cuandovence,
-    'colaborar': colaborar,
+    'start': {
+        'handler': start,
+        'description': 'Inicia el bot.'
+    },
+    'help': {
+        'handler': help,
+        'description': 'Muestra este mensaje de ayuda.'
+    },
+    'estasvivo': {
+        'handler': estasvivo,
+        'description': 'Responde si el bot está funcionando.'
+    },
+    'listar': {
+        'handler': listar,
+        'description': 'Muestra los grupos de Telegram de materias obligatorias.'
+    },
+    'listaroptativa': {
+        'handler': listaroptativa,
+        'description': 'Muestra los grupos de Telegram de materias optativas.'
+    },
+    'listareci': {
+        'handler': listareci,
+        'description': 'Muestra los grupos de Telegram de las ECI.'
+    },
+    'listarotro': {
+        'handler': listarotro,
+        'description': 'Muestra otros grupos de Telegram.'
+    },
+    'cubawiki': {
+        'handler': cubawiki,
+        'description': 'Devuelve el link a la Cubawiki de la materia (si estás en el grupo de la materia).'
+    },
+    'sugerirgrupo': {
+        'handler': sugerirgrupo,
+        'description': 'Sugiere un grupo de una materia obligatoria.'
+    },
+    'sugeriroptativa': {
+        'handler': sugeriroptativa,
+        'description': 'Sugiere un grupo de una materia optativa.'
+    },
+    'sugerireci': {
+        'handler': sugerireci,
+        'description': 'Sugiere un grupo de una ECI.'
+    },
+    'sugerirotro': {
+        'handler': sugerirotro,
+        'description': 'Sugiere un grupo de otra categoría.'
+    },
+    'campusvivo': {
+        'handler': campusvivo,
+        'description': 'Verifica si el Campus Virtual está funcionando.'
+    },
+    'noitip': {
+        'handler': noitip,
+        'description': "Explica el meme 'No, it IP'."
+    },
+    'asm': {
+        'handler': asm,
+        'description': 'Explica el meme de Assembly.'
+    },
+    'flan': {
+        'handler': flan,
+        'description': 'Muestra el plan de estudios de la carrera.'
+    },
+    'flanviejo': {
+        'handler': flanviejo,
+        'description': 'Muestra el plan de estudios viejo de la carrera.'
+    },
+    # 'aulas': {
+    #     'handler': aulas,
+    #     'description': 'Muestra el mapa de las aulas.'
+    # },
+    'checodepers': {
+        'handler': checodepers,
+        'description': 'Envía un mensaje a les codepers.'
+    },
+    'checodeppers': {
+        'handler': checodeppers,
+        'description': 'Alias para /checodepers.'
+    },
+    'cuandovence': {
+        'handler': cuandovence,
+        'description': 'Calcula cuándo vence la validez de los TPs de una materia.'
+    },
+    'colaborar': {
+        'handler': colaborar,
+        'description': 'Muestra el link al repositorio de Github del bot.'
+    },
 }

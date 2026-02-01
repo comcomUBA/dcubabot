@@ -1,19 +1,22 @@
 import telegram
 import os
-from telegram.ext import Application, CommandHandler
-from bot_logic import COMMANDS
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from bot_logic import COMMANDS, button  # Assuming 'button' is now in bot_logic
 from models import init_db
 
 def main():
     """Start the bot."""
-    # Create the Application and pass it your bot's token.
+
     application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
 
-    # on different commands - answer in Telegram
-    for command_name, command_handler in COMMANDS.items():
-        application.add_handler(CommandHandler(command_name, command_handler))
 
-    # Initialize the database
+    for command_name, command_info in COMMANDS.items():
+            application.add_handler(CommandHandler(command_name, command_info['handler']))
+
+    # Register the callback query handler for buttons
+    application.add_handler(CallbackQueryHandler(button))
+
+
     init_db()
 
     # The WEBHOOK_URL is now guaranteed to be set by the CI/CD pipeline.
