@@ -16,20 +16,21 @@ def main():
     # Initialize the database
     init_db()
 
-    # Get webhook URL from environment, but don't fail if it's not there
-    webhook_url = os.environ.get("WEBHOOK_URL")
-    if webhook_url:
-        webhook_url = f'{webhook_url}/{os.environ["TELEGRAM_BOT_TOKEN"]}'
-
+    # Get webhook URL from environment.
+    webhook_url_from_env = os.environ.get("WEBHOOK_URL")
+    
+    # Prepare the webhook_url parameter. It must be None if the env var is missing or empty.
+    webhook_url_param = None
+    if webhook_url_from_env: # This is only true if the string is not None and not empty.
+        webhook_url_param = f'{webhook_url_from_env}/{os.environ["TELEGRAM_BOT_TOKEN"]}'
 
     # Start the Bot
-    # On the first deploy, webhook_url will be None, and the bot will just start listening.
-    # On the second deploy (after the workflow updates the env var), it will be set correctly.
+    # If webhook_url_param is None, run_webhook will only start the webserver without setting a webhook.
     application.run_webhook(
         listen="0.0.0.0",
         port=int(os.environ.get("PORT", 8080)),
-        url_path=os.environ["TELEGRAM_BOT_TOKEN"],
-        webhook_url=webhook_url,
+        #url_path=os.environ["TELEGRAM_BOT_TOKEN"],
+        #webhook_url=webhook_url_param,
     )
 
 if __name__ == "__main__":
