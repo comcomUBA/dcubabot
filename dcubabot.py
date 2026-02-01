@@ -24,7 +24,7 @@ import labos
 import river
 import conciertos
 from campus import is_campus_up
-from utils.hora_feliz_dia import get_hora_feliz_dia, get_hora_update_groups
+from utils.hora_feliz_dia import  get_hora_update_groups
 from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
 from orga2Utils import noitip, asm
 from tg_ids import DC_GROUP_CHATID, ROZEN_CHATID, DGARRO_CHATID, CODEPERS_CHATID, NOTICIAS_CHATID
@@ -553,8 +553,7 @@ def main():
         updater = Updater(token=token, use_context=True)
         dispatcher = updater.dispatcher
 
-        updater.job_queue.run_daily(
-            callback=felizdia, time=get_hora_feliz_dia())
+
         updater.job_queue.run_daily(
             callback=update_groups, time=get_hora_update_groups())
 

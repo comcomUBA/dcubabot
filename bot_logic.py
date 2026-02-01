@@ -21,7 +21,7 @@ import labos
 import river
 import conciertos
 from campus import is_campus_up
-from utils.hora_feliz_dia import get_hora_feliz_dia, get_hora_update_groups
+
 from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
 from orga2Utils import noitip, asm
 from tg_ids import DC_GROUP_CHATID, ROZEN_CHATID, DGARRO_CHATID, CODEPERS_CHATID, NOTICIAS_CHATID
@@ -33,21 +33,13 @@ command_handlers = {}
 bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 
 
-class DummyContext:
-    def __init__(self, bot, update):
-        self.bot = bot
-        self.update = update
-        self.sent_messages = []
-        self.args = update.message.text.split()[1:] # For commands with arguments
-
-def start(update, context):
+def start(update: Update, context: CallbackContext):
     msg = update.message.reply_text(
         "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
         quote=False)
-    context.sent_messages.append(msg)
 
 
-def help(update, context):
+def help(update: Update, context: CallbackContext):
     message_text = ""
     session = Session()
     try:
@@ -57,15 +49,13 @@ def help(update, context):
     finally:
         session.close()
     msg = update.message.reply_text(message_text, quote=False)
-    context.sent_messages.append(msg)
 
 
-def estasvivo(update, context):
+def estasvivo(update: Update, context: CallbackContext):
     msg = update.message.reply_text("Sí, estoy vivo.", quote=False)
-    context.sent_messages.append(msg)
 
 
-def list_buttons(update, context, listable_type):
+def list_buttons(update: Update, context: CallbackContext, listable_type):
     session = Session()
     try:
         buttons = session.query(listable_type).filter_by(validated=True).order_by(listable_type.name).all()
@@ -80,28 +70,27 @@ def list_buttons(update, context, listable_type):
         reply_markup = InlineKeyboardMarkup(keyboard)
         msg = update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
                                         reply_markup=reply_markup, quote=False)
-        context.sent_messages.append(msg)
     finally:
         session.close()
 
 
-def listar(update, context):
+def listar(update: Update, context: CallbackContext):
     list_buttons(update, context, Grupo)
 
 
-def listaroptativa(update, context):
+def listaroptativa(update: Update, context: CallbackContext):
     list_buttons(update, context, GrupoOptativa)
 
 
-def listareci(update, context):
+def listareci(update: Update, context: CallbackContext):
     list_buttons(update, context, ECI)
 
 
-def listarotro(update, context):
+def listarotro(update: Update, context: CallbackContext):
     list_buttons(update, context, GrupoOtros)
 
 
-def cubawiki(update, context):
+def cubawiki(update: Update, context: CallbackContext):
     session = Session()
     try:
         group = session.query(Obligatoria).filter(
@@ -110,12 +99,11 @@ def cubawiki(update, context):
         ).first()
         if group:
             msg = update.message.reply_text(group.cubawiki_url, quote=False)
-            context.sent_messages.append(msg)
     finally:
         session.close()
 
 
-def suggest_listable(update, context, listable_type):
+def suggest_listable(update: Update, context: CallbackContext, listable_type):
     try:
         name, url = " ".join(context.args).split("|")
         if not (name and url):
@@ -125,7 +113,6 @@ def suggest_listable(update, context, listable_type):
                                         update.message.text.split()[0] +
                                         " <nombre>|<link>",
                                         quote=False)
-        context.sent_messages.append(msg)
         return
 
     session = Session()
@@ -150,25 +137,24 @@ def suggest_listable(update, context, listable_type):
                             text=listable_type.__name__ + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
     msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
-    context.sent_messages.append(msg)
 
 
-def sugerirgrupo(update, context):
+def sugerirgrupo(update: Update, context: CallbackContext):
     suggest_listable(update, context, Obligatoria)
 
 
-def sugeriroptativa(update, context):
+def sugeriroptativa(update: Update, context: CallbackContext):
     suggest_listable(update, context, Optativa)
 
 
-def sugerireci(update, context):
+def sugerireci(update: Update, context: CallbackContext):
     suggest_listable(update, context, ECI)
 
 
-def sugerirotro(update, context):
+def sugerirotro(update: Update, context: CallbackContext):
     suggest_listable(update, context, Otro)
 
-def campusvivo(update, context):
+def campusvivo(update: Update, context: CallbackContext):
     msg = update.message.reply_text("Bancá que me fijo...", quote=False)
 
     campus_response_text = is_campus_up()
@@ -177,24 +163,22 @@ def campusvivo(update, context):
                                 message_id=msg.message_id,
                                 text=msg.text + "\n" + campus_response_text)
 
-    context.sent_messages.append(msg)
 
-def flan(update, context):
+def flan(update: Update, context: CallbackContext):
     responder_imagen(update, context, 'files/Plandeestudios-23.png')
 
-def flanviejo(update, context):
+def flanviejo(update: Update, context: CallbackContext):
     responder_imagen(update, context, 'files/Plandeestudios-93.png')
 
-def aulas(update, context):
+def aulas(update: Update, context: CallbackContext):
     responder_documento(update, context, 'files/0I-aulas.pdf')
 
-def checodepers(update, context):
+def checodepers(update: Update, context: CallbackContext):
     if not context.args:
         ejemplo = """ Ejemplo de uso:
   /checodepers Hola, tengo un mensaje mucho muy importante que me gustaria que respondan
 """
         msg = update.message.reply_text(ejemplo, quote=False)
-        context.sent_messages.append(msg)
         return
     user = update.message.from_user
     try:
@@ -215,18 +199,16 @@ def checodepers(update, context):
             return
     msg = update.message.reply_text(
         "OK, se lo mando a les codepers.", quote=False)
-    context.sent_messages.append(msg)
 
 
-def checodeppers(update, context):
+def checodeppers(update: Update, context: CallbackContext):
     checodepers(update, context)
 
-def cuandovence(update, context):
+def cuandovence(update: Update, context: CallbackContext):
     ejemplo = "\nCuatris: 1c, 2c, i, inv, invierno, v, ver, verano.\nEjemplo: /cuandovence verano2010"
     if not context.args:
         ayuda = "Pasame cuatri y año en que aprobaste los TPs." + ejemplo
         msg = update.message.reply_text(ayuda, quote=False)
-        context.sent_messages.append(msg)
         return
     try:
         linea_entrada = "".join(context.args).lower()
@@ -234,22 +216,19 @@ def cuandovence(update, context):
     except Exception:
         msg = update.message.reply_text(
             "¿Me pasás las cosas bien? Es cuatri+año." + ejemplo, quote=False)
-        context.sent_messages.append(msg)
         return
 
     vencimiento = calcular_vencimiento(cuatri, anio)
     msg = update.message.reply_text(
         vencimiento, quote=False, parse_mode=ParseMode.MARKDOWN,disable_web_page_preview=True)
-    context.sent_messages.append(msg)
 
 
-def colaborar(update, context):
+def colaborar(update: Update, context: CallbackContext):
     msg = update.message.reply_text(
         "Se puede colaborar con el DCUBA bot en https://github.com/comcomUBA/dcubabot", quote=False)
-    context.sent_messages.append(msg)
 
 # Manda una imagen a partir de su path al chat del update dado
-def mandar_imagen(chat_id, context, file_path):
+def mandar_imagen(chat_id, context: CallbackContext, file_path):
     context.bot.sendChatAction(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
     session = Session()
     try:
@@ -269,7 +248,7 @@ def mandar_imagen(chat_id, context, file_path):
 
 
 # Manda un documento a partir de su path al chat del update dado
-def mandar_pdf(chat_id, context, file_path):
+def mandar_pdf(chat_id, context: CallbackContext, file_path):
     context.bot.sendChatAction(
         chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
     session = Session()
@@ -290,11 +269,11 @@ def mandar_pdf(chat_id, context, file_path):
 
 
 # Responde una imagen a partir de su path al chat del update dado
-def responder_imagen(update, context, file_path):
+def responder_imagen(update: Update, context: CallbackContext, file_path):
     mandar_imagen(update.message.chat_id, context, file_path)
 
 # Responde un documento a partir de su path al chat del update dado
-def responder_documento(update, context, file_path):
+def responder_documento(update: Update, context: CallbackContext, file_path):
     mandar_pdf(update.message.chat_id, context, file_path)
 
 
@@ -322,10 +301,3 @@ COMMANDS = {
     'cuandovence': cuandovence,
     'colaborar': colaborar,
 }
-
-def handle_command(update, bot):
-    command_text = update.message.text.split(' ')[0][1:]
-    command = command_text.split('@')[0] # Remove bot username from command
-    if command in COMMANDS:
-        context = DummyContext(bot, update)
-        COMMANDS[command](update, context)
