@@ -94,7 +94,7 @@ class GrupoOtros(Listable):
 
 class Noticia(Base):
     __tablename__ = 'noticias'
-    id = Column(Integer, primary_key=T)
+    id = Column(Integer, primary_key=True)
     text = Column(Text, nullable=False)
     date = Column(Date, nullable=False, default=datetime.date.today)
     validado = Column(Boolean, default=True)
