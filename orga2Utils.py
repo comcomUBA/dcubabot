@@ -5,11 +5,14 @@ from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
 # Local imports
-from models import AsmInstruction, Noitip, Session
+from models import AsmInstruction, Noitip, Session, init_db
 
 @contextmanager
 def get_session():
     """Provide a transactional scope around a series of operations."""
+    global Session
+    if Session is None:
+        init_db()
     session = Session()
     try:
         yield session
