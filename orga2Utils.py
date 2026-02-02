@@ -23,16 +23,16 @@ def get_session():
         session.close()
 
 
-def noitip(update, context):
+async def noitip(update, context):
     with get_session() as session:
         random_noitip = session.query(models.Noitip).order_by(func.random()).first().text
-    msg = update.message.reply_text(random_noitip)
+    msg = await update.message.reply_text(random_noitip)
     context.chat_data.setdefault('sent_messages', []).append(msg)
 
 
-def asm(update, context):
+async def asm(update, context):
     if not context.args:
-        msg = update.message.reply_text(
+        msg = await update.message.reply_text(
             "No me pasaste ninguna instrucción.")
         context.chat_data.setdefault('sent_messages', []).append(msg)
         return
@@ -53,7 +53,7 @@ def asm(update, context):
                 response_text = ("No pude encontrar esa instrucción.\n"
                                  "Quizás quisiste decir:\n")
                 response_text += "\n".join(getasminfo(i) for i in possibles)
-    msg = update.message.reply_text(response_text)
+    msg = await update.message.reply_text(response_text)
     context.chat_data.setdefault('sent_messages', []).append(msg)
 
 
