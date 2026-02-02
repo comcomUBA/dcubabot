@@ -27,14 +27,16 @@ async def noitip(update, context):
     with get_session() as session:
         random_noitip = session.query(models.Noitip).order_by(func.random()).first().text
     msg = await update.message.reply_text(random_noitip)
-    context.chat_data.setdefault('sent_messages', []).append(msg)
+    if hasattr(context, 'sent_messages'):
+        context.sent_messages.append(msg)
 
 
 async def asm(update, context):
     if not context.args:
         msg = await update.message.reply_text(
             "No me pasaste ninguna instrucción.")
-        context.chat_data.setdefault('sent_messages', []).append(msg)
+        if hasattr(context, 'sent_messages'):
+            context.sent_messages.append(msg)
         return
 
     mnemonic = " ".join(context.args).upper()
@@ -54,7 +56,8 @@ async def asm(update, context):
                                  "Quizás quisiste decir:\n")
                 response_text += "\n".join(getasminfo(i) for i in possibles)
     msg = await update.message.reply_text(response_text)
-    context.chat_data.setdefault('sent_messages', []).append(msg)
+    if hasattr(context, 'sent_messages'):
+        context.sent_messages.append(msg)
 
 
 def levenshtein(string1, string2):
