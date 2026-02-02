@@ -1,13 +1,13 @@
 name: Build and Deploy to Cloud Run
 on:
-  push:
-  #pull_request:
+  push:  #pull_request:
   workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   PROJECT_REGION: ${{ vars.GCP_PROJECT_REGION }}
   SERVICE_NAME: ${{ vars.GCP_SERVICE_API_NAME }}
+  JOB_NAME: ${{ vars.GCP_SERVICE_API_NAME }}-update-groups
   ARTIFACT_REGISTRY: ${{ vars.GCP_ARTIFACT_REGISTRY }}
 
 jobs:
@@ -44,7 +44,7 @@ jobs:
           docker push $TAG
 
   deploy-to-cloud-run:
-    name: Deploy to Cloud Run
+    name: Deploy Service to Cloud Run
     needs: build-and-push
     runs-on: ubuntu-latest
     environment: GCP-Rozen
@@ -89,3 +89,41 @@ jobs:
             --set-env-vars=WEBHOOK_URL=${{ env.URL }} \
             --platform managed \
             --allow-unauthenticated
+
+  deploy-cron-job-to-cloud-run:
+    name: Deploy CronJob to Cloud Run
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: GCP-Rozen
+    if: github.event_name == 'push'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Authenticate Cloud CLI
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Define image tag for deployment
+        run: echo "TAG=${{ env.PROJECT_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Deploy Cron Job to Cloud Run
+        run: |-
+          gcloud run jobs deploy ${{ env.JOB_NAME }} \
+            --image $TAG \
+            --region ${{ env.PROJECT_REGION }} \
+            --command=python \
+            --args=cron.py \
+            --schedule="0 0 * * *" \
+            --time-zone="America/Argentina/Buenos_Aires" \
+            --service-account ${{ vars.GCP_SA_EMAIL }} \
+            --set-secrets=TELEGRAM_BOT_TOKEN=${{ vars.GCP_SECRET_TG_BOT_TOKEN }}:latest \
+            --set-secrets=DB_USER=${{ vars.GCP_SECRET_DB_USER }}:latest \
+            --set-secrets=DB_PASSWORD=${{ vars.GCP_SECRET_DB_PASSWORD }}:latest \
+            --set-secrets=DB_URL=${{ vars.GCP_SECRET_DB_URL }}:latest \
+            --set-env-vars=DB_PORT=${{ vars.GCP_DB_PORT }}
