@@ -30,4 +30,5 @@ COPY . .
 ENV PYTHONPATH /app/packages
 
 
+ENTRYPOINT ["python"]
 CMD ["main.py"]

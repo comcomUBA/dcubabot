@@ -1,0 +1,42 @@
+steps:
+# Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'build'
+  - '-t'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/dcubabot/dcubabot:latest'
+  - '.'
+
+# Push the container image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'push'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/dcubabot/dcubabot:latest'
+
+# Deploy the main service to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+  - 'run'
+  - 'deploy'
+  - 'dcubabot'
+  - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/dcubabot/dcubabot:latest'
+  - '--platform=managed'
+  - '--region=us-central1'
+  - '--allow-unauthenticated'
+  - '--port=8080'
+
+# Deploy the scheduled job for updating groups
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+  - 'run'
+  - 'jobs'
+  - 'deploy'
+  - 'dcubabot-update-groups'
+  - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/dcubabot/dcubabot:latest'
+  - '--region=us-central1'
+  - '--command=python'
+  - '--args=cron.py'
+  - '--schedule=0 0 * * *' # Daily at midnight
+  - '--time-zone=America/Argentina/Buenos_Aires'
