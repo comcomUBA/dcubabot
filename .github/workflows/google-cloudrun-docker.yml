@@ -90,8 +90,8 @@ jobs:
             --platform managed \
             --allow-unauthenticated
 
-  deploy-cron-job-to-cloud-run:
-    name: Deploy CronJob to Cloud Run
+  deploy-and-schedule-job:
+    name: Deploy and Schedule Job
     needs: build-and-push
     runs-on: ubuntu-latest
     environment: GCP-Rozen
@@ -112,18 +112,37 @@ jobs:
       - name: Define image tag for deployment
         run: echo "TAG=${{ env.PROJECT_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
 
-      - name: Deploy Cron Job to Cloud Run
+      - name: Deploy Cloud Run Job
         run: |-
           gcloud run jobs deploy ${{ env.JOB_NAME }} \
             --image $TAG \
             --region ${{ env.PROJECT_REGION }} \
             --command=python \
             --args=cron.py \
-            --schedule="0 0 * * *" \
-            --time-zone="America/Argentina/Buenos_Aires" \
             --service-account ${{ vars.GCP_SA_EMAIL }} \
             --set-secrets=TELEGRAM_BOT_TOKEN=${{ vars.GCP_SECRET_TG_BOT_TOKEN }}:latest \
             --set-secrets=DB_USER=${{ vars.GCP_SECRET_DB_USER }}:latest \
             --set-secrets=DB_PASSWORD=${{ vars.GCP_SECRET_DB_PASSWORD }}:latest \
             --set-secrets=DB_URL=${{ vars.GCP_SECRET_DB_URL }}:latest \
             --set-env-vars=DB_PORT=${{ vars.GCP_DB_PORT }}
+
+      - name: Create or Update Cloud Scheduler Job
+        run: |
+          if gcloud scheduler jobs describe ${{ env.JOB_NAME }} --location=${{ env.PROJECT_REGION }} >/dev/null 2>&1; then
+            echo "Updating existing Cloud Scheduler job"
+            gcloud scheduler jobs update http ${{ env.JOB_NAME }} \
+              --location=${{ env.PROJECT_REGION }} \
+              --schedule="0 0 * * *" \
+              --uri="https://${{ env.PROJECT_REGION }}-run.googleapis.com/v1/projects/${{ env.PROJECT_ID }}/locations/${{ env.PROJECT_REGION }}/jobs/${{ env.JOB_NAME }}:run" \
+              --http-method=POST \
+              --oidc-service-account-email=${{ vars.GCP_SA_EMAIL }}
+          else
+            echo "Creating new Cloud Scheduler job"
+            gcloud scheduler jobs create http ${{ env.JOB_NAME }} \
+              --location=${{ env.PROJECT_REGION }} \
+              --schedule="0 0 * * *" \
+              --time-zone="America/Argentina/Buenos_Aires" \
+              --uri="https://${{ env.PROJECT_REGION }}-run.googleapis.com/v1/projects/${{ env.PROJECT_ID }}/locations/${{ env.PROJECT_REGION }}/jobs/${{ env.JOB_NAME }}:run" \
+              --http-method=POST \
+              --oidc-service-account-email=${{ vars.GCP_SA_EMAIL }}
+          fi

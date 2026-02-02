@@ -38,5 +38,5 @@ steps:
   - '--region=us-central1'
   - '--command=python'
   - '--args=cron.py'
-  - '--schedule=0 0 * * *' # Daily at midnight
+  - '--schedule=0 0 * * *' # Daily at midnight #callate lereno
   - '--time-zone=America/Argentina/Buenos_Aires'
