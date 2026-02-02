@@ -38,23 +38,22 @@ def asm(update, context):
         return
 
     mnemonic = " ".join(context.args).upper()
+    response_text = ""
     with get_session() as session:
         all_instructions = session.query(models.AsmInstruction).all()
         possibles = [i for i in all_instructions
                      if levenshtein(mnemonic, i.mnemonic.upper()) < 2]
-    if not possibles:
-        msg = update.message.reply_text(
-            "No pude encontrar esa instrucción.", quote=False)
-    else:
-        instr_match = [i for i in possibles if i.mnemonic.upper() == mnemonic]
-        if instr_match:
-            response_text = ""
-            response_text += "\n".join(getasminfo(i) for i in instr_match)
+        if not possibles:
+            response_text = "No pude encontrar esa instrucción."
         else:
-            response_text = ("No pude encontrar esa instrucción.\n"
-                             "Quizás quisiste decir:\n")
-            response_text += "\n".join(getasminfo(i) for i in possibles)
-        msg = update.message.reply_text(response_text, quote=False)
+            instr_match = [i for i in possibles if i.mnemonic.upper() == mnemonic]
+            if instr_match:
+                response_text = "\n".join(getasminfo(i) for i in instr_match)
+            else:
+                response_text = ("No pude encontrar esa instrucción.\n"
+                                 "Quizás quisiste decir:\n")
+                response_text += "\n".join(getasminfo(i) for i in possibles)
+    msg = update.message.reply_text(response_text, quote=False)
     context.sent_messages.append(msg)
 
 
