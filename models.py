@@ -59,37 +59,37 @@ class Listable(Base):
 
 class Obligatoria(Listable):
     __mapper_args__ = {
-        'polymorphic_identity': 'obligatoria',
+        'polymorphic_identity': 'Obligatoria',
     }
 
 class Optativa(Listable):
     __mapper_args__ = {
-        'polymorphic_identity': 'optativa',
+        'polymorphic_identity': 'Optativa',
     }
 
 class ECI(Listable):
     __mapper_args__ = {
-        'polymorphic_identity': 'eci',
+        'polymorphic_identity': 'ECI',
     }
 
 class Otro(Listable):
     __mapper_args__ = {
-        'polymorphic_identity': 'otro',
+        'polymorphic_identity': 'Otro',
     }
 
 class Grupo(Listable):
     __mapper_args__ = {
-        'polymorphic_identity': 'grupo',
+        'polymorphic_identity': 'Grupo',
     }
 
 class GrupoOptativa(Listable):
     __mapper_args__ = {
-        'polymorphic_identity': 'grupo_optativa',
+        'polymorphic_identity': 'GrupoOptativa',
     }
 
 class GrupoOtros(Listable):
     __mapper_args__ = {
-        'polymorphic_identity': 'grupo_otros',
+        'polymorphic_identity': 'GrupoOtros',
     }
 
 class Noticia(Base):

@@ -20,6 +20,7 @@ from telegram.ext import (
 )
 from typing import Dict, Final
 
+import models
 # Local imports
 from models import (Session, Command, Grupo, GrupoOptativa, ECI, GrupoOtros,
                     Obligatoria, Optativa, Otro, File, Listable, Noticia)
@@ -42,7 +43,9 @@ bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 @contextmanager
 def get_session():
     """Provide a transactional scope around a series of operations."""
-    session = Session()
+    if models.Session is None:
+        models.init_db()
+    session = models.Session()
     try:
         yield session
         session.commit()

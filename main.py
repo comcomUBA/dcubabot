@@ -27,8 +27,7 @@ def main():
         level=logging.INFO,
         format='[%(asctime)s] - [%(name)s] - [%(levelname)s] - %(message)s',
     )
-    
-    init_db()
+
 
     application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
 
