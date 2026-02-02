@@ -144,50 +144,6 @@ def felizdia(context):
     context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
 
 
-def suggest_listable(update, context, listable_type):
-    try:
-        name, url = " ".join(context.args).split("|")
-        if not (name and url):
-            raise Exception("not userneim")
-    except Exception:
-        msg = update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
-                                        update.message.text.split()[0] +
-                                        " <nombre>|<link>",
-                                        quote=False)
-        context.sent_messages.append(msg)
-        return
-    with db_session:
-        group = listable_type(name=name, url=url)
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                text="Aceptar", callback_data=f"Listable|{group.id}|1"),
-            InlineKeyboardButton(
-                text="Rechazar", callback_data=f"Listable|{group.id}|0")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.sendMessage(chat_id=ROZEN_CHATID,
-                            text=listable_type.__name__ + ": " + name + "\n" + url,
-                            reply_markup=reply_markup)
-    msg = update.message.reply_text("OK, se lo mando a Rozen.", quote=False)
-    context.sent_messages.append(msg)
-
-
-def sugerirgrupo(update, context):
-    suggest_listable(update, context, Obligatoria)
-
-
-def sugeriroptativa(update, context):
-    suggest_listable(update, context, Optativa)
-
-
-def sugerireci(update, context):
-    suggest_listable(update, context, ECI)
-
-
-def sugerirotro(update, context):
-    suggest_listable(update, context, Otro)
 
 
 def listarlabos(update, context):
@@ -207,27 +163,6 @@ def flanviejo(update, context):
 
 def aulas(update, context):
     responder_documento(update, context, 'files/0I-aulas.pdf')
-
-
-def togglecommand(update, context):
-    if context.args and update.message.from_user.id in admin_ids:
-        command_name = context.args[0]
-        if command_name not in command_handlers:
-            update.message.reply_text(text=f"No existe el comando /{command_name}.",
-                                      quote=False)
-            return
-        with db_session:
-            command = Command.get(name=command_name)
-            command.enabled = not command.enabled
-            if command.enabled:
-                action = "activado"
-                context.dispatcher.add_handler(command_handlers[command_name])
-            else:
-                action = "desactivado"
-                context.dispatcher.remove_handler(
-                    command_handlers[command_name])
-            update.message.reply_text(text=f"Comando /{command_name} {action}.",
-                                      quote=False)
 
 
 def sugerir(update, context):

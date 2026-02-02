@@ -7,6 +7,7 @@ import pytz
 import datetime
 import random
 from contextlib import contextmanager
+from time import sleep
 
 # Non STL imports
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -66,7 +67,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as session:
         commands = session.query(Command).filter_by(enabled=True).order_by(Command.name).all()
         for command in commands:
-            message_text += f"/{command.name} - {command.description}\n"
+            if command.description:
+                message_text += f"/{command.name} - {command.description}\n"
+            else:
+                message_text += f"/{command.name}\n"
     await update.message.reply_text(message_text)
 
 
@@ -149,29 +153,20 @@ async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, l
 
 
 async def sugerirgrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await suggest_listable(update, context, Obligatoria)
+    await update.message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregargrupo")
 
 
 async def sugeriroptativa(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await suggest_listable(update, context, Optativa)
+    await update.message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregaroptativa")
 
 
 async def sugerireci(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await suggest_listable(update, context, ECI)
+    await update.message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregareci")
 
 
 async def sugerirotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await suggest_listable(update, context, Otro)
+    await update.message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregarotro")
 
-async def agregargrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Para sugerir un grupo, usá uno de los siguientes comandos, dependiendo de la categoría del grupo:\n"
-        "/sugerirgrupo - Materia obligatoria\n"
-        "/sugeriroptativa - Materia optativa\n"
-        "/sugerireci - ECI\n"
-        "/sugerirotro - Otra categoría\n\n"
-        "El formato es: /comando <nombre>|<link>"
-    )
 
 async def campusvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text("Bancá que me fijo...")
@@ -320,6 +315,124 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await query.edit_message_text(text=message.text + action_text)
 
 
+async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype, groupString):
+    try:
+        url = await context.bot.export_chat_invite_link(
+            chat_id=update.message.chat.id)
+        name = update.message.chat.title
+        chat_id = str(update.message.chat.id)
+    except:  # TODO: filter excepts
+        await update.message.reply_text(
+            text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin")
+        return
+    with get_session() as session:
+        group = session.query(grouptype).filter_by(chat_id=chat_id).first()
+        if group:
+            group.url = url
+            group.name = name
+            await update.message.reply_text(
+                text=f"Datos del grupo actualizados")
+            return
+        group = grouptype(name=name, url=url, chat_id=chat_id)
+        session.add(group)
+        session.flush()
+        group_id = group.id
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="Aceptar", callback_data=f"Listable|{group_id}|1"),
+            InlineKeyboardButton(
+                text="Rechazar", callback_data=f"Listable|{group_id}|0")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await context.bot.send_message(chat_id=ROZEN_CHATID,
+                            text=f"{groupString}: {name}\n{url}",
+                            reply_markup=reply_markup)
+    await update.message.reply_text("OK, se lo mando a Rozen.")
+
+
+async def agregargrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await agregar(update, context, Grupo, "grupo")
+
+
+async def agregaroptativa(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await agregar(update, context, GrupoOptativa, "optativa")
+
+
+async def agregarotros(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await agregar(update, context, GrupoOtros, "otro")
+
+
+async def agregareci(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await agregar(update, context, ECI, "eci")
+
+
+async def sugerirNoticia(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
+    name = user.first_name
+    texto = " ".join(context.args)
+    if not texto:
+        await update.message.reply_text(
+            text="Loc@, pusisiste algo mal, la idea es q pongas:\n "
+                 "/sugerirNoticia <texto>")
+        return
+    with get_session() as session:
+        noticia = Noticia(text=texto)
+        session.add(noticia)
+        session.flush()
+        noticia_id = noticia.id
+    keyboard = [
+        [
+            InlineKeyboardButton("Aceptar", callback_data=f"Noticia|{noticia_id}|1"),
+            InlineKeyboardButton("Rechazar", callback_data=f"Noticia|{noticia_id}|0")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await context.bot.send_message(chat_id=ROZEN_CHATID, text=f"Noticia-{name}: {texto}",
+                            reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(text="Ok, se lo pregunto a Rozen")
+
+
+async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> (str, str, bool):
+    try:
+        url = await context.bot.export_chat_invite_link(chat_id=chat_id)
+        return chat_id, url, True  # too GO-like huh?
+    except Exception:
+        logger.error(f"Could not create invite link for {chat_id}", exc_info=True)
+        return None, None, False  # too GO-like huh?
+
+
+async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
+    logger.info("Starting update_groups job")
+    with get_session() as session:
+        chats = list(session.query(Listable).filter_by(validated=True).all())
+    logger.info(f"Found {len(chats)} groups to update")
+
+    for chat in chats:
+        sleep(1)
+        chat_id, url, validated = await update_group_url(context, chat.chat_id)
+        if not validated:
+            logger.warning(f"Failed to update URL for group '{chat.name}'. De-validating.")
+            with get_session() as session:
+                c = session.query(Listable).filter_by(id=chat.id).first()
+                c.validated = False
+            await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat.name} murió 💀")
+        else:
+            logger.info(f"Updating URL for group '{chat.name}'")
+            with get_session() as session:
+                c = session.query(Listable).filter_by(id=chat.id).first()
+                c.url = url
+    logger.info("Finished update_groups job")
+
+
+async def actualizar_grupos(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"Manual update of groups triggered by {update.effective_user.id}")
+    await update.message.reply_text("Actualizando grupos...")
+    await _update_groups(context)
+    await update.message.reply_text("¡Grupos actualizados!")
+
+
 COMMANDS = {
     'start': {
         'handler': start,
@@ -353,25 +466,26 @@ COMMANDS = {
         'handler': cubawiki,
         'description': 'Devuelve el link a la Cubawiki de la materia (si estás en el grupo de la materia).'
     },
-    'sugerirgrupo': {
-        'handler': sugerirgrupo,
-        'description': 'Sugiere un grupo de una materia obligatoria.'
-    },
-    'sugeriroptativa': {
-        'handler': sugeriroptativa,
-        'description': 'Sugiere un grupo de una materia optativa.'
-    },
-    'sugerireci': {
-        'handler': sugerireci,
-        'description': 'Sugiere un grupo de una ECI.'
-    },
-    'sugerirotro': {
-        'handler': sugerirotro,
-        'description': 'Sugiere un grupo de otra categoría.'
-    },
+
     'agregargrupo': {
         'handler': agregargrupo,
-        'description': 'Muestra ayuda para sugerir un grupo.'
+        'description': 'Agrega el grupo actual a la lista de grupos de materias obligatorias.'
+    },
+    'agregaroptativa': {
+        'handler': agregaroptativa,
+        'description': 'Agrega el grupo actual a la lista de grupos de materias optativas.'
+    },
+    'agregareci': {
+        'handler': agregareci,
+        'description': 'Agrega el grupo actual a la lista de grupos de ECI.'
+    },
+    'agregarotros': {
+        'handler': agregarotros,
+        'description': 'Agrega el grupo actual a la lista de otros grupos.'
+    },
+    'sugerirnoticia': {
+        'handler': sugerirNoticia,
+        'description': 'Sugiere una noticia para el canal de noticias.'
     },
     'campusvivo': {
         'handler': campusvivo,
@@ -413,4 +527,23 @@ COMMANDS = {
         'handler': colaborar,
         'description': 'Muestra el link al repositorio de Github del bot.'
     },
+    'actualizar_grupos': {
+        'handler': actualizar_grupos,
+        'description': 'Actualiza los links de todos los grupos.'
+    },
+    #deprecated
+    'sugerirgrupo': {
+        'handler': sugerirgrupo,
+    },
+    'sugeriroptativa': {
+        'handler': sugeriroptativa,
+    },
+    'sugerireci': {
+        'handler': sugerireci,
+    },
+    'sugerirotro': {
+        'handler': sugerirotro,
+    },
+    #hidden
+
 }
