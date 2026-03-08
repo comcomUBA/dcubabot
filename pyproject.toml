@@ -9,7 +9,7 @@ dependencies = [
     "icalevents==0.3.1",
     "pytz==2026.1.post1",
     "requests==2.32.5",
-    "python-telegram-bot>=13.11,<14",
+    "python-telegram-bot>=13.11,<23",
     "robobrowser==0.5.3",
     "Werkzeug==0.15.5",
 ]
