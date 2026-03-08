@@ -482,7 +482,10 @@ def add_all_handlers(application: Application):
     )
     with db_session:
         for command in list(Command.select(lambda _: True)):
-            handler = DeletableCommandHandler(command.name, globals()[command.name])
+            handler_fn = globals().get(command.name)
+            if handler_fn is None:
+                continue
+            handler = DeletableCommandHandler(command.name, handler_fn)
             command_handlers[command.name] = handler
             if command.enabled:
                 application.add_handler(handler)

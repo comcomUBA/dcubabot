@@ -128,6 +128,11 @@ def install_check_or_install_commands():
         )
 
         check_or_install_command(
+            name="fechafinales",
+            description="Muestra las fechas de exámenes del calendario académico de Exactas.",
+        )
+
+        check_or_install_command(
             name="colaborar",
             description="Devuelve el repositorio donde se desarrolla el DCUBABOT.",
         )
