@@ -2,6 +2,6 @@ pony
 icalevents
 pytz
 requests
-python_telegram_bot==13.11
+python_telegram_bot==22.6
 robobrowser==0.5.3
 Werkzeug==0.15.5
