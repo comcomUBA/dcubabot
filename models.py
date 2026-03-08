@@ -1,8 +1,15 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
 
-from pony.orm import *
 import datetime
+
+from pony.orm import (  # noqa: F401
+    Database,
+    Optional,
+    Required,
+    commit,
+    db_session,
+    select,
+)
 
 db = Database()
 
@@ -46,11 +53,14 @@ class Otro(Listable):
 class Grupo(Listable):
     pass
 
+
 class GrupoOptativa(Listable):
     pass
 
+
 class GrupoOtros(Listable):
     pass
+
 
 # TODO: Subclasificar con validable
 class Noticia(db.Entity):
@@ -75,5 +85,5 @@ class File(db.Entity):
 
 
 def init_db(path):
-    db.bind('sqlite', path, create_db=True)
+    db.bind("sqlite", path, create_db=True)
     db.generate_mapping(create_tables=True)

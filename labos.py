@@ -1,35 +1,39 @@
-from icalevents import icaldownload, icalparser
 from datetime import datetime, timedelta
+
+from icalevents import icaldownload, icalparser
 from pytz import timezone
 
 
-def __calendar_url(id):
-    return 'https://calendar.google.com/calendar/ical/' + str(id) + \
-        '%40group.calendar.google.com/public/basic.ics'
+def __calendar_url(calendar_id):
+    return (
+        "https://calendar.google.com/calendar/ical/"
+        + str(calendar_id)
+        + "%40group.calendar.google.com/public/basic.ics"
+    )
 
 
 urls = {
-    'Labo 1': __calendar_url('s57pjfhll16pqpu456eonvb760'),
-    'Labo 2': __calendar_url('bupjqrv2va0nb3bv3o1f1jqtc0'),
-    'Labo 3 (Graduados)': __calendar_url('n3sd0tpdt0o5855evq8uvsi3vo'),
-    'Labo 4': __calendar_url('4lbn08p17sv8s2pfqoophliag4'),
-    'Labo 5': __calendar_url('fu35kvoh4i2looi4drjf17k1ts'),
-    'Labo 6': __calendar_url('g3jdt9mmsrqllp7hqfotvttsck'),
-    'Labo 7 (Turing)': __calendar_url('krs8uvil4o36kd3a3ad5qs57dg')
+    "Labo 1": __calendar_url("s57pjfhll16pqpu456eonvb760"),
+    "Labo 2": __calendar_url("bupjqrv2va0nb3bv3o1f1jqtc0"),
+    "Labo 3 (Graduados)": __calendar_url("n3sd0tpdt0o5855evq8uvsi3vo"),
+    "Labo 4": __calendar_url("4lbn08p17sv8s2pfqoophliag4"),
+    "Labo 5": __calendar_url("fu35kvoh4i2looi4drjf17k1ts"),
+    "Labo 6": __calendar_url("g3jdt9mmsrqllp7hqfotvttsck"),
+    "Labo 7 (Turing)": __calendar_url("krs8uvil4o36kd3a3ad5qs57dg"),
 }
 
 calendars = {
     # 'name': (events: List[Event], loaded: Datetime, span: Timedelta, raw: Str)
-    'Labo 1': (None,),
-    'Labo 2': (None,),
-    'Labo 3 (Graduados)': (None,),
-    'Labo 4': (None,),
-    'Labo 5': (None,),
-    'Labo 6': (None,),
-    'Labo 7 (Turing)': (None,),
+    "Labo 1": (None,),
+    "Labo 2": (None,),
+    "Labo 3 (Graduados)": (None,),
+    "Labo 4": (None,),
+    "Labo 5": (None,),
+    "Labo 6": (None,),
+    "Labo 7 (Turing)": (None,),
 }
 
-tz = timezone('America/Buenos_Aires')
+tz = timezone("America/Buenos_Aires")
 
 
 # Devuelve el momento actual con nuestra zona horaria.
@@ -52,9 +56,11 @@ def load_calendar(name, retries=3):
             now = aware_now()
             span = timedelta(weeks=4)
             calendar_raw = icaldownload.ICalDownload().data_from_url(url)
-            events = icalparser.parse_events(calendar_raw,
-                                             start=now - span,
-                                             end=now + span)
+            events = icalparser.parse_events(
+                calendar_raw,
+                start=now - span,
+                end=now + span,
+            )
             calendars[name] = (events, now, span, calendar_raw)
             return calendars[name]
         except Exception:
@@ -101,16 +107,14 @@ def events_at(time):
         if calendar[1] - calendar[2] <= time <= calendar[1] + calendar[2]:
             events_gen = (e for e in calendar[0] if e.start <= time <= e.end)
         else:
-            events_gen = (e for e in icalparser.parse_events(calendar[3],
-                                                             start=time,
-                                                             end=time))
+            events_gen = (e for e in icalparser.parse_events(calendar[3], start=time, end=time))
         events = repeat_next(events_gen)
 
         if next(events, None) is None:
-            yield '[%s] No tiene nada reservado' % name
+            yield "[%s] No tiene nada reservado" % name
 
         for event in events:
-            yield '[%s] %s' % (name, event.summary)
+            yield "[%s] %s" % (name, event.summary)
 
 
 # Llamado periódicamente para forzar la actualización de los calendarios

@@ -1,17 +1,19 @@
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import date, datetime, time
+
 from robobrowser import RoboBrowser
 
 RIVER = "River Plate"
 UNSPECIFIED_TIMES = {"A confirmar", ""}
+
 
 @dataclass
 class Partido:
     equipo_local: str
     equipo_visitante: str
     copa: str
-    fecha: datetime.date
-    hora: datetime.time
+    fecha: date
+    hora: time
 
     @property
     def es_local(self):
@@ -25,7 +27,7 @@ class Partido:
         _fecha, _, line2 = line2.partition(" - ")
         _hora = line2
 
-        if not RIVER in equipos:
+        if RIVER not in equipos:
             raise ValueError
 
         _dow, dmy = _fecha.split(" ")
@@ -49,6 +51,7 @@ class Partido:
             hora,
         )
 
+
 def fetch_partidos():
     browser = RoboBrowser(parser="html.parser")
     browser.open("https://www.cariverplate.com.ar/calendario-de-partidos")
@@ -57,8 +60,9 @@ def fetch_partidos():
 
     for el in browser.select(".d_calendario"):
         partidos.append(Partido.parse(el))
-        
+
     return partidos
+
 
 def es_local(dt: datetime):
     fecha = dt.date()
@@ -75,6 +79,7 @@ def es_local(dt: datetime):
         return True, p
 
     return False, None
+
 
 if __name__ == "__main__":
     print(es_local(datetime.today()))

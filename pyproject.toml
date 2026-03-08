@@ -1,0 +1,69 @@
+[project]
+name = "dcubabot"
+version = "0.1.0"
+description = "Bot de Telegram para DCUBA"
+readme = "README.md"
+requires-python = "==3.13.*"
+dependencies = [
+    "pony",
+    "icalevents",
+    "pytz",
+    "requests",
+    "python-telegram-bot==13.11",
+    "robobrowser==0.5.3",
+    "Werkzeug==0.15.5",
+]
+
+[dependency-groups]
+dev = [
+    "ruff==0.15.5",
+    "mypy==1.19.1",
+    "types-pytz",
+    "types-requests",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "E501",  # line length - line-length en tool.ruff
+    "D100", "D104", "D",  # docstrings
+    "ANN",  # annotations - mypy maneja tipos
+    "TD", "FIX002",  # TODO
+    "T201", "ERA001", "A001", "N816", "N802", "N803", "N804", "N806",
+    "BLE001", "DTZ002", "DTZ003", "DTZ005", "DTZ007", "DTZ011",  # datetime
+    "ARG001", "G003", "G004",  # logging
+    "PLR2004", "S311", "TRY002", "TRY003", "TRY300", "EM101", "TRY301", "TRY400", "TRY401",
+    "SIM115", "PTH123",  # open - API telegram requiere file object
+    "PLC2401",  # mañana - variable en español
+    "B007",  # chat_id en loop - se usa en comprehension
+    "PLW0602", "C416", "UP031", "EXE001", "EXE002", "B007", "A002",
+    "SIM108", "PERF401", "RUF005", "PLE0704", "RET504",
+    "W291", "W293",  # trailing whitespace - ruff format lo maneja
+    "DTZ003", "TRY300", "B007", "A002", "COM812",  # reglas adicionales
+]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 100
+
+[tool.mypy]
+strict = false
+disallow_untyped_defs = false
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+explicit_package_bases = true
+enable_error_code = ["ignore-without-code"]
+
+[[tool.mypy.overrides]]
+module = ["models", "invitacionMail", "handlers.update_groups"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["dcubabot", "deletablecommandhandler", "orga2Utils"]
+disable_error_code = ["attr-defined"]

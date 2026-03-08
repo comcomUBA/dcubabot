@@ -1,8 +1,10 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
-from models import *
+from models import Obligatoria, db_session, init_db, select
+
 init_db("dcubabot.sqlite3")
 
 with db_session:
-    buttons = select(l for l in Obligatoria if l.validated).order_by(lambda l: l.name)
+    buttons = select(item for item in Obligatoria if item.validated).order_by(
+        lambda item: item.name,
+    )
     print(list(buttons))

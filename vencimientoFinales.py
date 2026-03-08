@@ -1,5 +1,4 @@
 import re
-from abc import abstractmethod 
 
 VERANO = "ver"
 PCUAT = "1c"
@@ -19,12 +18,10 @@ EXT_SEP_TXT = "Septiembre de "
 
 ## CARGAR EXCEPCIONES
 #               año : cuatrimestres de validez (default 8)
-EXCEPCIONES = { "2016": 12,
-                "2017": 11,
-                "2018": 10,
-                "2019": 9}
+EXCEPCIONES = {"2016": 12, "2017": 11, "2018": 10, "2019": 9}
 
-class Cursada():
+
+class Cursada:
     @classmethod
     def nueva(self, cuatri, anio, validez):
         clase = next(sc for sc in self.__subclasses__() if sc.accepts(cuatri))
@@ -35,19 +32,19 @@ class Cursada():
         self.cuatri = cuatri
         self.validez = validez
         self.set_vencimientos()
-    
+
     def fecha_aprobacion(self):
         return f"{self.cuatri} de {self.anio}"
-    
-class PrimerSemestre(Cursada):
 
+
+class PrimerSemestre(Cursada):
     @classmethod
     def accepts(self, cuatri):
         return cuatri in PRIMEROS
-    
+
     def set_vencimientos(self):
-        self.anio_venc = self.anio + self.validez//2
-        
+        self.anio_venc = self.anio + self.validez // 2
+
         if self.validez % 2 == 0:
             self.fecha_vencimiento = VENC_FEB_TXT + str(self.anio_venc)
             self.fecha_extension = EXT_ABR_TXT + str(self.anio_venc)
@@ -55,15 +52,15 @@ class PrimerSemestre(Cursada):
             self.fecha_vencimiento = VENC_JUL_TXT + str(self.anio_venc)
             self.fecha_extension = EXT_SEP_TXT + str(self.anio_venc)
 
-class SegundoSemestre(Cursada):
 
+class SegundoSemestre(Cursada):
     @classmethod
     def accepts(self, cuatri):
         return cuatri in SEGUNDOS
-    
+
     def set_vencimientos(self):
-        self.anio_venc = self.anio + self.validez//2
-        
+        self.anio_venc = self.anio + self.validez // 2
+
         if self.validez % 2 == 0:
             self.fecha_vencimiento = VENC_JUL_TXT + str(self.anio_venc)
             self.fecha_extension = EXT_SEP_TXT + str(self.anio_venc)
@@ -72,17 +69,19 @@ class SegundoSemestre(Cursada):
             self.fecha_vencimiento = VENC_FEB_TXT + str(self.anio_venc)
             self.fecha_extension = EXT_ABR_TXT + str(self.anio_venc)
 
+
 def parse_cuatri_y_anio(linea):
     # regex para parametros.
     r_entrada = r"^(?P<cuatri>[12]c|v(er(ano)?)?|i(nv(ierno)?)?)(?P<anio>20\d{2})$"
     entrada = re.search(r_entrada, linea)
     if not entrada:
-        raise 
+        raise
 
     cuatri = entrada.group("cuatri")
     anio = entrada.group("anio")
 
     return cuatri, anio
+
 
 def calcular_vencimiento(cuatri, anio):
 
@@ -102,6 +101,7 @@ def calcular_vencimiento(cuatri, anio):
 
     return mje
 
+
 def unificar_especiales(cuatri):
     if cuatri in VERANOS:
         cuatri = VERANO
@@ -109,8 +109,9 @@ def unificar_especiales(cuatri):
         cuatri = INVIERNO
     return cuatri
 
+
 def armar_texto(cursada, txt_excepcion):
-    mje = f"""Materia aprobada en {cursada.fecha_aprobacion()}.
+    mje = rf"""Materia aprobada en {cursada.fecha_aprobacion()}.
 
 Última fecha en la cual podés rendir: 
 *{cursada.fecha_vencimiento}.*
