@@ -83,20 +83,24 @@ def _cache_path(url: str) -> Path:
 
 
 def _fetch_html(*, use_cache: bool = True) -> str:
-    if use_cache:
-        path = _cache_path(URL)
-        if path.exists() and time.time() - path.stat().st_mtime < CACHE_TTL:
+    path = _cache_path(URL)
+    if use_cache and path.exists() and time.time() - path.stat().st_mtime < CACHE_TTL:
+        return path.read_text(encoding="utf-8", errors="replace")
+    try:
+        r = requests.get(URL, headers={"User-Agent": USER_AGENT}, timeout=15)
+        r.raise_for_status()
+        html_content = r.text
+        if use_cache:
+            try:
+                _cache_dir().mkdir(parents=True, exist_ok=True)
+                path.write_text(html_content, encoding="utf-8")
+            except OSError:
+                pass
+        return html_content
+    except (requests.RequestException, OSError):
+        if path.exists():
             return path.read_text(encoding="utf-8", errors="replace")
-    r = requests.get(URL, headers={"User-Agent": USER_AGENT}, timeout=15)
-    r.raise_for_status()
-    html_content = r.text
-    if use_cache:
-        try:
-            _cache_dir().mkdir(parents=True, exist_ok=True)
-            _cache_path(URL).write_text(html_content, encoding="utf-8")
-        except OSError:
-            pass
-    return html_content
+        raise
 
 
 def _extract_content(html_content: str) -> str:
@@ -488,14 +492,22 @@ async def fechafinales(update: Update, context: DCUBACallbackContext) -> None:
 
     chunks = _split_for_telegram(texto)
     for i, chunk in enumerate(chunks):
-        if i == 0:
-            await context.bot.edit_message_text(
-                chat_id=msg.chat_id,
-                message_id=msg.message_id,
-                text=chunk,
-                parse_mode=ParseMode.HTML,
-            )
-        else:
+        try:
+            if i == 0:
+                await context.bot.edit_message_text(
+                    chat_id=msg.chat_id,
+                    message_id=msg.message_id,
+                    text=chunk,
+                    parse_mode=ParseMode.HTML,
+                )
+            else:
+                m = await context.bot.send_message(
+                    chat_id=msg.chat_id,
+                    text=chunk,
+                    parse_mode=ParseMode.HTML,
+                )
+                context.sent_messages.append(m)
+        except Exception:
             m = await context.bot.send_message(
                 chat_id=msg.chat_id,
                 text=chunk,

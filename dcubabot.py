@@ -566,10 +566,12 @@ def add_all_handlers(
 
 
 def _make_post_init(
-    descriptions: list[tuple[str, str | None]],
+    descriptions_ref: list[list[tuple[str, str | None]]],
 ) -> Any:
     async def _set_commands(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
-        await app.bot.set_my_commands(descriptions)
+        desc = descriptions_ref[0] if descriptions_ref else []
+        if desc:
+            await app.bot.set_my_commands(desc)
 
     return _set_commands
 
@@ -746,23 +748,19 @@ def main() -> None:
         logger.info("Iniciando")
         random.seed()
         init_db("dcubabot.sqlite3")
-        with db_session:
-            descriptions = [
-                (c.name, c.description)
-                for c in list(Command.select(lambda c: c.description is not None))
-                if c.description and c.description.strip()
-            ]
+        command_descriptions: list[list[tuple[str, str | None]]] = []
         application = (
             Application.builder()
             .token(token)
             .connect_timeout(30.0)
             .read_timeout(30.0)
             .context_types(DCUBA_CONTEXT_TYPES)
-            .post_init(_make_post_init(descriptions))
+            .post_init(_make_post_init(command_descriptions))
             .build()
         )
 
-        add_all_handlers(application)
+        descriptions = add_all_handlers(application)
+        command_descriptions.append(descriptions)
 
         job_queue = application.job_queue
         if job_queue is None:
