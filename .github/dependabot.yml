@@ -1,0 +1,22 @@
+# Dependabot revisa las dependencias en pyproject.toml (uv) y GitHub Actions
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "cron"
+      cronjob: "0 0 1 12 *"  # 1 de diciembre a las 00:00 UTC
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        patterns:
+          - "ruff*"
+          - "mypy*"
+          - "types-*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "cron"
+      cronjob: "0 0 1 12 *"  # 1 de diciembre a las 00:00 UTC
+    open-pull-requests-limit: 3

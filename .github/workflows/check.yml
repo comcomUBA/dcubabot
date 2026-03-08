@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: [master, main]
   schedule:
-    # Una vez al año: 1 de enero a las 00:00 UTC
-    - cron: "0 0 1 1 *"
+    # Una vez al año: 1 de diciembre a las 00:00 UTC
+    - cron: "0 0 1 12 *"
   workflow_dispatch:
 
 jobs:
