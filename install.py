@@ -15,7 +15,6 @@ def check_or_install_command(**kwargs):
 
 
 def install_check_or_install_commands():
-
     with db_session:
         check_or_install_command(name="start")
         check_or_install_command(

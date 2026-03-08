@@ -29,7 +29,7 @@ El script `./check.sh` ejecuta ruff (linter + formatter) y mypy para validar el 
 
 ## Instalación
 
-### Con uv (recomendado)
+### Con uv
 
 Si no tenés uv instalado:
 
@@ -41,15 +41,12 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Instalar dependencias
 uv sync
 
+# Poblar la base de datos con los comandos (solo la primera vez)
+uv run python install.py
+
 # Ejecutar el bot
 uv run python dcubabot.py
 
 # Chequear linter y formatter
 ./check.sh
-```
-
-### Con pip
-
-```bash
-pip3 install -r requirements.txt
 ```

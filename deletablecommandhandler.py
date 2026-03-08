@@ -6,7 +6,7 @@ import logging
 from telegram.error import BadRequest
 from telegram.ext import CommandHandler
 
-from models import SentMessage, db_session, select
+from models import SentMessage, db_session
 
 logger = logging.getLogger("DCUBABOT")
 
@@ -16,21 +16,21 @@ class DeletableCommandHandler(CommandHandler):
         time_ellapsed = datetime.datetime.now(datetime.UTC) - message.timestamp
         return time_ellapsed < datetime.timedelta(hours=24)
 
-    def handle_update(self, update, dispatcher, check_result, context=None):
-        # context.dispatcher = dispatcher
+    async def handle_update(self, update, application, check_result, context):
         context.sent_messages = []
-        super().handle_update(update, dispatcher, check_result, context)
+        await super().handle_update(update, application, check_result, context)
 
+        command_name = next(iter(self.commands))
+        chat_id = update.effective_chat.id
         with db_session:
             # Delete previous messages sent with the command in the group
-            for message in select(
-                msg
-                for msg in SentMessage
-                if msg.command == self.command[0] and msg.chat_id == update.effective_chat.id
-            ):
+            # Filtro por command en DB; chat_id en Python (evita TO_BOOL con Pony+Py3.13)
+            for message in list(SentMessage.select(lambda m: m.command == command_name)):
+                if message.chat_id != chat_id:
+                    continue
                 if self._message_in_time_range(message):
                     try:
-                        context.bot.delete_message(
+                        await context.bot.delete_message(
                             chat_id=message.chat_id,
                             message_id=message.message_id,
                         )
@@ -42,7 +42,7 @@ class DeletableCommandHandler(CommandHandler):
             for message in context.sent_messages:
                 if message.chat.type != "private":
                     SentMessage(
-                        command=self.command[0],
+                        command=command_name,
                         chat_id=message.chat.id,
                         message_id=message.message_id,
                     )

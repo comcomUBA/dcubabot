@@ -3,13 +3,13 @@ name = "dcubabot"
 version = "0.1.0"
 description = "Bot de Telegram para DCUBA"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13, <3.14"
 dependencies = [
     "pony==0.7.19",
     "icalevents==0.3.1",
     "pytz==2026.1.post1",
     "requests==2.32.5",
-    "python-telegram-bot>=13.11,<23",
+    "python-telegram-bot[job-queue]==22.6",
     "robobrowser==0.5.3",
     "Werkzeug==0.15.5",
 ]

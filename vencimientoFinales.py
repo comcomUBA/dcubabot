@@ -84,7 +84,6 @@ def parse_cuatri_y_anio(linea):
 
 
 def calcular_vencimiento(cuatri, anio):
-
     # Unificar strings de verano/invierno
     cuatri = unificar_especiales(cuatri)
 

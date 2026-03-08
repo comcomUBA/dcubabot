@@ -4,18 +4,24 @@
 from models import AsmInstruction, Noitip, db_session
 
 
-def noitip(update, context):
+async def noitip(update, context):
     with db_session:
-        random_noitip = Noitip.select_random(1)[0].text
-    msg = update.message.reply_text(random_noitip, quote=False)
+        tips = Noitip.select_random(1)
+    if not tips:
+        msg = await update.message.reply_text(
+            "No hay tips cargados todavía.",
+            do_quote=False,
+        )
+    else:
+        msg = await update.message.reply_text(tips[0].text, do_quote=False)
     context.sent_messages.append(msg)
 
 
-def asm(update, context):
+async def asm(update, context):
     if not context.args:
-        msg = update.message.reply_text(
+        msg = await update.message.reply_text(
             "No me pasaste ninguna instrucción.",
-            quote=False,
+            do_quote=False,
         )
         context.sent_messages.append(msg)
         return
@@ -28,9 +34,9 @@ def asm(update, context):
             if levenshtein(mnemonic, i.mnemonic.upper()) < 2
         ]
     if not possibles:
-        msg = update.message.reply_text(
+        msg = await update.message.reply_text(
             "No pude encontrar esa instrucción.",
-            quote=False,
+            do_quote=False,
         )
     else:
         instr_match = [i for i in possibles if i.mnemonic.upper() == mnemonic]
@@ -40,7 +46,7 @@ def asm(update, context):
         else:
             response_text = "No pude encontrar esa instrucción.\nQuizás quisiste decir:\n"
             response_text += "\n".join(getasminfo(i) for i in possibles)
-        msg = update.message.reply_text(response_text, quote=False)
+        msg = await update.message.reply_text(response_text, do_quote=False)
     context.sent_messages.append(msg)
 
 
