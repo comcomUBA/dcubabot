@@ -6,7 +6,7 @@ updates:
     schedule:
       interval: "cron"
       cronjob: "0 0 1 12 *"  # 1 de diciembre a las 00:00 UTC
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 7
     groups:
       dev-dependencies:
         patterns:
@@ -19,4 +19,4 @@ updates:
     schedule:
       interval: "cron"
       cronjob: "0 0 1 12 *"  # 1 de diciembre a las 00:00 UTC
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 7
