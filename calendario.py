@@ -295,11 +295,21 @@ def _extraer_turno_desde_nombre(nombre: str) -> str | None:
     return None
 
 
+def _sufijo_exclusivo_bimestre(nombre: str) -> str:
+    """Si el turno es exclusivo para materias bimetrales, devuelve el sufijo a mostrar."""
+    if "exclusivo" not in nombre.lower() or "bimestre" not in nombre.lower():
+        return ""
+    m = re.search(r"del\s+(\d+(?:er|do|to)?\s+bimestre)", nombre, re.IGNORECASE)
+    if m:
+        return f" (solo materias {m.group(1).lower()})"
+    return " (solo materias bimetrales)"
+
+
 def _agrupar_solo_examenes_por_turno(
     secciones: list[SeccionCalendario],
-) -> list[tuple[str, int, list[str]]]:
+) -> list[tuple[str, int, list[str], str]]:
     """Agrupa por turno extrayendo el nombre de cada sección. Abril, Mayo, Septiembre, Octubre son turnos aparte."""
-    turnos: dict[tuple[str, int], list[str]] = {}
+    turnos: dict[tuple[str, int], tuple[list[str], str]] = {}
 
     for sec in secciones:
         if sec.categoria != "examenes":
@@ -314,11 +324,15 @@ def _agrupar_solo_examenes_por_turno(
                 continue
             año, _mes = ma
             clave = (nombre_turno, año)
-            turnos.setdefault(clave, []).append(exam)
+            sufijo = _sufijo_exclusivo_bimestre(sec.nombre)
+            if clave not in turnos:
+                turnos[clave] = ([], "")
+            turnos[clave][0].append(exam)
+            turnos[clave] = (turnos[clave][0], sufijo or turnos[clave][1])
 
     # Ordenar por fecha del primer examen
     resultado = []
-    for (nombre_turno, año), exams in turnos.items():
+    for (nombre_turno, año), (exams, sufijo) in turnos.items():
         if not exams:
             continue
         ma = _extraer_mes_año(exams[0])
@@ -326,10 +340,10 @@ def _agrupar_solo_examenes_por_turno(
             continue
         _, mes = ma
         orden = (año, mes)
-        resultado.append((orden, nombre_turno, año, exams))
+        resultado.append((orden, nombre_turno, año, exams, sufijo))
 
     resultado.sort(key=lambda x: x[0])
-    return [(nombre, año, items) for _orden, nombre, año, items in resultado]
+    return [(nombre, año, items, sufijo) for _orden, nombre, año, items, sufijo in resultado]
 
 
 def _extraer_fechas_cortas(fechas_str: str) -> str:
@@ -392,12 +406,12 @@ def _formatear_solo_examenes(secciones: list[SeccionCalendario]) -> str:
     date_lines = []
     año_actual = None
 
-    for nombre_turno, año, items in grupos:
+    for nombre_turno, año, items, sufijo_bimestre in grupos:
         año_str = str(año)
         if año_str != año_actual:
             año_actual = año_str
             out.append(("txt", f"Año— {año_str}"))
-        out.append(("txt", nombre_turno))
+        out.append(("txt", nombre_turno + sufijo_bimestre))
 
         añadir_llamado = len(items) > 1
         for i, fechas_str in enumerate(items):
