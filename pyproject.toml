@@ -18,6 +18,7 @@ dependencies = [
 dev = [
     "ruff==0.15.5",
     "mypy==1.19.1",
+    "pony-stubs==0.5.2",
     "types-pytz",
     "types-requests",
 ]
@@ -50,8 +51,8 @@ max-line-length = 100
 
 [tool.mypy]
 exclude = [".*tokenz.*"]
-strict = false
-disallow_untyped_defs = false
+strict = true
+disallow_untyped_calls = true
 python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
@@ -59,17 +60,11 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 ignore_missing_imports = true
 explicit_package_bases = true
-enable_error_code = ["ignore-without-code"]
+enable_error_code = ["ignore-without-code", "explicit-override"]
 
 [[tool.mypy.overrides]]
 module = "tokenz"
 follow_imports = "skip"
 
-[[tool.mypy.overrides]]
-module = ["models", "invitacionMail", "handlers.update_groups"]
-ignore_errors = true
-follow_imports = "skip"
 
-[[tool.mypy.overrides]]
-module = ["dcubabot", "deletablecommandhandler", "orga2Utils"]
-disable_error_code = ["attr-defined"]
+

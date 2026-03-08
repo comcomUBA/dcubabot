@@ -5,14 +5,14 @@ import datetime
 import logging
 import random
 
-import pytz
-
 # Non STL imports
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from typing import Any
+
+import pytz
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 from telegram.constants import ChatAction, ParseMode
 from telegram.ext import (
     Application,
-    CallbackContext,
     CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
@@ -22,7 +22,9 @@ from telegram.ext import (
 import conciertos
 import labos
 import river
+from calendario import fechafinales  # noqa: F401 - used via globals()
 from campus import is_campus_up
+from context_types import DCUBA_CONTEXT_TYPES, DCUBACallbackContext
 from deletablecommandhandler import DeletableCommandHandler
 
 # Local imports
@@ -64,15 +66,17 @@ logging.basicConfig(
 # Globals ...... yes, globals
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [ROZEN_CHATID, DGARRO_CHATID]  # @Rozen, @dgarro
-command_handlers: dict[str, object] = {}
+command_handlers: dict[str, DeletableCommandHandler] = {}
 bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 
 
-async def error_callback(update, context):
+async def error_callback(update: object, context: DCUBACallbackContext) -> None:
     logger.exception(context.error)
 
 
-async def start(update, context):
+async def start(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     msg = await update.message.reply_text(
         "Hola, ¿qué tal? ¡Mandame /help si no sabés qué puedo hacer!",
         do_quote=False,
@@ -80,7 +84,9 @@ async def start(update, context):
     context.sent_messages.append(msg)
 
 
-async def help(update, context):
+async def help(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     message_text = ""
     with db_session:
         for command in list(Command.select(lambda c: c.enabled).order_by(lambda c: c.name)):
@@ -91,12 +97,20 @@ async def help(update, context):
     context.sent_messages.append(msg)
 
 
-async def estasvivo(update, context):
+async def estasvivo(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     msg = await update.message.reply_text("Sí, estoy vivo.", do_quote=False)
     context.sent_messages.append(msg)
 
 
-async def list_buttons(update, context, listable_type):
+async def list_buttons(
+    update: Update,
+    context: DCUBACallbackContext,
+    listable_type: type[Any],
+) -> None:
+    if update.message is None:
+        return
     with db_session:
         buttons = list(
             listable_type.select(lambda item: item.validated).order_by(
@@ -126,23 +140,25 @@ async def list_buttons(update, context, listable_type):
         context.sent_messages.append(msg)
 
 
-async def listar(update, context):
+async def listar(update: Update, context: DCUBACallbackContext) -> None:
     await list_buttons(update, context, Grupo)
 
 
-async def listaroptativa(update, context):
+async def listaroptativa(update: Update, context: DCUBACallbackContext) -> None:
     await list_buttons(update, context, GrupoOptativa)
 
 
-async def listareci(update, context):
+async def listareci(update: Update, context: DCUBACallbackContext) -> None:
     await list_buttons(update, context, ECI)
 
 
-async def listarotro(update, context):
+async def listarotro(update: Update, context: DCUBACallbackContext) -> None:
     await list_buttons(update, context, GrupoOtros)
 
 
-async def cubawiki(update, context):
+async def cubawiki(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     chat_id = update.message.chat.id
     with db_session:
         for group in list(Obligatoria.select(lambda o: o.chat_id == chat_id)):
@@ -152,19 +168,21 @@ async def cubawiki(update, context):
                 break
 
 
-async def log_message(update, context):
+async def log_message(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None or update.message.from_user is None:
+        return
     user = str(update.message.from_user.id)
     chat = str(update.message.chat.id)
     # EAFP
     try:
-        user_at_group = user + " @ " + update.message.chat.title
+        user_at_group = user + " @ " + (update.message.chat.title or "")
     except Exception:
         user_at_group = user
     user_at_group = f"{user_at_group}({chat})"
     logger.info("%s: %s", user_at_group, update.message.text)
 
 
-def felizdia_text(today):
+def felizdia_text(today: datetime.date) -> str:
     meses = [
         "Enero",
         "Febrero",
@@ -180,15 +198,15 @@ def felizdia_text(today):
         "Diciembre",
     ]
     dia = str(today.day)
-    mes = int(today.month)
+    mes_idx = int(today.month)
 
-    if mes == 3 and today.day == 8:
+    if mes_idx == 3 and today.day == 8:
         return "Hoy es 8 de Marzo"
-    mes = meses[mes - 1]
-    return "Feliz " + dia + " de " + mes
+    mes_nombre = meses[mes_idx - 1]
+    return "Feliz " + dia + " de " + mes_nombre
 
 
-async def felizdia(context):
+async def felizdia(context: DCUBACallbackContext) -> None:
     if random.uniform(0, 7) > 1:
         return
     today = datetime.date.today()
@@ -196,16 +214,21 @@ async def felizdia(context):
     await context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
 
 
-async def suggest_listable(update, context, listable_type):
+async def suggest_listable(
+    update: Update,
+    context: DCUBACallbackContext,
+    listable_type: type[Any],
+) -> None:
+    if update.message is None:
+        return
     try:
-        name, url = " ".join(context.args).split("|")
+        name, url = " ".join(context.args or []).split("|")
         if not (name and url):
             raise Exception("not userneim")
     except Exception:
+        cmd = (update.message.text or "").split()[0] if update.message else ""
         msg = await update.message.reply_text(
-            "Hiciste algo mal, la idea es que pongas:\n"
-            + update.message.text.split()[0]
-            + " <nombre>|<link>",
+            f"Hiciste algo mal, la idea es que pongas:\n{cmd} <nombre>|<link>",
             do_quote=False,
         )
         context.sent_messages.append(msg)
@@ -234,24 +257,26 @@ async def suggest_listable(update, context, listable_type):
     context.sent_messages.append(msg)
 
 
-async def sugerirgrupo(update, context):
+async def sugerirgrupo(update: Update, context: DCUBACallbackContext) -> None:
     await suggest_listable(update, context, Obligatoria)
 
 
-async def sugeriroptativa(update, context):
+async def sugeriroptativa(update: Update, context: DCUBACallbackContext) -> None:
     await suggest_listable(update, context, Optativa)
 
 
-async def sugerireci(update, context):
+async def sugerireci(update: Update, context: DCUBACallbackContext) -> None:
     await suggest_listable(update, context, ECI)
 
 
-async def sugerirotro(update, context):
+async def sugerirotro(update: Update, context: DCUBACallbackContext) -> None:
     await suggest_listable(update, context, Otro)
 
 
-async def listarlabos(update, context):
-    args = context.args
+async def listarlabos(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
+    args = context.args or []
     mins = int(args[0]) if len(args) > 0 else 0
     instant = labos.aware_now() + datetime.timedelta(minutes=mins)
     respuesta = "\n".join(labos.events_at(instant))
@@ -259,20 +284,25 @@ async def listarlabos(update, context):
     context.sent_messages.append(msg)
 
 
-async def flan(update, context):
+async def flan(update: Update, context: DCUBACallbackContext) -> None:
     await responder_imagen(update, context, "files/Plandeestudios-23.png")
 
 
-async def flanviejo(update, context):
+async def flanviejo(update: Update, context: DCUBACallbackContext) -> None:
     await responder_imagen(update, context, "files/Plandeestudios-93.png")
 
 
-async def aulas(update, context):
+async def aulas(update: Update, context: DCUBACallbackContext) -> None:
     await responder_documento(update, context, "files/0I-aulas.pdf")
 
 
-async def togglecommand(update, context):
-    if context.args and update.message and update.message.from_user.id in admin_ids:
+async def togglecommand(update: Update, context: DCUBACallbackContext) -> None:
+    if (
+        context.args
+        and update.message
+        and update.message.from_user
+        and update.message.from_user.id in admin_ids
+    ):
         command_name = context.args[0]
         if command_name not in command_handlers:
             await update.message.reply_text(
@@ -295,7 +325,9 @@ async def togglecommand(update, context):
             )
 
 
-async def sugerir(update, context):
+async def sugerir(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     await update.message.reply_text(
         text="Ahora en mas las sugerencias las vamos a tomar en github:\n "
         "https://github.com/comcomUBA/dcubabot/issues",
@@ -303,11 +335,13 @@ async def sugerir(update, context):
     )
 
 
-async def sugerirNoticia(update, context):
+async def sugerirNoticia(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None or update.message.from_user is None:
+        return
     user = update.message.from_user
     name = user.first_name  # Agarro el nombre para ver quien fue
     # /sugerirNoticia <texto>
-    texto = str.join(" ", context.args)
+    texto = str.join(" ", context.args or [])
     try:
         # Esto es re cabeza pero no me acuerdo por que está asi
         if not (texto and isinstance(texto, str)):
@@ -346,7 +380,11 @@ async def sugerirNoticia(update, context):
 
 
 # Manda una imagen a partir de su path al chat del update dado
-async def mandar_imagen(chat_id, context, file_path):
+async def mandar_imagen(
+    chat_id: int,
+    context: DCUBACallbackContext,
+    file_path: str,
+) -> None:
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
     with db_session:
         file = File.get(path=file_path)
@@ -360,7 +398,11 @@ async def mandar_imagen(chat_id, context, file_path):
 
 
 # Manda un documento a partir de su path al chat del update dado
-async def mandar_pdf(chat_id, context, file_path):
+async def mandar_pdf(
+    chat_id: int,
+    context: DCUBACallbackContext,
+    file_path: str,
+) -> None:
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
     with db_session:
         file = File.get(path=file_path)
@@ -374,7 +416,13 @@ async def mandar_pdf(chat_id, context, file_path):
 
 
 # Responde una imagen a partir de su path al chat del update dado
-async def responder_imagen(update, context, file_path):
+async def responder_imagen(
+    update: Update,
+    context: DCUBACallbackContext,
+    file_path: str,
+) -> None:
+    if update.message is None:
+        return
     await mandar_imagen(update.message.chat_id, context, file_path)
 
 
@@ -387,17 +435,29 @@ async def responder_imagen(update, context, file_path):
 
 
 # Responde un documento a partir de su path al chat del update dado
-async def responder_documento(update, context, file_path):
+async def responder_documento(
+    update: Update,
+    context: DCUBACallbackContext,
+    file_path: str,
+) -> None:
+    if update.message is None:
+        return
     await mandar_pdf(update.message.chat_id, context, file_path)
 
 
-async def button(update, context):
+async def button(update: Update, context: DCUBACallbackContext) -> None:
     query = update.callback_query
+    if query is None or query.message is None or query.data is None:
+        return
     message = query.message
-    buttonType, id, action = query.data.split("|")
+    if not isinstance(message, Message):
+        return
+    buttonType, id_str, action = query.data.split("|")
     with db_session:
         if buttonType == "Listable":
-            group = Listable[int(id)]
+            group = Listable.get(id=int(id_str))
+            if group is None:
+                return
             if action == "1":
                 group.validated = True
                 action_text = "\n¡Aceptado!"
@@ -407,10 +467,12 @@ async def button(update, context):
             await context.bot.edit_message_text(
                 chat_id=message.chat_id,
                 message_id=message.message_id,
-                text=message.text + action_text,
+                text=(message.text or "") + action_text,
             )
         if buttonType == "Noticia":
-            noticia = Noticia[int(id)]
+            noticia = Noticia.get(id=int(id_str))
+            if noticia is None:
+                return
             if action == "1":
                 noticia.validated = True
                 action_text = "\n¡Aceptado!"
@@ -425,19 +487,19 @@ async def button(update, context):
             await context.bot.edit_message_text(
                 chat_id=message.chat_id,
                 message_id=message.message_id,
-                text=message.text + action_text,
+                text=(message.text or "") + action_text,
             )
 
 
-async def actualizarPartidos(context):
+async def actualizarPartidos(context: DCUBACallbackContext) -> None:
     hoy = datetime.datetime.now()
     mañana = hoy + datetime.timedelta(days=1)
     local, partido = river.es_local(mañana)
 
-    if not local:
+    if not local or partido is None:
         return
 
-    async def partido_msg(context):
+    async def partido_msg(ctx: DCUBACallbackContext) -> None:
         if partido.hora is None:
             horario = "hora a confirmar"
         else:
@@ -446,35 +508,42 @@ async def actualizarPartidos(context):
         msg = f"Mañana juega River, {horario}"
         msg += f"\n(contra {partido.equipo_visitante}, {partido.copa})"
 
-        await context.bot.send_message(chat_id=NOTICIAS_CHATID, text=msg)
+        await ctx.bot.send_message(chat_id=NOTICIAS_CHATID, text=msg)
 
-    # la hora local es UTC así que especificamos el timezone que corresponde para el aviso acá
+    job_queue = context.job_queue
+    if job_queue is None:
+        return
     avisoHora = hoy.replace(hour=20, tzinfo=bsasTz)  # 8pm argentina, buenos aires
-    context.job_queue.run_once(callback=partido_msg, when=avisoHora)
+    job_queue.run_once(callback=partido_msg, when=avisoHora)  # type: ignore[arg-type]
 
 
-async def actualizarConciertos(context):
+async def actualizarConciertos(context: DCUBACallbackContext) -> None:
     hoy = datetime.datetime.now()
     mañana = hoy + datetime.timedelta(days=1)
     hay_concierto, concierto = conciertos.hay_concierto(mañana)
 
-    if not hay_concierto:
+    if not hay_concierto or concierto is None:
         return
 
-    async def concierto_msg(context):
+    async def concierto_msg(ctx: DCUBACallbackContext) -> None:
         msg = f"Mañana hay un concierto en River\n{concierto.titulo}"
-        await context.bot.send_message(chat_id=NOTICIAS_CHATID, text=msg)
+        await ctx.bot.send_message(chat_id=NOTICIAS_CHATID, text=msg)
 
+    job_queue = context.job_queue
+    if job_queue is None:
+        return
     avisoHora = hoy.replace(hour=20, tzinfo=bsasTz)  # 8pm argentina, buenos aires
-    context.job_queue.run_once(callback=concierto_msg, when=avisoHora)
+    job_queue.run_once(callback=concierto_msg, when=avisoHora)  # type: ignore[arg-type]
 
 
-async def actualizarRiver(context):
+async def actualizarRiver(context: DCUBACallbackContext) -> None:
     await actualizarPartidos(context)
     await actualizarConciertos(context)
 
 
-def add_all_handlers(application: Application):
+def add_all_handlers(
+    application: Application[Any, Any, Any, Any, Any, Any],
+) -> list[tuple[str, str | None]]:
     descriptions = []
     application.add_handler(
         MessageHandler((filters.TEXT | filters.COMMAND), log_message),
@@ -496,14 +565,18 @@ def add_all_handlers(application: Application):
     return descriptions
 
 
-def _make_post_init(descriptions):
-    async def _set_commands(app: Application):
+def _make_post_init(
+    descriptions: list[tuple[str, str | None]],
+) -> Any:
+    async def _set_commands(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
         await app.bot.set_my_commands(descriptions)
 
     return _set_commands
 
 
-async def checodepers(update, context):
+async def checodepers(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None or update.message.from_user is None:
+        return
     if not context.args:
         ejemplo = """ Ejemplo de uso:
   /checodepers Hola, tengo un mensaje mucho muy importante que me gustaria que respondan
@@ -539,11 +612,13 @@ async def checodepers(update, context):
     context.sent_messages.append(msg)
 
 
-async def checodeppers(update, context):
+async def checodeppers(update: Update, context: DCUBACallbackContext) -> None:
     await checodepers(update, context)
 
 
-async def campusvivo(update, context):
+async def campusvivo(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     msg = await update.message.reply_text("Bancá que me fijo...", do_quote=False)
 
     campus_response_text = is_campus_up()
@@ -551,13 +626,15 @@ async def campusvivo(update, context):
     await context.bot.edit_message_text(
         chat_id=msg.chat_id,
         message_id=msg.message_id,
-        text=msg.text + "\n" + campus_response_text,
+        text=(msg.text or "") + "\n" + campus_response_text,
     )
 
     context.sent_messages.append(msg)
 
 
-async def cuandovence(update, context):
+async def cuandovence(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     ejemplo = (
         "\nCuatris: 1c, 2c, i, inv, invierno, v, ver, verano.\nEjemplo: /cuandovence verano2010"
     )
@@ -587,7 +664,7 @@ async def cuandovence(update, context):
     context.sent_messages.append(msg)
 
 
-async def colaborar(update, context):
+async def colaborar(update: Update, context: DCUBACallbackContext) -> None:
     if update.message is None:
         return
     msg = await update.message.reply_text(
@@ -597,7 +674,12 @@ async def colaborar(update, context):
     context.sent_messages.append(msg)
 
 
-async def agregar(update: Update, context: CallbackContext, grouptype, groupString):
+async def agregar(
+    update: Update,
+    context: DCUBACallbackContext,
+    grouptype: type[Grupo | GrupoOptativa | GrupoOtros | ECI],
+    groupString: str,
+) -> None:
     if update.message is None:
         return
     message = update.message
@@ -641,23 +723,23 @@ async def agregar(update: Update, context: CallbackContext, grouptype, groupStri
     context.sent_messages.append(msg)
 
 
-async def agregargrupo(update: Update, context: CallbackContext):
+async def agregargrupo(update: Update, context: DCUBACallbackContext) -> None:
     await agregar(update, context, Grupo, "grupo")
 
 
-async def agregaroptativa(update: Update, context: CallbackContext):
+async def agregaroptativa(update: Update, context: DCUBACallbackContext) -> None:
     await agregar(update, context, GrupoOptativa, "optativa")
 
 
-async def agregarotros(update: Update, context: CallbackContext):
+async def agregarotros(update: Update, context: DCUBACallbackContext) -> None:
     await agregar(update, context, GrupoOtros, "otro")
 
 
-async def agregareci(update: Update, context: CallbackContext):
+async def agregareci(update: Update, context: DCUBACallbackContext) -> None:
     await agregar(update, context, ECI, "eci")
 
 
-def main():
+def main() -> None:
     try:
         # Telegram bot Authorization Token
         print("Iniciando DCUBABOT")
@@ -675,30 +757,34 @@ def main():
             .token(token)
             .connect_timeout(30.0)
             .read_timeout(30.0)
+            .context_types(DCUBA_CONTEXT_TYPES)
             .post_init(_make_post_init(descriptions))
             .build()
         )
 
         add_all_handlers(application)
 
-        application.job_queue.run_daily(callback=felizdia, time=get_hora_feliz_dia())
-        application.job_queue.run_daily(
+        job_queue = application.job_queue
+        if job_queue is None:
+            raise RuntimeError("job_queue requerido (usar python-telegram-bot[job-queue])")
+        job_queue.run_daily(callback=felizdia, time=get_hora_feliz_dia())
+        job_queue.run_daily(
             callback=update_groups,
             time=get_hora_update_groups(),
         )
 
-        application.job_queue.run_once(callback=actualizarRiver, when=0)
-        application.job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
+        job_queue.run_once(callback=actualizarRiver, when=0)
+        job_queue.run_daily(callback=actualizarRiver, time=datetime.time())
 
         application.add_handler(CommandHandler("actualizar_grupos", actualizar_grupos))
 
-        application.job_queue.run_repeating(
+        job_queue.run_repeating(
             callback=labos.update,
             interval=datetime.timedelta(hours=1),
         )
         application.add_error_handler(error_callback)
 
-        print([j for j in application.job_queue.jobs()])
+        print([j for j in job_queue.jobs()])
         application.run_polling(drop_pending_updates=True)
     except Exception as inst:
         logger.critical("ERROR AL INICIAR EL DCUBABOT")

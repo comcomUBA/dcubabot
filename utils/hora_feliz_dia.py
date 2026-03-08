@@ -6,7 +6,7 @@ import datetime
 import pytz
 
 
-def get_hora_feliz_dia():
+def get_hora_feliz_dia() -> datetime.time:
     tz = pytz.timezone("America/Argentina/Buenos_Aires")
     now = datetime.datetime.now(tz).date()
     midnight = tz.localize(
@@ -16,7 +16,7 @@ def get_hora_feliz_dia():
     return midnight.astimezone(pytz.utc).time()
 
 
-def get_hora_update_groups():
+def get_hora_update_groups() -> datetime.time:
     tz = pytz.timezone("America/Argentina/Buenos_Aires")
     now = datetime.datetime.now(tz).date()
     midnight = tz.localize(

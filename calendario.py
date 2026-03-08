@@ -1,5 +1,7 @@
 """Calendario académico de Exactas UBA - lógica copiada de calendarioacademico."""
 
+from __future__ import annotations
+
 import hashlib
 import html
 import os
@@ -9,9 +11,15 @@ from dataclasses import dataclass, field
 from datetime import date
 from html import escape as html_escape
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import requests
 from telegram.constants import ParseMode
+
+if TYPE_CHECKING:
+    from telegram import Update
+
+    from context_types import DCUBACallbackContext
 
 URL = "https://exactas.uba.ar/calendario-academico/"
 USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
@@ -61,20 +69,20 @@ MESES = (
 class SeccionCalendario:
     nombre: str
     categoria: str
-    items: list = field(default_factory=list)
+    items: list[tuple[str, str]] = field(default_factory=list)
 
 
-def _cache_dir():
+def _cache_dir() -> Path:
     base = os.environ.get("XDG_CACHE_HOME") or str(Path("~/.cache").expanduser())
     return Path(base) / "calendario_academico"
 
 
-def _cache_path(url):
+def _cache_path(url: str) -> Path:
     key = hashlib.sha256(url.encode()).hexdigest()[:16]
     return _cache_dir() / f"calendario_{key}.html"
 
 
-def _fetch_html(*, use_cache=True):
+def _fetch_html(*, use_cache: bool = True) -> str:
     if use_cache:
         path = _cache_path(URL)
         if path.exists() and time.time() - path.stat().st_mtime < CACHE_TTL:
@@ -91,7 +99,7 @@ def _fetch_html(*, use_cache=True):
     return html_content
 
 
-def _extract_content(html_content):
+def _extract_content(html_content: str) -> str:
     for pattern in CONTENT_PATTERNS:
         m = re.search(pattern, html_content, re.DOTALL | re.IGNORECASE)
         if m:
@@ -100,25 +108,25 @@ def _extract_content(html_content):
     return m.group(1) if m else html_content
 
 
-def _remove_tags(content):
+def _remove_tags(content: str) -> str:
     for tag in TAGS_TO_REMOVE:
         content = re.sub(rf"<{tag}[^>]*>.*?</{tag}>", "", content, flags=re.DOTALL | re.IGNORECASE)
     return content
 
 
-def _clean_text(raw):
+def _clean_text(raw: str) -> str:
     text = re.sub(r"<[^>]+>", "", raw)
     text = html.unescape(text.strip())
     return re.sub(r"\s+", " ", text)
 
 
-def _is_nav(text):
+def _is_nav(text: str) -> bool:
     if len(text) >= 50:
         return False
     return any(kw in text.lower() for kw in NAV_KEYWORDS)
 
 
-def _extract_raw(html_content):
+def _extract_raw(html_content: str) -> str:
     content = _remove_tags(_extract_content(html_content))
     lines, seen = [], set()
     for level in range(1, 7):
@@ -144,7 +152,7 @@ def _extract_raw(html_content):
     return "\n".join(p + t for _, p, t in lines).strip()
 
 
-def _categorizar(titulo):
+def _categorizar(titulo: str) -> str:
     t = titulo.lower()
     if any(k in t for k in ("exámenes", "turno")):
         return "examenes"
@@ -159,14 +167,14 @@ def _categorizar(titulo):
     return "otras"
 
 
-def _parsear_linea(linea):
+def _parsear_linea(linea: str) -> list[tuple[str, str]]:
     out = []
     for m in PATRON_ACTIVIDAD_FECHAS.finditer(linea):
         out.append((m.group(1).strip(), m.group(2).strip()))
     return out or ([(linea.strip(), "")] if linea.strip() else [])
 
 
-def _parsear_secciones(raw):
+def _parsear_secciones(raw: str) -> list[SeccionCalendario]:
     secciones, actual = [], None
     for ln in (ln.strip() for ln in raw.split("\n") if ln.strip()):
         if ln.startswith("=="):
@@ -186,11 +194,11 @@ def _parsear_secciones(raw):
     return secciones
 
 
-def _filtrar_solo_examenes(secciones):
+def _filtrar_solo_examenes(secciones: list[SeccionCalendario]) -> list[SeccionCalendario]:
     return [s for s in secciones if s.categoria == "examenes"]
 
 
-def _extraer_insc_exam(items):
+def _extraer_insc_exam(items: list[tuple[str, str]]) -> tuple[str, str]:
     insc, exam = "", ""
     for a, f in items:
         al = a.lower()
@@ -201,12 +209,16 @@ def _extraer_insc_exam(items):
     return insc, exam
 
 
-def _es_titulo_turno(nombre):
+def _es_titulo_turno(nombre: str) -> bool:
     return bool(re.match(r"^EXÁMENES\s*[-]\s*TURNO\s+DE\s+", nombre, re.IGNORECASE))
 
 
-def _agrupar_examenes(secciones):
-    grupos, filas, titulo = [], [], None
+def _agrupar_examenes(
+    secciones: list[SeccionCalendario],
+) -> list[tuple[str | None, list[tuple[str, str, str]]]]:
+    grupos: list[tuple[str | None, list[tuple[str, str, str]]]] = []
+    filas: list[tuple[str, str, str]] = []
+    titulo: str | None = None
     for sec in secciones:
         if sec.categoria != "examenes":
             if filas:
@@ -233,7 +245,7 @@ def _agrupar_examenes(secciones):
     return grupos
 
 
-def _extraer_mes_año(fechas):
+def _extraer_mes_año(fechas: str) -> tuple[int, int] | None:
     m = PATRON_FECHA.search(fechas)
     if not m:
         return None
@@ -241,11 +253,11 @@ def _extraer_mes_año(fechas):
     return (yyyy, mm) if 1 <= mm <= 12 else None
 
 
-def _agrupar_por_mes(secciones):  # noqa: C901
+def _agrupar_por_mes(secciones: list[SeccionCalendario]) -> list[tuple[str, list[tuple[str, str]]]]:  # noqa: C901
     grupos_exam = _agrupar_examenes(secciones)
-    items_por_mes = {}
+    items_por_mes: dict[tuple[int, int], list[tuple[str, str]]] = {}
 
-    def agregar(act, fechas, clave=None):
+    def agregar(act: str, fechas: str, clave: tuple[int, int] | None = None) -> None:
         if not fechas or fechas == "—":
             return
         k = clave or _extraer_mes_año(fechas) or (9999, 99)
@@ -270,7 +282,7 @@ def _agrupar_por_mes(secciones):  # noqa: C901
     return resultado
 
 
-def _extraer_turno_desde_nombre(nombre):
+def _extraer_turno_desde_nombre(nombre: str) -> str | None:
     """Extrae el turno desde cualquier sección: '1er Llamado del Turno de Febrero-Marzo' o 'EXÁMENES - TURNO DE ABRIL'."""
     # Formato "EXÁMENES - TURNO DE X" o "TURNO DE X"
     m = re.search(r"TURNO\s+DE\s+([A-Za-záéíóúñ]+(?:-[A-Za-záéíóúñ]+)?)", nombre, re.IGNORECASE)
@@ -283,9 +295,11 @@ def _extraer_turno_desde_nombre(nombre):
     return None
 
 
-def _agrupar_solo_examenes_por_turno(secciones):
+def _agrupar_solo_examenes_por_turno(
+    secciones: list[SeccionCalendario],
+) -> list[tuple[str, int, list[str]]]:
     """Agrupa por turno extrayendo el nombre de cada sección. Abril, Mayo, Septiembre, Octubre son turnos aparte."""
-    turnos = {}  # (nombre_turno, año) -> [exam_dates]
+    turnos: dict[tuple[str, int], list[str]] = {}
 
     for sec in secciones:
         if sec.categoria != "examenes":
@@ -318,7 +332,7 @@ def _agrupar_solo_examenes_por_turno(secciones):
     return [(nombre, año, items) for _orden, nombre, año, items in resultado]
 
 
-def _extraer_fechas_cortas(fechas_str):
+def _extraer_fechas_cortas(fechas_str: str) -> str:
     """Extrae fechas en formato dd/mm desde un texto como 'lunes 15/12/2025' o rangos."""
     fechas = []
     for m in PATRON_FECHA.finditer(fechas_str):
@@ -332,7 +346,7 @@ def _extraer_fechas_cortas(fechas_str):
     return f"{fechas[0]} - {fechas[-1]}"
 
 
-def _primera_fecha_completa(fechas_str):
+def _primera_fecha_completa(fechas_str: str) -> date | None:
     """Devuelve (año, mes, día) de la primera fecha en el string, o None."""
     m = PATRON_FECHA.search(fechas_str)
     if not m:
@@ -343,7 +357,9 @@ def _primera_fecha_completa(fechas_str):
     return None
 
 
-def _buscar_fecha_mas_cercana(date_lines, hoy):
+def _buscar_fecha_mas_cercana(
+    date_lines: list[tuple[date, str]], hoy: date
+) -> tuple[date, str] | None:
     """Devuelve (date, line) de la fecha de final más cercana en el futuro, o None."""
     candidato = None
     for d, line in date_lines:
@@ -352,7 +368,10 @@ def _buscar_fecha_mas_cercana(date_lines, hoy):
     return candidato
 
 
-def _construir_html_con_destacado(out, candidato):
+def _construir_html_con_destacado(
+    out: list[tuple[str, str]],
+    candidato: tuple[date, str] | None,
+) -> str:
     """Construye el HTML escapando y poniendo en negrita la línea más cercana."""
     partes = []
     for typ, content in out:
@@ -364,7 +383,7 @@ def _construir_html_con_destacado(out, candidato):
     return "\n".join(partes) + "\n" if partes else ""
 
 
-def _formatear_solo_examenes(secciones):
+def _formatear_solo_examenes(secciones: list[SeccionCalendario]) -> str:
     """Formato por turno (ej. Febrero-Marzo), no por mes. Llamado solo si hay más de uno. La más cercana en negrita."""
     grupos = _agrupar_solo_examenes_por_turno(secciones)
     ordinals = ("1er", "2do", "3er", "4to", "5to")
@@ -395,7 +414,7 @@ def _formatear_solo_examenes(secciones):
     return _construir_html_con_destacado(out, candidato)
 
 
-def _formatear_fechas_finales(secciones):
+def _formatear_fechas_finales(secciones: list[SeccionCalendario]) -> str:
     out = ["\n  Calendario Académico · FCEN · UBA\n"]
     for nombre_mes, items in _agrupar_por_mes(secciones):
         out.append(f"  {nombre_mes}")
@@ -411,7 +430,7 @@ def _formatear_fechas_finales(secciones):
     return "\n".join(out).rstrip() + "\n"
 
 
-def _split_for_telegram(text, max_len=4000):
+def _split_for_telegram(text: str, max_len: int = 4000) -> list[str]:
     chunks = []
     while len(text) > max_len:
         idx = text.rfind("\n", 0, max_len)
@@ -424,8 +443,10 @@ def _split_for_telegram(text, max_len=4000):
     return chunks
 
 
-async def fechafinales(update, context):
+async def fechafinales(update: Update, context: DCUBACallbackContext) -> None:
     """Muestra las fechas de exámenes del calendario académico de Exactas."""
+    if update.message is None:
+        return
     msg = await update.message.reply_text("Bancá, busco las fechas...", do_quote=False)
     context.sent_messages.append(msg)
 

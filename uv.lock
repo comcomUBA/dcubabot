@@ -90,6 +90,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "mypy" },
+    { name = "pony-stubs" },
     { name = "ruff" },
     { name = "types-pytz" },
     { name = "types-requests" },
@@ -109,6 +110,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "mypy", specifier = "==1.19.1" },
+    { name = "pony-stubs", specifier = "==0.5.2" },
     { name = "ruff", specifier = "==0.15.5" },
     { name = "types-pytz" },
     { name = "types-requests" },
@@ -255,6 +257,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/60/59/ab6542afa95de0d5a16545ce6ce683960352cfd9a2318722593b81a98123/pony-0.7.19.tar.gz", hash = "sha256:f7f83b2981893e49f7f18e8def52ad8fa8f8e6c5f9583b9aaed62d4d85036a0f", size = 258589, upload-time = "2024-08-27T12:29:29.963Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/16/cb/0ef8429024309fe6f5edf1debc7cf63adeaeb34b2242490cc18710658abd/pony-0.7.19-py3-none-any.whl", hash = "sha256:5112b4cf40d3f24e93ae66dc5ab7dc6813388efa870e750928d60dc699873cf5", size = 317259, upload-time = "2024-08-27T12:29:28.247Z" },
+]
+
+[[package]]
+name = "pony-stubs"
+version = "0.5.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/16/07daf8f5c69018663f9e7679371d471aee35627f70a5b591200cf5389408/pony-stubs-0.5.2.tar.gz", hash = "sha256:65a2739d4c6848eb00e5d8c74c8f25a92f960809b011e3138694665f8a4a5adc", size = 28511, upload-time = "2022-04-17T20:40:55.522Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/52/73/e04a44e996636053dddbd56fbd3e2138db68b9d4adba73819a561f979bdc/pony_stubs-0.5.2-py3-none-any.whl", hash = "sha256:c446481b1e6699676e8fc5c22b59429c18e00d1e663990cd98dae843acaf395a", size = 35817, upload-time = "2022-04-17T20:40:56.796Z" },
 ]
 
 [[package]]

@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any
 
 from robobrowser import RoboBrowser
 
@@ -11,7 +12,7 @@ class Concierto:
     fecha: date
 
     @staticmethod
-    def parse(evento):
+    def parse(evento: Any) -> "Concierto | None":
         try:
             info = json.loads(evento.select("script")[0].text)[0]
             titulo = info["name"]
@@ -27,7 +28,7 @@ class Concierto:
             return None
 
 
-def fetch_conciertos():
+def fetch_conciertos() -> list[Concierto]:
     browser = RoboBrowser(parser="html.parser")
 
     browser.open("https://www.songkick.com/venues/4514007-estadio-river-plate/calendar")
@@ -42,7 +43,7 @@ def fetch_conciertos():
     return conciertos
 
 
-def hay_concierto(dt: datetime):
+def hay_concierto(dt: datetime) -> tuple[bool, Concierto | None]:
     fecha = dt.date()
 
     conciertos = fetch_conciertos()

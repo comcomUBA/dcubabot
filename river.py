@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
+from typing import Any
 
 from robobrowser import RoboBrowser
 
@@ -13,14 +14,14 @@ class Partido:
     equipo_visitante: str
     copa: str
     fecha: date
-    hora: time
+    hora: time | None
 
     @property
-    def es_local(self):
+    def es_local(self) -> bool:
         return self.equipo_local == RIVER
 
     @staticmethod
-    def parse(el):
+    def parse(el: Any) -> "Partido":
         equipos = [e.strip() for e in el.select("b")[0].text.split("vs.")]
         line2 = el.select("p")[0].text
         copa, _, line2 = line2.partition(" • ")
@@ -52,7 +53,7 @@ class Partido:
         )
 
 
-def fetch_partidos():
+def fetch_partidos() -> list[Partido]:
     browser = RoboBrowser(parser="html.parser")
     browser.open("https://www.cariverplate.com.ar/calendario-de-partidos")
 
@@ -64,7 +65,7 @@ def fetch_partidos():
     return partidos
 
 
-def es_local(dt: datetime):
+def es_local(dt: datetime) -> tuple[bool, Partido | None]:
     fecha = dt.date()
 
     partidos = fetch_partidos()

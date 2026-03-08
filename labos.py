@@ -1,10 +1,15 @@
+from collections.abc import Generator, Iterator
 from datetime import datetime, timedelta
+from typing import Any
 
 from icalevents import icaldownload, icalparser
 from pytz import timezone
 
+# (events, loaded, span, raw) - inicial: (None, epoch, 0, "") para forzar carga
+CalendarEntry = tuple[list[Any] | None, datetime, timedelta, str]
 
-def __calendar_url(calendar_id):
+
+def __calendar_url(calendar_id: str) -> str:
     return (
         "https://calendar.google.com/calendar/ical/"
         + str(calendar_id)
@@ -22,33 +27,27 @@ urls = {
     "Labo 7 (Turing)": __calendar_url("krs8uvil4o36kd3a3ad5qs57dg"),
 }
 
-calendars = {
-    # 'name': (events: List[Event], loaded: Datetime, span: Timedelta, raw: Str)
-    "Labo 1": (None,),
-    "Labo 2": (None,),
-    "Labo 3 (Graduados)": (None,),
-    "Labo 4": (None,),
-    "Labo 5": (None,),
-    "Labo 6": (None,),
-    "Labo 7 (Turing)": (None,),
-}
-
 tz = timezone("America/Buenos_Aires")
+
+# (events, loaded, span, raw) - inicial vacío para forzar carga
+calendars: dict[str, CalendarEntry] = {
+    k: (None, datetime(2000, 1, 1, tzinfo=tz), timedelta(0), "") for k in urls
+}
 
 
 # Devuelve el momento actual con nuestra zona horaria.
-def aware_now():
+def aware_now() -> datetime:
     return datetime.now(tz=tz)
 
 
 # Decide si vale la pena o no recargar un calendario.
-def should_reload(name):
+def should_reload(name: str) -> bool:
     calendar = calendars[name]
     return aware_now() - timedelta(hours=12) > calendar[1]
 
 
 # Carga un calendario desde una url y lo guarda con la fecha de carga.
-def load_calendar(name, retries=3):
+def load_calendar(name: str, retries: int = 3) -> CalendarEntry | None:
     url = urls[name]
 
     while retries > 0:
@@ -71,7 +70,7 @@ def load_calendar(name, retries=3):
 
 
 # Dado el nombre de un calendario lo devuelve (y recarga si es necesario).
-def get_calendar(name):
+def get_calendar(name: str) -> CalendarEntry:
     if calendars[name][0] is None:
         retries = 100
     elif should_reload(name):
@@ -85,7 +84,9 @@ def get_calendar(name):
 
 # Repite el siguiente valor del generador, útil para ver si un generador está
 # vacío sin romperlo.
-def repeat_next(generator):
+def repeat_next(
+    generator: Iterator[Any],
+) -> Generator[Any]:
     empty = object()
     _next = next(generator, empty)
 
@@ -99,12 +100,12 @@ def repeat_next(generator):
 
 # Este sería el API que exponemos.
 # El datetime no puede ser naive.
-def events_at(time):
+def events_at(time: datetime) -> Iterator[str]:
     for name in calendars:
         calendar = get_calendar(name)
 
         # Vemos si podemos usar los eventos en caché o tenemos que parsear raw
-        if calendar[1] - calendar[2] <= time <= calendar[1] + calendar[2]:
+        if calendar[1] - calendar[2] <= time <= calendar[1] + calendar[2] and calendar[0]:
             events_gen = (e for e in calendar[0] if e.start <= time <= e.end)
         else:
             events_gen = (e for e in icalparser.parse_events(calendar[3], start=time, end=time))
@@ -118,6 +119,6 @@ def events_at(time):
 
 
 # Llamado periódicamente para forzar la actualización de los calendarios
-async def update(context):
+async def update(context: object) -> None:
     for name in calendars:
         load_calendar(name)

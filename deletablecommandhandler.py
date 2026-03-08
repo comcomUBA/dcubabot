@@ -2,25 +2,37 @@
 
 import datetime
 import logging
+from typing import override
 
+from telegram import Update
 from telegram.error import BadRequest
 from telegram.ext import CommandHandler
 
+from context_types import DCUBACallbackContext
 from models import SentMessage, db_session
 
 logger = logging.getLogger("DCUBABOT")
 
 
-class DeletableCommandHandler(CommandHandler):
-    def _message_in_time_range(self, message):
+class DeletableCommandHandler(CommandHandler):  # type: ignore[type-arg]
+    def _message_in_time_range(self, message: SentMessage) -> bool:
         time_ellapsed = datetime.datetime.now(datetime.UTC) - message.timestamp
-        return time_ellapsed < datetime.timedelta(hours=24)
+        return bool(time_ellapsed < datetime.timedelta(hours=24))
 
-    async def handle_update(self, update, application, check_result, context):
+    @override
+    async def handle_update(
+        self,
+        update: Update,
+        application: object,
+        check_result: object,
+        context: DCUBACallbackContext,
+    ) -> None:
         context.sent_messages = []
-        await super().handle_update(update, application, check_result, context)
+        await super().handle_update(update, application, check_result, context)  # type: ignore[arg-type]
 
         command_name = next(iter(self.commands))
+        if update.effective_chat is None:
+            return
         chat_id = update.effective_chat.id
         with db_session:
             # Delete previous messages sent with the command in the group

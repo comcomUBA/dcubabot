@@ -1,10 +1,15 @@
 #!/usr/bin/python3
 
 # Local imports
+from telegram import Update
+
+from context_types import DCUBACallbackContext
 from models import AsmInstruction, Noitip, db_session
 
 
-async def noitip(update, context):
+async def noitip(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     with db_session:
         tips = Noitip.select_random(1)
     if not tips:
@@ -17,7 +22,9 @@ async def noitip(update, context):
     context.sent_messages.append(msg)
 
 
-async def asm(update, context):
+async def asm(update: Update, context: DCUBACallbackContext) -> None:
+    if update.message is None:
+        return
     if not context.args:
         msg = await update.message.reply_text(
             "No me pasaste ninguna instrucción.",
@@ -50,7 +57,7 @@ async def asm(update, context):
     context.sent_messages.append(msg)
 
 
-def levenshtein(string1, string2):
+def levenshtein(string1: str, string2: str) -> int:
     len1 = len(string1) + 1
     len2 = len(string2) + 1
 
@@ -71,7 +78,7 @@ def levenshtein(string1, string2):
     return tbl[i, j]
 
 
-def getasminfo(instr):
+def getasminfo(instr: AsmInstruction) -> str:
     return "[%s] Descripción: %s.\nMás info: %s" % (
         instr.mnemonic,
         instr.summary,

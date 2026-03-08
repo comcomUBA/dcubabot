@@ -1,7 +1,7 @@
 import requests
 
 
-def is_campus_up():
+def is_campus_up() -> str:
     response_threshold = 3
     timeout = 5
     url = "https://campus.exactas.uba.ar"

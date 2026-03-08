@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 
+from typing import Any
 
 from models import Command, db, db_session
 
 
-@db_session
-def check_or_install_command(**kwargs):
+@db_session  # type: ignore[untyped-decorator]
+def check_or_install_command(**kwargs: Any) -> None:
     try:
         if not Command.get(name=kwargs["name"]):
             print(Command(**kwargs))
@@ -14,7 +15,7 @@ def check_or_install_command(**kwargs):
         print("elol", e)
 
 
-def install_check_or_install_commands():
+def install_check_or_install_commands() -> None:
     with db_session:
         check_or_install_command(name="start")
         check_or_install_command(

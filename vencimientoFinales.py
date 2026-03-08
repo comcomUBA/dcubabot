@@ -1,4 +1,5 @@
 import re
+from typing import override
 
 VERANO = "ver"
 PCUAT = "1c"
@@ -18,31 +19,53 @@ EXT_SEP_TXT = "Septiembre de "
 
 ## CARGAR EXCEPCIONES
 #               año : cuatrimestres de validez (default 8)
-EXCEPCIONES = {"2016": 12, "2017": 11, "2018": 10, "2019": 9}
+EXCEPCIONES: dict[str, int] = {"2016": 12, "2017": 11, "2018": 10, "2019": 9}
 
 
 class Cursada:
-    @classmethod
-    def nueva(self, cuatri, anio, validez):
-        clase = next(sc for sc in self.__subclasses__() if sc.accepts(cuatri))
-        return clase(cuatri, anio, validez)
+    anio: int
+    cuatri: str
+    validez: int
+    anio_venc: int
+    fecha_vencimiento: str
+    fecha_extension: str
 
-    def __init__(self, cuatri, anio, validez):
+    @classmethod
+    def nueva(cls, cuatri: str, anio: str, validez: int) -> "Cursada":
+        for sc in cls.__subclasses__():
+            if sc.accepts(cuatri):
+                return sc(cuatri, anio, validez)
+        msg = f"No subclass accepts {cuatri}"
+        raise ValueError(msg)
+
+    def __init__(self, cuatri: str, anio: str, validez: int) -> None:
         self.anio = int(anio)
         self.cuatri = cuatri
         self.validez = validez
+        self.anio_venc = 0
+        self.fecha_vencimiento = ""
+        self.fecha_extension = ""
         self.set_vencimientos()
 
-    def fecha_aprobacion(self):
+    @classmethod
+    def accepts(cls, _cuatri: str) -> bool:
+        return False
+
+    def set_vencimientos(self) -> None:
+        raise NotImplementedError
+
+    def fecha_aprobacion(self) -> str:
         return f"{self.cuatri} de {self.anio}"
 
 
 class PrimerSemestre(Cursada):
     @classmethod
-    def accepts(self, cuatri):
+    @override
+    def accepts(cls, cuatri: str) -> bool:
         return cuatri in PRIMEROS
 
-    def set_vencimientos(self):
+    @override
+    def set_vencimientos(self) -> None:
         self.anio_venc = self.anio + self.validez // 2
 
         if self.validez % 2 == 0:
@@ -55,10 +78,12 @@ class PrimerSemestre(Cursada):
 
 class SegundoSemestre(Cursada):
     @classmethod
-    def accepts(self, cuatri):
+    @override
+    def accepts(cls, cuatri: str) -> bool:
         return cuatri in SEGUNDOS
 
-    def set_vencimientos(self):
+    @override
+    def set_vencimientos(self) -> None:
         self.anio_venc = self.anio + self.validez // 2
 
         if self.validez % 2 == 0:
@@ -70,7 +95,7 @@ class SegundoSemestre(Cursada):
             self.fecha_extension = EXT_ABR_TXT + str(self.anio_venc)
 
 
-def parse_cuatri_y_anio(linea):
+def parse_cuatri_y_anio(linea: str) -> tuple[str, str]:
     # regex para parametros.
     r_entrada = r"^(?P<cuatri>[12]c|v(er(ano)?)?|i(nv(ierno)?)?)(?P<anio>20\d{2})$"
     entrada = re.search(r_entrada, linea)
@@ -83,7 +108,7 @@ def parse_cuatri_y_anio(linea):
     return cuatri, anio
 
 
-def calcular_vencimiento(cuatri, anio):
+def calcular_vencimiento(cuatri: str, anio: str) -> str:
     # Unificar strings de verano/invierno
     cuatri = unificar_especiales(cuatri)
 
@@ -101,7 +126,7 @@ def calcular_vencimiento(cuatri, anio):
     return mje
 
 
-def unificar_especiales(cuatri):
+def unificar_especiales(cuatri: str) -> str:
     if cuatri in VERANOS:
         cuatri = VERANO
     elif cuatri in INVIERNOS:
@@ -109,7 +134,7 @@ def unificar_especiales(cuatri):
     return cuatri
 
 
-def armar_texto(cursada, txt_excepcion):
+def armar_texto(cursada: "Cursada", txt_excepcion: str) -> str:
     mje = rf"""Materia aprobada en {cursada.fecha_aprobacion()}.
 
 Última fecha en la cual podés rendir: 
