@@ -3,13 +3,13 @@ name = "dcubabot"
 version = "0.1.0"
 description = "Bot de Telegram para DCUBA"
 readme = "README.md"
-requires-python = "==3.13.*"
+requires-python = ">=3.13"
 dependencies = [
-    "pony",
-    "icalevents",
-    "pytz",
-    "requests",
-    "python-telegram-bot==22.6",
+    "pony==0.7.19",
+    "icalevents==0.3.1",
+    "pytz==2026.1.post1",
+    "requests==2.32.5",
+    "python-telegram-bot>=13.11,<14",
     "robobrowser==0.5.3",
     "Werkzeug==0.15.5",
 ]
@@ -49,6 +49,7 @@ ignore = [
 max-line-length = 100
 
 [tool.mypy]
+exclude = [".*tokenz.*"]
 strict = false
 disallow_untyped_defs = false
 python_version = "3.13"
@@ -61,8 +62,13 @@ explicit_package_bases = true
 enable_error_code = ["ignore-without-code"]
 
 [[tool.mypy.overrides]]
+module = "tokenz"
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
 module = ["models", "invitacionMail", "handlers.update_groups"]
 ignore_errors = true
+follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = ["dcubabot", "deletablecommandhandler", "orga2Utils"]
