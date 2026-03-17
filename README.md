@@ -1,52 +1,87 @@
-# dcubabot
+# 🤖 dcubabot
 
-La idea de este repositorio es migrar desde el viejo repositorio las funcionalidades que tiene el bot de forma estructurada, prolija y segura. Muy pronto traeremos bardearmarto, tranquilos.
+[![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Type Checked](https://img.shields.io/badge/Type%20Checked-mypy-brightgreen.svg)](https://mypy.readthedocs.io/)
 
-Mientras seguimos la migración todos son libres de colaborar con pull requests.
+Bot de Telegram para la comunidad del Departamento de Computación de la Facultad de Ciencias Exactas y Naturales (UBA).
 
-Para probar el bot en acción en Telegram es necesario crear un archivo `tokenz.py` que asigne a la variable `token` el token del bot con el que se desea hacer las pruebas.
+La idea de este repositorio es migrar las funcionalidades del bot original de forma estructurada, prolija y segura.
 
-## Herramientas
+---
 
-### Desarrollo
+## ✨ Funcionalidades
 
-- **Python 3.13**
-- **[uv](https://docs.astral.sh/uv/)** – gestor de paquetes y entornos
-- **[ruff](https://docs.astral.sh/ruff/)** (0.15.5) – linter y formatter
-- **[mypy](https://mypy.readthedocs.io/)** (1.19.1) – verificador de tipos estáticos
+El bot ofrece una variedad de herramientas útiles para los estudiantes:
 
-El script `./check.sh` ejecuta ruff (linter + formatter) y mypy para validar el código.
+- 🏫 **Campus Vivo:** Chequeo en tiempo real del estado del campus virtual.
+- 📅 **Finales:** Cálculo de fechas de vencimiento de finales aprobados.
+- 🏟️ **River Plate:** Avisos de cuando juega River de local o hay conciertos (para evitar el caos de las aulas de Ciudad Universitaria).
+- 🧪 **Laboratorios:** Consulta de disponibilidad y eventos en los laboratorios de computación.
+- 📁 **Repositorio de Material:** Acceso rápido a apuntes, planos de estudios y archivos útiles.
+- 📢 **Noticias y Sugerencias:** Sistema para proponer noticias y mejoras al bot.
+- 💬 **Grupos:** Listado dinámico de grupos de materias (obligatorias, optativas, ECI).
 
-### Dependencias principales
+---
 
-- [python-telegram-bot](https://python-telegram-bot.org/) – API de Telegram
-- [Pony ORM](https://ponyorm.org/) – base de datos
-- [icalevents](https://github.com/irgangla/icalevents) – calendarios iCal
-- [pytz](https://pypi.org/project/pytz/) – zonas horarias
-- [requests](https://requests.readthedocs.io/) – HTTP (ej. chequeo del campus)
-- [RoboBrowser](https://github.com/jmcarp/robobrowser/) – scraping web
-- [Werkzeug](https://werkzeug.palletsprojects.com/) – utilidades WSGI
+## 🛠️ Stack Tecnológico
 
-## Instalación
+### Ecosistema de Desarrollo
+- **Python 3.13**: Lenguaje principal.
+- **[uv](https://docs.astral.sh/uv/)**: Gestión ultrarrápida de paquetes y entornos virtuales.
+- **[ruff](https://docs.astral.sh/ruff/)**: Linter y formatter de alto rendimiento.
+- **[mypy](https://mypy.readthedocs.io/)**: Verificación estática de tipos.
 
-### Con uv
+### Dependencias Principales
+- **[python-telegram-bot](https://python-telegram-bot.org/)**: Interfaz con la API de Telegram.
+- **[Pony ORM](https://ponyorm.org/)**: Mapeo objeto-relacional simple y potente.
+- **[icalevents](https://github.com/irgangla/icalevents)**: Manejo de calendarios iCal.
+- **[requests](https://requests.readthedocs.io/)**: Peticiones HTTP.
 
-Si no tenés uv instalado:
+---
 
+## 🚀 Instalación y Uso
+
+### 1. Clonar y configurar
+Asegurate de tener `uv` instalado. Si no lo tenés:
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+### 2. Configurar Token
+Creá un archivo `tokenz.py` en la raíz del proyecto:
+```python
+token = "TU_TOKEN_DE_TELEGRAM_AQUI"
+```
+
+### 3. Ejecutar
 ```bash
-# Instalar dependencias
+# Sincronizar dependencias e instalar entorno
 uv sync
 
-# Poblar la base de datos con los comandos (solo la primera vez)
+# Inicializar base de datos (solo la primera vez)
 uv run python install.py
 
-# Ejecutar el bot
+# Iniciar el bot
 uv run python dcubabot.py
+```
 
-# Chequear linter y formatter
+### 4. Mantener la calidad del código
+Para correr el linter, formatter y chequeo de tipos:
+```bash
 ./check.sh
 ```
+
+---
+
+## 🤝 Contribuciones
+
+¡Todas las contribuciones son bienvenidas! Podés ayudar reportando bugs, sugiriendo nuevas funcionalidades o enviando un Pull Request.
+
+- **Issues:** [Reportar un problema](https://github.com/comcomUBA/dcubabot/issues)
+- **PRs:** Asegurate de correr `./check.sh` antes de subir tus cambios.
+
+---
+
+Desarrollado con ❤️ para la comunidad del DC.
