@@ -1,9 +1,11 @@
 # 🤖 dcubabot
 
-[![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/)
-[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Type Checked](https://img.shields.io/badge/Type%20Checked-mypy-brightgreen.svg)](https://mypy.readthedocs.io/)
+[![Build Status](https://github.com/cavazquez/dcubabot/actions/workflows/check.yml/badge.svg)](https://github.com/cavazquez/dcubabot/actions)
+[![Repo Size](https://img.shields.io/github/repo-size/cavazquez/dcubabot)](https://github.com/cavazquez/dcubabot)
+[![Code Size](https://img.shields.io/github/languages/code-size/cavazquez/dcubabot)](https://github.com/cavazquez/dcubabot)
+[![Issues](https://img.shields.io/github/issues/cavazquez/dcubabot)](https://github.com/cavazquez/dcubabot/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/cavazquez/dcubabot)](https://github.com/cavazquez/dcubabot)
+[![License](https://img.shields.io/github/license/cavazquez/dcubabot)](https://github.com/cavazquez/dcubabot/blob/master/LICENSE)
 
 Bot de Telegram para la comunidad del Departamento de Computación de la Facultad de Ciencias Exactas y Naturales (UBA).
 
