@@ -1,10 +1,28 @@
 import telegram
 import os
 import logging
+import html
+import traceback
+from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 from bot_logic import COMMANDS, button
 from models import init_db
+from tg_ids import ROZEN_CHATID
+
+async def error_handler(update, context):
+    """Log the error and send a telegram message to notify the developer."""
+    logger = logging.getLogger("DCUBABOT")
+    logger.error("Exception while handling an update:", exc_info=context.error)
+
+    try:
+        tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+        tb_string = "".join(tb_list)
+        
+        message = f"⚠️ <b>Error en el bot:</b>\n<pre>{html.escape(tb_string)[:3800]}</pre>"
+        await context.bot.send_message(chat_id=ROZEN_CHATID, text=message, parse_mode=ParseMode.HTML)
+    except Exception as e:
+        logger.error(f"Failed to send error message to ROZEN: {e}")
 
 async def log_update(update, context):
     """Log every update received by the bot."""
@@ -30,6 +48,8 @@ def main():
 
 
     application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
+
+    application.add_error_handler(error_handler)
 
     # Add the logging middleware handler with a high priority
     application.add_handler(MessageHandler(filters.ALL, log_update), group=-1)
