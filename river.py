@@ -1,6 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass
-from robobrowser import RoboBrowser
+import requests
+from bs4 import BeautifulSoup
 
 RIVER = "River Plate"
 UNSPECIFIED_TIMES = {"A confirmar", ""}
@@ -50,13 +51,17 @@ class Partido:
         )
 
 def fetch_partidos():
-    browser = RoboBrowser(parser="html.parser")
-    browser.open("https://www.cariverplate.com.ar/calendario-de-partidos")
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    res = requests.get("https://www.cariverplate.com.ar/calendario-de-partidos", headers=headers)
+    soup = BeautifulSoup(res.text, "html.parser")
 
     partidos = []
 
-    for el in browser.select(".d_calendario"):
-        partidos.append(Partido.parse(el))
+    for el in soup.select(".d_calendario"):
+        try:
+            partidos.append(Partido.parse(el))
+        except ValueError:
+            pass
         
     return partidos
 

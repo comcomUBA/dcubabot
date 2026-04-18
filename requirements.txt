@@ -2,9 +2,7 @@ icalevents
 pytz
 requests
 python-telegram-bot[webhooks]==22.0
-robobrowser==0.5.3
-Werkzeug==0.15.5
-MarkupSafe==2.0.1
+beautifulsoup4
 psycopg2-binary
 SQLAlchemy
 sqlalchemy-cockroachdb
