@@ -39,6 +39,21 @@ async def log_update(update, context):
     logger.info(log_message)
 
 
+async def post_init(application: Application):
+    """Set the bot commands on startup."""
+    from telegram import BotCommand
+    commands = []
+    for command_name, command_info in COMMANDS.items():
+        if 'description' in command_info and command_info['description']:
+            # Telegram commands must be lowercase and 1-32 chars
+            commands.append(BotCommand(command_name.lower(), command_info['description'][:256]))
+    
+    try:
+        await application.bot.set_my_commands(commands)
+        logging.getLogger("DCUBABOT").info("Successfully set bot commands.")
+    except Exception as e:
+        logging.getLogger("DCUBABOT").error(f"Failed to set bot commands: {e}")
+
 def main():
     """Start the bot."""
     logging.basicConfig(
@@ -47,7 +62,7 @@ def main():
     )
 
 
-    application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
+    application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).post_init(post_init).build()
 
     application.add_error_handler(error_handler)
 
