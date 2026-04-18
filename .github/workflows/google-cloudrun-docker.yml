@@ -133,16 +133,16 @@ jobs:
             gcloud scheduler jobs update http ${{ env.JOB_NAME }} \
               --location=${{ env.PROJECT_REGION }} \
               --schedule="* * * * *" \
-              --uri="https://${{ env.PROJECT_REGION }}-run.googleapis.com/v2/projects/${{ env.PROJECT_ID }}/locations/${{ env.PROJECT_REGION }}/jobs/${{ env.JOB_NAME }}:run" \
+              --uri="https://${{ env.PROJECT_REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ env.PROJECT_ID }}/jobs/${{ env.JOB_NAME }}:run" \
               --http-method=POST \
-              --oidc-service-account-email=${{ vars.GCP_SA_EMAIL }}
+              --oauth-service-account-email=${{ vars.GCP_SA_EMAIL }}
           else
             echo "Creating new Cloud Scheduler job"
             gcloud scheduler jobs create http ${{ env.JOB_NAME }} \
               --location=${{ env.PROJECT_REGION }} \
               --schedule="* * * * *" \
               --time-zone="America/Argentina/Buenos_Aires" \
-              --uri="https://${{ env.PROJECT_REGION }}-run.googleapis.com/v2/projects/${{ env.PROJECT_ID }}/locations/${{ env.PROJECT_REGION }}/jobs/${{ env.JOB_NAME }}:run" \
+              --uri="https://${{ env.PROJECT_REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ env.PROJECT_ID }}/jobs/${{ env.JOB_NAME }}:run" \
               --http-method=POST \
-              --oidc-service-account-email=${{ vars.GCP_SA_EMAIL }}
+              --oauth-service-account-email=${{ vars.GCP_SA_EMAIL }}
           fi
