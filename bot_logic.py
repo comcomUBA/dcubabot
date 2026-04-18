@@ -530,7 +530,7 @@ async def felizdia(context: ContextTypes.DEFAULT_TYPE):
     if random.uniform(0, 7) > 1:
         return
     today = datetime.date.today()
-    chat_id = DC_GROUP_CHATID
+    chat_id = ROZEN_CHATID
     await context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
 
 async def actualizarPartidos(context: ContextTypes.DEFAULT_TYPE):
