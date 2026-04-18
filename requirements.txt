@@ -1,8 +1,0 @@
-icalevents
-pytz
-requests
-python-telegram-bot[webhooks]==22.0
-beautifulsoup4
-psycopg2-binary
-SQLAlchemy
-sqlalchemy-cockroachdb
