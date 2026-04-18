@@ -501,11 +501,8 @@ async def responder_documento(update: Update, context: ContextTypes.DEFAULT_TYPE
     await mandar_pdf(update.message.chat_id, context, file_path)
 
 async def listarlabos(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    mins = int(args[0]) if len(args) > 0 else 0
-    instant = labos.aware_now() + datetime.timedelta(minutes=mins)
-    respuesta = '\n'.join(labos.events_at(instant))
-    await update.message.reply_text(text=respuesta)
+    msg = "Che, creo que la info de los laboratorios caducó y no tengo esta data. Si tenés alguna fuente de información actualizada o calendarios nuevos, pasásela a @Rozen para que lo pueda agregar."
+    await update.message.reply_text(text=msg)
 
 async def flan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await responder_imagen(update, context, 'files/Plandeestudios-23.png')
