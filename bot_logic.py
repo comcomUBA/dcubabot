@@ -527,8 +527,6 @@ def felizdia_text(today):
         return "Feliz " + dia + " de " + mes
 
 async def felizdia(context: ContextTypes.DEFAULT_TYPE):
-    if random.uniform(0, 7) > 1:
-        return
     today = datetime.date.today()
     chat_id = ROZEN_CHATID
     await context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
