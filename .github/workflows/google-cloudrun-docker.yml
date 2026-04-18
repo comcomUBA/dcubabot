@@ -132,7 +132,7 @@ jobs:
             echo "Updating existing Cloud Scheduler job"
             gcloud scheduler jobs update http ${{ env.JOB_NAME }} \
               --location=${{ env.PROJECT_REGION }} \
-              --schedule="* * * * *" \
+              --schedule="0 0 * * *" \
               --uri="https://${{ env.PROJECT_REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ env.PROJECT_ID }}/jobs/${{ env.JOB_NAME }}:run" \
               --http-method=POST \
               --oauth-service-account-email=${{ vars.GCP_SA_EMAIL }}
@@ -140,7 +140,7 @@ jobs:
             echo "Creating new Cloud Scheduler job"
             gcloud scheduler jobs create http ${{ env.JOB_NAME }} \
               --location=${{ env.PROJECT_REGION }} \
-              --schedule="* * * * *" \
+              --schedule="0 0 * * *" \
               --time-zone="America/Argentina/Buenos_Aires" \
               --uri="https://${{ env.PROJECT_REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ env.PROJECT_ID }}/jobs/${{ env.JOB_NAME }}:run" \
               --http-method=POST \
