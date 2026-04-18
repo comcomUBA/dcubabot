@@ -80,8 +80,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(message_text)
 
 
+import sys
+
 async def estasvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Sí, estoy vivo.")
+    await update.message.reply_text(f"Sí, estoy vivo y corriendo en Python {sys.version.split()[0]}")
 
 
 async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
