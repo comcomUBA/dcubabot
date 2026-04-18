@@ -21,6 +21,12 @@ from telegram.ext import (
 )
 from typing import Dict, Final
 
+
+import labos
+import river
+import conciertos
+from telegram.constants import ChatAction
+
 import models
 # Local imports
 from models import (Session, Command, Grupo, GrupoOptativa, ECI, GrupoOtros,
@@ -433,7 +439,148 @@ async def actualizar_grupos(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("¡Grupos actualizados!")
 
 
+
+async def mandar_imagen(chat_id: str, context: ContextTypes.DEFAULT_TYPE, file_path: str):
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+    file_id = None
+    with get_session() as session:
+        file_obj = session.query(File).filter_by(path=file_path).first()
+        if file_obj:
+            file_id = file_obj.file_id
+
+    if file_id:
+        try:
+            msg = await context.bot.send_photo(chat_id=chat_id, photo=file_id)
+            return
+        except Exception:
+            pass # if file_id is invalid, upload again
+
+    with open(file_path, 'rb') as photo:
+        msg = await context.bot.send_photo(chat_id=chat_id, photo=photo)
+    
+    with get_session() as session:
+        file_obj = session.query(File).filter_by(path=file_path).first()
+        if not file_obj:
+            file_obj = File(path=file_path, file_id=msg.photo[-1].file_id)
+            session.add(file_obj)
+        else:
+            file_obj.file_id = msg.photo[-1].file_id
+
+async def mandar_pdf(chat_id: str, context: ContextTypes.DEFAULT_TYPE, file_path: str):
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
+    file_id = None
+    with get_session() as session:
+        file_obj = session.query(File).filter_by(path=file_path).first()
+        if file_obj:
+            file_id = file_obj.file_id
+
+    if file_id:
+        try:
+            msg = await context.bot.send_document(chat_id=chat_id, document=file_id)
+            return
+        except Exception:
+            pass # upload again
+
+    with open(file_path, 'rb') as doc:
+        msg = await context.bot.send_document(chat_id=chat_id, document=doc)
+    
+    with get_session() as session:
+        file_obj = session.query(File).filter_by(path=file_path).first()
+        if not file_obj:
+            file_obj = File(path=file_path, file_id=msg.document.file_id)
+            session.add(file_obj)
+        else:
+            file_obj.file_id = msg.document.file_id
+            
+async def responder_imagen(update: Update, context: ContextTypes.DEFAULT_TYPE, file_path: str):
+    await mandar_imagen(update.message.chat_id, context, file_path)
+
+async def responder_documento(update: Update, context: ContextTypes.DEFAULT_TYPE, file_path: str):
+    await mandar_pdf(update.message.chat_id, context, file_path)
+
+async def listarlabos(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    args = context.args
+    mins = int(args[0]) if len(args) > 0 else 0
+    instant = labos.aware_now() + datetime.timedelta(minutes=mins)
+    respuesta = '\n'.join(labos.events_at(instant))
+    await update.message.reply_text(text=respuesta)
+
+async def flan(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await responder_imagen(update, context, 'files/Plandeestudios-23.png')
+
+async def flanviejo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await responder_imagen(update, context, 'files/Plandeestudios-93.png')
+
+async def aulas(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await responder_documento(update, context, 'files/0I-aulas.pdf')
+
+def felizdia_text(today):
+    meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+             "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    dia = str(today.day)
+    mes = int(today.month)
+
+    if mes == 3 and today.day == 8:
+        return "Hoy es 8 de Marzo"
+    else:
+        mes = meses[mes - 1]
+        return "Feliz " + dia + " de " + mes
+
+async def felizdia(context: ContextTypes.DEFAULT_TYPE):
+    if random.uniform(0, 7) > 1:
+        return
+    today = datetime.date.today()
+    chat_id = DC_GROUP_CHATID
+    await context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
+
+async def actualizarPartidos(context: ContextTypes.DEFAULT_TYPE):
+    hoy = datetime.datetime.now(bsasTz)
+    mañana = hoy + datetime.timedelta(days=1)
+    try:
+        local, partido = river.es_local(mañana)
+        if not local:
+            return
+        horario = "hora a confirmar" if partido.hora is None else partido.hora.strftime("a las %H:%M")
+        msg = f"Mañana juega River, {horario}\n(contra {partido.equipo_visitante}, {partido.copa})"
+        await context.bot.send_message(chat_id=NOTICIAS_CHATID, text=msg)
+    except Exception as e:
+        logger.error(f"Error checking River matches: {e}")
+
+async def actualizarConciertos(context: ContextTypes.DEFAULT_TYPE):
+    hoy = datetime.datetime.now(bsasTz)
+    mañana = hoy + datetime.timedelta(days=1)
+    try:
+        hay, concierto = conciertos.hay_concierto(mañana)
+        if not hay:
+            return
+        msg = f"Mañana hay un concierto en River\n{concierto.titulo}"
+        await context.bot.send_message(chat_id=NOTICIAS_CHATID, text=msg)
+    except Exception as e:
+        logger.error(f"Error checking concerts: {e}")
+
+async def actualizarRiver(context: ContextTypes.DEFAULT_TYPE):
+    await actualizarPartidos(context)
+    await actualizarConciertos(context)
+
+
 COMMANDS = {
+
+    'listarlabos': {
+        'handler': listarlabos,
+        'description': 'Muestra las reservas de los laboratorios.'
+    },
+    'flan': {
+        'handler': flan,
+        'description': 'Muestra el plan de estudios (2023).'
+    },
+    'flanviejo': {
+        'handler': flanviejo,
+        'description': 'Muestra el plan de estudios (1993).'
+    },
+    'aulas': {
+        'handler': aulas,
+        'description': 'Muestra el mapa de las aulas.'
+    },
     'start': {
         'handler': start,
         'description': 'Inicia el bot.'

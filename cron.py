@@ -2,7 +2,7 @@ import asyncio
 import os
 import logging
 from telegram.ext import Application
-from bot_logic import _update_groups
+from bot_logic import _update_groups, felizdia, actualizarRiver
 
 def main():
     """Runs the update_groups command."""
@@ -15,6 +15,8 @@ def main():
     
     async def run_update():
         await _update_groups(application)
+        await felizdia(application)
+        await actualizarRiver(application)
 
     asyncio.run(run_update())
 
