@@ -424,7 +424,7 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
                 c = session.query(Listable).filter_by(id=chat_db_id).first()
                 if c:
                     c.validated = False
-            await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat_name} murió 💀")
+            await context.bot.send_message(chat_id=ROZEN_CHATID, text=f"El grupo {chat_name} murió 💀")
         else:
             logger.info(f"Updating URL for group '{chat_name}'")
             with get_session() as session:
