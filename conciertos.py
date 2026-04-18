@@ -28,15 +28,21 @@ class Concierto:
         
 def fetch_conciertos():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-    res = requests.get("https://www.songkick.com/venues/4514007-estadio-river-plate/calendar", headers=headers)
-    soup = BeautifulSoup(res.text, "html.parser")
+    urls = [
+        "https://www.songkick.com/venues/4514007-estadio-river-plate/calendar",
+        "https://www.songkick.com/venues/47008-estadio-mas-monumental-antonio-vespucio-liberti/calendar"
+    ]
     
     conciertos = []
     
-    for el in soup.select(".microformat"):
-        concierto = Concierto.parse(el)
-        if concierto:
-            conciertos.append(concierto)
+    for url in urls:
+        res = requests.get(url, headers=headers)
+        soup = BeautifulSoup(res.text, "html.parser")
+        
+        for el in soup.select(".microformat"):
+            concierto = Concierto.parse(el)
+            if concierto:
+                conciertos.append(concierto)
 
     return conciertos
 
