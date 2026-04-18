@@ -412,23 +412,25 @@ async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> 
 async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info("Starting update_groups job")
     with get_session() as session:
-        chats = list(session.query(Listable).filter_by(validated=True).all())
+        chats = [(c.id, c.chat_id, c.name) for c in session.query(Listable).filter_by(validated=True).all()]
     logger.info(f"Found {len(chats)} groups to update")
 
-    for chat in chats:
+    for chat_db_id, chat_chat_id, chat_name in chats:
         sleep(1)
-        chat_id, url, validated = await update_group_url(context, chat.chat_id)
+        chat_id, url, validated = await update_group_url(context, chat_chat_id)
         if not validated:
-            logger.warning(f"Failed to update URL for group '{chat.name}'. De-validating.")
+            logger.warning(f"Failed to update URL for group '{chat_name}'. De-validating.")
             with get_session() as session:
-                c = session.query(Listable).filter_by(id=chat.id).first()
-                c.validated = False
-            await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat.name} murió 💀")
+                c = session.query(Listable).filter_by(id=chat_db_id).first()
+                if c:
+                    c.validated = False
+            await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat_name} murió 💀")
         else:
-            logger.info(f"Updating URL for group '{chat.name}'")
+            logger.info(f"Updating URL for group '{chat_name}'")
             with get_session() as session:
-                c = session.query(Listable).filter_by(id=chat.id).first()
-                c.url = url
+                c = session.query(Listable).filter_by(id=chat_db_id).first()
+                if c:
+                    c.url = url
     logger.info("Finished update_groups job")
 
 
