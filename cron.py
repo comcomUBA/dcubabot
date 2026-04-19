@@ -18,11 +18,6 @@ def main():
     
     async def run_update():
         try:
-            await application.bot.send_message(chat_id=ROZEN_CHATID, text="Arrancando cron job...")
-        except Exception:
-            pass
-
-        try:
             await felizdia(application)
         except Exception as e:
             error_msg = f"Error en felizdia:\n{traceback.format_exc()}"
