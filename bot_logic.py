@@ -414,12 +414,7 @@ async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> 
 async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info("Starting update_groups job")
     with get_session() as session:
-        # TEMP: Hasta el 25 de abril de 2026, buscar TODOS los grupos (incluso los desvalidados)
-        # para intentar revivirlos luego del accidente de la migración con el test bot.
-        if datetime.date.today() < datetime.date(2026, 4, 25):
-            chats = [(c.id, c.chat_id, c.name) for c in session.query(Listable).all()]
-        else:
-            chats = [(c.id, c.chat_id, c.name) for c in session.query(Listable).filter_by(validated=True).all()]
+        chats = [(c.id, c.chat_id, c.name) for c in session.query(Listable).filter_by(validated=True).all()]
     logger.info(f"Found {len(chats)} groups to update")
 
     for chat_db_id, chat_chat_id, chat_name in chats:
@@ -429,16 +424,15 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
             logger.warning(f"Failed to update URL for group '{chat_name}'. De-validating.")
             with get_session() as session:
                 c = session.query(Listable).filter_by(id=chat_db_id).first()
-                if c and c.validated:
+                if c:
                     c.validated = False
-                    await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat_name} murió 💀")
+            await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat_name} murió 💀")
         else:
             logger.info(f"Updating URL for group '{chat_name}'")
             with get_session() as session:
                 c = session.query(Listable).filter_by(id=chat_db_id).first()
                 if c:
                     c.url = url
-                    c.validated = True
     logger.info("Finished update_groups job")
 
 
