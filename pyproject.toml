@@ -1,0 +1,19 @@
+[project]
+name = "dcubabot"
+version = "0.1.0"
+description = "Bot de Telegram del DC-UBA"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4",
+    "fastapi>=0.136.0",
+    "google-cloud-logging>=3.15.0",
+    "icalevents",
+    "psycopg2-binary",
+    "python-telegram-bot[webhooks]==22.0",
+    "pytz",
+    "requests",
+    "sqlalchemy",
+    "sqlalchemy-cockroachdb",
+    "uvicorn>=0.44.0",
+]
