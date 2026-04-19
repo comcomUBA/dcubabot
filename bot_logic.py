@@ -1,4 +1,4 @@
-from orga2Utils import noitip, asm
+from utils.orga2Utils import noitip, asm
 from handlers.basic import start, help_command, estasvivo, colaborar
 from handlers.info import campusvivo, flan, flanviejo, aulas, cuandovence, listarlabos
 from handlers.admin import checodepers, checodeppers, sugerirNoticia, get_logs

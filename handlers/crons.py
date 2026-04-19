@@ -3,8 +3,8 @@ import datetime
 import random
 import logging
 from telegram.ext import ContextTypes
-import river
-import conciertos
+from utils import river
+from utils import conciertos
 from tg_ids import DC_GROUP_CHATID, NOTICIAS_CHATID
 
 logger = logging.getLogger("DCUBABOT")

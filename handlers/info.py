@@ -1,8 +1,8 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
-from campus import is_campus_up
-from vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
+from utils.campus import is_campus_up
+from utils.vencimientoFinales import calcular_vencimiento, parse_cuatri_y_anio
 from handlers.media import responder_imagen, responder_documento
 
 async def campusvivo(update: Update, context: ContextTypes.DEFAULT_TYPE):
