@@ -1,5 +1,5 @@
 import logging
-from time import sleep
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from models import Grupo, GrupoOptativa, ECI, GrupoOtros, Obligatoria, Listable
@@ -148,7 +148,7 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Found {len(chats)} groups to update")
 
     for chat_db_id, chat_chat_id, chat_name in chats:
-        sleep(1)
+        await asyncio.sleep(1)
         chat_id, url, validated = await update_group_url(context, chat_chat_id)
         if not validated:
             logger.warning(f"Failed to update URL for group '{chat_name}'. De-validating.")
@@ -165,8 +165,15 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
                     c.url = url
     logger.info("Finished update_groups job")
 
+from handlers.admin import admin_ids
+
 async def actualizar_grupos(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info(f"Manual update of groups triggered by {update.effective_user.id}")
-    await update.message.reply_text("Actualizando grupos...")
+    user_id = update.effective_user.id
+    if user_id not in admin_ids and str(user_id) not in admin_ids:
+        logger.warning(f"Unauthorized user {user_id} tried to access /actualizar_grupos")
+        return
+        
+    logger.info(f"Manual update of groups triggered by {user_id}")
+    await update.message.reply_text("Actualizando grupos (esto puede demorar varios minutos)...")
     await _update_groups(context)
     await update.message.reply_text("¡Grupos actualizados!")
