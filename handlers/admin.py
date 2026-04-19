@@ -66,7 +66,8 @@ async def sugerirNoticia(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id not in admin_ids:
+    if user_id not in admin_ids and str(user_id) not in admin_ids:
+        logger.warning(f"Unauthorized user {user_id} tried to access /logs")
         return
     
     try:
@@ -77,7 +78,7 @@ async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Buscando errores en Google Cloud Logging...")
         client = gcp_logging.Client()
         
-        filter_str = 'resource.type="cloud_run_revision" AND severity>=ERROR AND resource.labels.service_name="dcubabot"'
+        filter_str = 'severity>=ERROR AND (resource.type="cloud_run_revision" OR resource.type="cloud_run_job")'
         entries = client.list_entries(filter_=filter_str, order_by=gcp_logging.DESCENDING, max_results=50)
         
         log_msgs = []
