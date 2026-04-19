@@ -148,9 +148,9 @@ async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, l
     keyboard = [
         [
             InlineKeyboardButton(
-                text="Aceptar", callback_data=f"Listable|{group_id}|1"),
+                text="Aceptar", callback_data=f"Listable|{group_id}|1", style="success"),
             InlineKeyboardButton(
-                text="Rechazar", callback_data=f"Listable|{group_id}|0")
+                text="Rechazar", callback_data=f"Listable|{group_id}|0", style="danger")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -348,9 +348,9 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
     keyboard = [
         [
             InlineKeyboardButton(
-                text="Aceptar", callback_data=f"Listable|{group_id}|1"),
+                text="Aceptar", callback_data=f"Listable|{group_id}|1", style="success"),
             InlineKeyboardButton(
-                text="Rechazar", callback_data=f"Listable|{group_id}|0")
+                text="Rechazar", callback_data=f"Listable|{group_id}|0", style="danger")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -392,8 +392,8 @@ async def sugerirNoticia(update: Update, context: ContextTypes.DEFAULT_TYPE):
         noticia_id = noticia.id
     keyboard = [
         [
-            InlineKeyboardButton("Aceptar", callback_data=f"Noticia|{noticia_id}|1"),
-            InlineKeyboardButton("Rechazar", callback_data=f"Noticia|{noticia_id}|0")
+            InlineKeyboardButton("Aceptar", callback_data=f"Noticia|{noticia_id}|1", style="success"),
+            InlineKeyboardButton("Rechazar", callback_data=f"Noticia|{noticia_id}|0", style="danger")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
