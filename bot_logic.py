@@ -571,36 +571,50 @@ async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         from google.cloud import logging as gcp_logging
-        import html
+        import json
+        import io
         
         await update.message.reply_text("Buscando errores en Google Cloud Logging...")
         client = gcp_logging.Client()
         
         # Query logs for the cloud_run_revision with severity>=ERROR
         filter_str = 'resource.type="cloud_run_revision" AND severity>=ERROR AND resource.labels.service_name="dcubabot"'
-        entries = client.list_entries(filter_=filter_str, order_by=gcp_logging.DESCENDING, max_results=10)
+        entries = client.list_entries(filter_=filter_str, order_by=gcp_logging.DESCENDING, max_results=50)
         
         log_msgs = []
         for entry in entries:
-            # GCP logs can have payload in text_payload or json_payload
+            # Prepare a structured dictionary for each log entry
+            log_data = {
+                "timestamp": entry.timestamp.isoformat(),
+                "severity": entry.severity,
+            }
+            
             payload = entry.payload
             if isinstance(payload, dict):
-                import json
-                payload = json.dumps(payload)
-            elif payload is None:
-                payload = str(entry.resource)
+                log_data["json_payload"] = payload
+            elif payload is not None:
+                log_data["text_payload"] = str(payload)
+            else:
+                log_data["resource"] = str(entry.resource)
                 
-            log_msgs.append(f"[{entry.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] {payload}")
+            log_msgs.append(log_data)
             
         if not log_msgs:
             await update.message.reply_text("✅ No se encontraron errores recientes en GCP.")
             return
             
-        msg = "\n\n".join(log_msgs)
-        # Split message if it's too long for Telegram (4096 chars limit)
-        for i in range(0, len(msg), 3800):
-            chunk = msg[i:i+3800]
-            await update.message.reply_text(f"Últimos errores:\n<pre>{html.escape(chunk)}</pre>", parse_mode=ParseMode.HTML)
+        # Convert list of dicts to a formatted JSON string
+        logs_json_str = json.dumps(log_msgs, indent=2, ensure_ascii=False)
+        
+        # Create an in-memory file
+        file_obj = io.BytesIO(logs_json_str.encode('utf-8'))
+        file_obj.name = f"gcp_error_logs_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        await context.bot.send_document(
+            chat_id=update.effective_chat.id,
+            document=file_obj,
+            caption="Acá tenés el archivo con los últimos errores registrados en GCP 🕵️‍♂️"
+        )
     except Exception as e:
         await update.message.reply_text(f"Error al leer logs (¿falta permiso roles/logging.viewer en la Service Account?): {e}")
 
