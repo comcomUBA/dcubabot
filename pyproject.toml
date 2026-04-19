@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "beautifulsoup4",
+    "google-cloud-logging>=3.15.0",
     "icalevents",
     "psycopg2-binary",
     "python-telegram-bot[webhooks]==22.0",

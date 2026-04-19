@@ -564,7 +564,51 @@ async def actualizarRiver(context: ContextTypes.DEFAULT_TYPE):
     await actualizarConciertos(context)
 
 
+async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in admin_ids:
+        return
+    
+    try:
+        from google.cloud import logging as gcp_logging
+        import html
+        
+        await update.message.reply_text("Buscando errores en Google Cloud Logging...")
+        client = gcp_logging.Client()
+        
+        # Query logs for the cloud_run_revision with severity>=ERROR
+        filter_str = 'resource.type="cloud_run_revision" AND severity>=ERROR AND resource.labels.service_name="dcubabot"'
+        entries = client.list_entries(filter_=filter_str, order_by=gcp_logging.DESCENDING, max_results=10)
+        
+        log_msgs = []
+        for entry in entries:
+            # GCP logs can have payload in text_payload or json_payload
+            payload = entry.payload
+            if isinstance(payload, dict):
+                import json
+                payload = json.dumps(payload)
+            elif payload is None:
+                payload = str(entry.resource)
+                
+            log_msgs.append(f"[{entry.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] {payload}")
+            
+        if not log_msgs:
+            await update.message.reply_text("✅ No se encontraron errores recientes en GCP.")
+            return
+            
+        msg = "\n\n".join(log_msgs)
+        # Split message if it's too long for Telegram (4096 chars limit)
+        for i in range(0, len(msg), 3800):
+            chunk = msg[i:i+3800]
+            await update.message.reply_text(f"Últimos errores:\n<pre>{html.escape(chunk)}</pre>", parse_mode=ParseMode.HTML)
+    except Exception as e:
+        await update.message.reply_text(f"Error al leer logs (¿falta permiso roles/logging.viewer en la Service Account?): {e}")
+
 COMMANDS = {
+    'logs': {
+        'handler': get_logs,
+        'description': '(Admin) Revisa los últimos 10 errores en GCP.'
+    },
 
     'listarlabos': {
         'handler': listarlabos,
