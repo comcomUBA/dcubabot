@@ -1,0 +1,9 @@
+# Archivo de Dueños de Código (CODEOWNERS)
+# Este archivo le dice a GitHub qué usuarios son los responsables de revisar
+# cambios en ciertos archivos clave del repositorio.
+
+# Por defecto, cualquier cambio en la infraestructura requiere la aprobación de @rozen03
+.github/workflows/google-cloudrun-docker.yml @rozen03
+cloudbuild.yaml @rozen03
+Dockerfile @rozen03
+tg_ids.py @rozen03
