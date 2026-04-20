@@ -63,8 +63,8 @@ async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, l
 
     keyboard = [
         [
-            InlineKeyboardButton(text="Aceptar", callback_data=f"Listable|{group_id}|1", style="success"),
-            InlineKeyboardButton(text="Rechazar", callback_data=f"Listable|{group_id}|0", style="danger")
+            InlineKeyboardButton(text="Aceptar", callback_data=f"Listable|{group_id}|1", api_kwargs={"style": "success"}),
+            InlineKeyboardButton(text="Rechazar", callback_data=f"Listable|{group_id}|0", api_kwargs={"style": "danger"})
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -110,8 +110,8 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
         group_id = group.id
     keyboard = [
         [
-            InlineKeyboardButton(text="Aceptar", callback_data=f"Listable|{group_id}|1", style="success"),
-            InlineKeyboardButton(text="Rechazar", callback_data=f"Listable|{group_id}|0", style="danger")
+            InlineKeyboardButton(text="Aceptar", callback_data=f"Listable|{group_id}|1", api_kwargs={"style": "success"}),
+            InlineKeyboardButton(text="Rechazar", callback_data=f"Listable|{group_id}|0", api_kwargs={"style": "danger"})
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)

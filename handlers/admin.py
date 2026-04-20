@@ -42,18 +42,18 @@ def get_movergrupo_keyboard(session, page: int = 0, items_per_page: int = 10):
     
     keyboard = []
     for g in page_groups:
-        keyboard.append([InlineKeyboardButton(f"{g.name} ({g.type})", callback_data=f"MoverGrupo|Select|{g.id}")])
+        keyboard.append([InlineKeyboardButton(f"{g.name} ({g.type})", callback_data=f"MoverGrupo|Select|{g.id}", api_kwargs={"style": "primary"})])
         
     nav_row = []
     if page > 0:
-        nav_row.append(InlineKeyboardButton("⬅️ Anterior", callback_data=f"MoverGrupo|Page|{page - 1}"))
+        nav_row.append(InlineKeyboardButton("⬅️ Anterior", callback_data=f"MoverGrupo|Page|{page - 1}", api_kwargs={"style": "primary"}))
     if page < total_pages - 1:
-        nav_row.append(InlineKeyboardButton("Siguiente ➡️", callback_data=f"MoverGrupo|Page|{page + 1}"))
+        nav_row.append(InlineKeyboardButton("Siguiente ➡️", callback_data=f"MoverGrupo|Page|{page + 1}", api_kwargs={"style": "primary"}))
         
     if nav_row:
         keyboard.append(nav_row)
         
-    keyboard.append([InlineKeyboardButton("❌ Cancelar", callback_data="MoverGrupo|Cancel|0")])
+    keyboard.append([InlineKeyboardButton("❌ Cancelar", callback_data="MoverGrupo|Cancel|0", api_kwargs={"style": "danger"})])
     return InlineKeyboardMarkup(keyboard)
 
 async def movergrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -114,8 +114,8 @@ async def sugerirNoticia(update: Update, context: ContextTypes.DEFAULT_TYPE):
         noticia_id = noticia.id
     keyboard = [
         [
-            InlineKeyboardButton("Aceptar", callback_data=f"Noticia|{noticia_id}|1", style="success"),
-            InlineKeyboardButton("Rechazar", callback_data=f"Noticia|{noticia_id}|0", style="danger")
+            InlineKeyboardButton("Aceptar", callback_data=f"Noticia|{noticia_id}|1", api_kwargs={"style": "success"}),
+            InlineKeyboardButton("Rechazar", callback_data=f"Noticia|{noticia_id}|0", api_kwargs={"style": "danger"})
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)

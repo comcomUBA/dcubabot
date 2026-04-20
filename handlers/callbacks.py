@@ -54,18 +54,18 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
                 keyboard = [
                     [
-                        InlineKeyboardButton("Grupo (Oblig.)", callback_data=f"MoverGrupo|Move|{group.id}|Grupo"),
-                        InlineKeyboardButton("GrupoOptativa", callback_data=f"MoverGrupo|Move|{group.id}|GrupoOptativa"),
-                        InlineKeyboardButton("ECI", callback_data=f"MoverGrupo|Move|{group.id}|ECI")
+                        InlineKeyboardButton("Grupo (Oblig.)", callback_data=f"MoverGrupo|Move|{group.id}|Grupo", api_kwargs={"style": "primary"}),
+                        InlineKeyboardButton("GrupoOptativa", callback_data=f"MoverGrupo|Move|{group.id}|GrupoOptativa", api_kwargs={"style": "primary"}),
+                        InlineKeyboardButton("ECI", callback_data=f"MoverGrupo|Move|{group.id}|ECI", api_kwargs={"style": "primary"})
                     ],
                     [
-                        InlineKeyboardButton("Otro", callback_data=f"MoverGrupo|Move|{group.id}|Otro"),
-                        InlineKeyboardButton("GrupoOtros", callback_data=f"MoverGrupo|Move|{group.id}|GrupoOtros"),
-                        InlineKeyboardButton("Obligatoria (v.)", callback_data=f"MoverGrupo|Move|{group.id}|Obligatoria")
+                        InlineKeyboardButton("Otro", callback_data=f"MoverGrupo|Move|{group.id}|Otro", api_kwargs={"style": "primary"}),
+                        InlineKeyboardButton("GrupoOtros", callback_data=f"MoverGrupo|Move|{group.id}|GrupoOtros", api_kwargs={"style": "primary"}),
+                        InlineKeyboardButton("Obligatoria (v.)", callback_data=f"MoverGrupo|Move|{group.id}|Obligatoria", api_kwargs={"style": "primary"})
                     ],
                     [
-                        InlineKeyboardButton("Optativa (v.)", callback_data=f"MoverGrupo|Move|{group.id}|Optativa"),
-                        InlineKeyboardButton("❌ Cancelar", callback_data="MoverGrupo|Cancel|0")
+                        InlineKeyboardButton("Optativa (v.)", callback_data=f"MoverGrupo|Move|{group.id}|Optativa", api_kwargs={"style": "primary"}),
+                        InlineKeyboardButton("❌ Cancelar", callback_data="MoverGrupo|Cancel|0", api_kwargs={"style": "danger"})
                     ]
                 ]
                 await query.edit_message_text(
