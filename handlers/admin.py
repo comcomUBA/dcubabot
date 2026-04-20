@@ -21,8 +21,9 @@ async def joder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
         
     message = " ".join(context.args)
+    formatted_message = f"@rozen dice: {message}"
     try:
-        await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=message)
+        await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=formatted_message)
         await update.message.reply_text("Mensaje enviado exitosamente al grupo general.")
     except Exception as e:
         logger.error(f"Failed to send joder message: {e}")
