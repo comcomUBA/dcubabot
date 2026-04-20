@@ -22,6 +22,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     session.delete(group)
                     action_text = "\n¡Rechazado!"
                 await query.edit_message_text(text=message.text + action_text)
+            else:
+                await query.edit_message_text(text=message.text + "\n[Botón huérfano: El grupo ya no existe en la base de datos]")
         
         elif buttonType == "Noticia":
             noticia = session.query(Noticia).filter_by(id=int(id_val)).first()
@@ -35,3 +37,5 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     session.delete(noticia)
                     action_text = "\n¡Rechazado!"
                 await query.edit_message_text(text=message.text + action_text)
+            else:
+                await query.edit_message_text(text=message.text + "\n[Botón huérfano: La noticia ya no existe en la base de datos]")
