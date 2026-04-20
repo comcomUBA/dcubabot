@@ -55,8 +55,8 @@ async def sugerirNoticia(update: Update, context: ContextTypes.DEFAULT_TYPE):
         noticia_id = noticia.id
     keyboard = [
         [
-            InlineKeyboardButton("Aceptar", callback_data=f"Noticia|{noticia_id}|1"),
-            InlineKeyboardButton("Rechazar", callback_data=f"Noticia|{noticia_id}|0")
+            InlineKeyboardButton("Aceptar", callback_data=f"Noticia|{noticia_id}|1", style="success"),
+            InlineKeyboardButton("Rechazar", callback_data=f"Noticia|{noticia_id}|0", style="danger")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
