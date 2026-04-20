@@ -133,31 +133,42 @@ async def agregarotros(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def agregareci(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await agregar(update, context, ECI, "eci")
 
+from telegram.error import Forbidden, BadRequest, RetryAfter
+
 async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> tuple[str, str, bool]:
     try:
         url = await context.bot.export_chat_invite_link(chat_id=chat_id)
         return chat_id, url, True
-    except Exception:
-        logger.error(f"Could not create invite link for {chat_id}", exc_info=True)
+    except (Forbidden, BadRequest) as e:
+        logger.error(f"Bot is no longer allowed to create invite link for {chat_id}: {e}")
         return None, None, False
+    except RetryAfter as e:
+        logger.warning(f"Rate limited while creating invite link for {chat_id}. Retry after {e.retry_after} seconds.")
+        return None, None, None
+    except Exception as e:
+        logger.error(f"Could not create invite link for {chat_id}: {e}", exc_info=True)
+        return None, None, None
 
 async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info("Starting update_groups job")
     with get_session() as session:
-        chats = [(c.id, c.chat_id, c.name) for c in session.query(Listable).filter_by(validated=True).all()]
+        chats = [(c.id, c.chat_id, c.name) for c in session.query(Listable).filter_by(validated=True).filter(Listable.chat_id != None, Listable.chat_id != '').all()]
     logger.info(f"Found {len(chats)} groups to update")
 
     for chat_db_id, chat_chat_id, chat_name in chats:
         await asyncio.sleep(1)
         chat_id, url, validated = await update_group_url(context, chat_chat_id)
-        if not validated:
+        if validated is False:
             logger.warning(f"Failed to update URL for group '{chat_name}'. De-validating.")
             with get_session() as session:
                 c = session.query(Listable).filter_by(id=chat_db_id).first()
                 if c:
                     c.validated = False
-            await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat_name} murió 💀")
-        else:
+            try:
+                await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat_name} murió 💀")
+            except Exception as e:
+                logger.error(f"Failed to send death message for {chat_name}: {e}")
+        elif validated is True:
             logger.info(f"Updating URL for group '{chat_name}'")
             with get_session() as session:
                 c = session.query(Listable).filter_by(id=chat_db_id).first()
