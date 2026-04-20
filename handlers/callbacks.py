@@ -31,21 +31,61 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await query.edit_message_text(text=message.text + "\n[Botón huérfano: El grupo ya no existe en la base de datos]")
                 
         elif buttonType == "MoverGrupo":
-            if action == "Cancelar":
-                await query.edit_message_text(text=f"❌ Operación cancelada para el grupo ID {id_val}.")
+            sub_action = id_val
+            value = action
+            
+            if sub_action == "Cancel":
+                await query.edit_message_text(text="❌ Operación cancelada.")
                 return
+            elif sub_action == "Page":
+                from handlers.admin import get_movergrupo_keyboard
+                reply_markup = get_movergrupo_keyboard(session, page=int(value))
+                await query.edit_message_text(
+                    text="Seleccioná el grupo que querés recategorizar:",
+                    reply_markup=reply_markup
+                )
+                return
+            elif sub_action == "Select":
+                group = session.query(Listable).filter_by(id=int(value)).first()
+                if not group:
+                    await query.edit_message_text(text="[Botón huérfano: El grupo ya no existe]")
+                    return
                 
-            group = session.query(Listable).filter_by(id=int(id_val)).first()
-            if group:
-                old_type = group.type
-                new_type = action
-                # Update the polymorphic identity directly via the type column
-                group.type = new_type
-                # Depending on SQLAlchemy, modifying the polymorphic column directly might require 
-                # a raw SQL update or session.flush() to be safe. We'll rely on SQLAlchemy's update.
-                await query.edit_message_text(text=f"✅ Grupo *{group.name}* movido exitosamente:\nDe `{old_type}` ➡️ a `{new_type}`", parse_mode=ParseMode.MARKDOWN)
-            else:
-                await query.edit_message_text(text=message.text + "\n[Botón huérfano: El grupo ya no existe]")
+                from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                keyboard = [
+                    [
+                        InlineKeyboardButton("Grupo (Oblig.)", callback_data=f"MoverGrupo|Move|{group.id}|Grupo"),
+                        InlineKeyboardButton("GrupoOptativa", callback_data=f"MoverGrupo|Move|{group.id}|GrupoOptativa"),
+                        InlineKeyboardButton("ECI", callback_data=f"MoverGrupo|Move|{group.id}|ECI")
+                    ],
+                    [
+                        InlineKeyboardButton("Otro", callback_data=f"MoverGrupo|Move|{group.id}|Otro"),
+                        InlineKeyboardButton("GrupoOtros", callback_data=f"MoverGrupo|Move|{group.id}|GrupoOtros"),
+                        InlineKeyboardButton("Obligatoria (v.)", callback_data=f"MoverGrupo|Move|{group.id}|Obligatoria")
+                    ],
+                    [
+                        InlineKeyboardButton("Optativa (v.)", callback_data=f"MoverGrupo|Move|{group.id}|Optativa"),
+                        InlineKeyboardButton("❌ Cancelar", callback_data="MoverGrupo|Cancel|0")
+                    ]
+                ]
+                await query.edit_message_text(
+                    text=f"Seleccioná la nueva categoría para el grupo:\n\n*Nombre:* {group.name}\n*Categoría Actual:* {group.type}",
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                return
+            elif sub_action == "Move":
+                group_id = int(data_parts[2])
+                new_type = data_parts[3]
+                
+                group = session.query(Listable).filter_by(id=group_id).first()
+                if group:
+                    old_type = group.type
+                    group.type = new_type
+                    await query.edit_message_text(text=f"✅ Grupo *{group.name}* movido exitosamente:\nDe `{old_type}` ➡️ a `{new_type}`", parse_mode=ParseMode.MARKDOWN)
+                else:
+                    await query.edit_message_text(text="[Botón huérfano: El grupo ya no existe]")
+                return
         
         elif buttonType == "Noticia":
             noticia = session.query(Noticia).filter_by(id=int(id_val)).first()

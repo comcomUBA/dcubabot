@@ -29,53 +29,44 @@ async def joder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Failed to send joder message: {e}")
         await update.message.reply_text(f"Error al enviar el mensaje: {e}")
 
+import math
+
+def get_movergrupo_keyboard(session, page: int = 0, items_per_page: int = 10):
+    from models import Listable
+    groups = session.query(Listable).filter_by(validated=True).order_by(Listable.name).all()
+    total_pages = math.ceil(len(groups) / items_per_page)
+    
+    start_idx = page * items_per_page
+    end_idx = start_idx + items_per_page
+    page_groups = groups[start_idx:end_idx]
+    
+    keyboard = []
+    for g in page_groups:
+        keyboard.append([InlineKeyboardButton(f"{g.name} ({g.type})", callback_data=f"MoverGrupo|Select|{g.id}")])
+        
+    nav_row = []
+    if page > 0:
+        nav_row.append(InlineKeyboardButton("⬅️ Anterior", callback_data=f"MoverGrupo|Page|{page - 1}"))
+    if page < total_pages - 1:
+        nav_row.append(InlineKeyboardButton("Siguiente ➡️", callback_data=f"MoverGrupo|Page|{page + 1}"))
+        
+    if nav_row:
+        keyboard.append(nav_row)
+        
+    keyboard.append([InlineKeyboardButton("❌ Cancelar", callback_data="MoverGrupo|Cancel|0")])
+    return InlineKeyboardMarkup(keyboard)
+
 async def movergrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in admin_ids and str(user_id) not in admin_ids:
         logger.warning(f"Unauthorized user {user_id} tried to access /movergrupo")
         return
         
-    if not context.args:
-        await update.message.reply_text("Uso: /movergrupo <nombre exacto del grupo>")
-        return
-        
-    name = " ".join(context.args)
     with get_session() as session:
-        from models import Listable
-        groups = session.query(Listable).filter(Listable.name.ilike(f"%{name}%")).all()
-        
-        if not groups:
-            await update.message.reply_text("No se encontró ningún grupo con ese nombre.")
-            return
-            
-        if len(groups) > 1:
-            names = "\n".join([f"- {g.name} ({g.type})" for g in groups])
-            await update.message.reply_text(f"Se encontraron múltiples grupos:\n{names}\n\nPor favor, sé más específico.")
-            return
-            
-        group = groups[0]
-        
-        keyboard = [
-            [
-                InlineKeyboardButton("Grupo (Oblig.)", callback_data=f"MoverGrupo|{group.id}|Grupo"),
-                InlineKeyboardButton("GrupoOptativa", callback_data=f"MoverGrupo|{group.id}|GrupoOptativa"),
-                InlineKeyboardButton("ECI", callback_data=f"MoverGrupo|{group.id}|ECI")
-            ],
-            [
-                InlineKeyboardButton("Otro", callback_data=f"MoverGrupo|{group.id}|Otro"),
-                InlineKeyboardButton("GrupoOtros", callback_data=f"MoverGrupo|{group.id}|GrupoOtros"),
-                InlineKeyboardButton("Obligatoria (viejo)", callback_data=f"MoverGrupo|{group.id}|Obligatoria"),
-            ],
-            [
-                InlineKeyboardButton("Optativa (viejo)", callback_data=f"MoverGrupo|{group.id}|Optativa"),
-                InlineKeyboardButton("Cancelar", callback_data=f"MoverGrupo|{group.id}|Cancelar")
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+        reply_markup = get_movergrupo_keyboard(session, page=0)
         await update.message.reply_text(
-            f"Seleccioná la nueva categoría para el grupo:\n\n*Nombre:* {group.name}\n*Categoría Actual:* {group.type}",
-            reply_markup=reply_markup,
-            parse_mode=ParseMode.MARKDOWN
+            "Seleccioná el grupo que querés recategorizar:",
+            reply_markup=reply_markup
         )
 
 async def checodepers(update: Update, context: ContextTypes.DEFAULT_TYPE):
