@@ -203,11 +203,33 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info("Finished update_groups job")
 
 from handlers.admin import admin_ids
+from models import Lock
+import datetime
 
-_update_in_progress = False
+async def acquire_lock(session, key: str, ttl_minutes: int = 15) -> bool:
+    now = datetime.datetime.utcnow()
+    # Try to clean up expired locks first
+    session.query(Lock).filter(Lock.key == key, Lock.expires_at < now).delete()
+    session.commit()
+    
+    existing = session.query(Lock).filter_by(key=key).first()
+    if existing:
+        return False
+        
+    new_lock = Lock(key=key, expires_at=now + datetime.timedelta(minutes=ttl_minutes))
+    session.add(new_lock)
+    try:
+        session.commit()
+        return True
+    except Exception:
+        session.rollback()
+        return False
+
+async def release_lock(session, key: str):
+    session.query(Lock).filter_by(key=key).delete()
+    session.commit()
 
 async def _background_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global _update_in_progress
     try:
         await _update_groups(context)
         await context.bot.send_message(chat_id=update.effective_chat.id, text="¡Grupos actualizados!")
@@ -215,20 +237,22 @@ async def _background_update(update: Update, context: ContextTypes.DEFAULT_TYPE)
         logger.error(f"Background update failed: {e}", exc_info=True)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Error actualizando grupos: {e}")
     finally:
-        _update_in_progress = False
+        with get_session() as session:
+            await release_lock(session, "update_groups")
 
 async def actualizar_grupos(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global _update_in_progress
     user_id = update.effective_user.id
     if user_id not in admin_ids and str(user_id) not in admin_ids:
         logger.warning(f"Unauthorized user {user_id} tried to access /actualizar_grupos")
         return
         
-    if _update_in_progress:
-        await update.message.reply_text("Ya hay una actualización de grupos en progreso. Por favor, esperá a que termine.")
+    with get_session() as session:
+        lock_acquired = await acquire_lock(session, "update_groups", ttl_minutes=15)
+        
+    if not lock_acquired:
+        await update.message.reply_text("Ya hay una actualización de grupos en progreso (u ocurrió un error reciente). Por favor, esperá unos minutos a que termine o expire.")
         return
 
-    _update_in_progress = True
     logger.info(f"Manual update of groups triggered by {user_id}")
     await update.message.reply_text("Actualizando grupos en segundo plano (esto puede demorar varios minutos)...")
     asyncio.create_task(_background_update(update, context))

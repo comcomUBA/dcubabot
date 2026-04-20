@@ -34,8 +34,12 @@ class Command(Base):
     description = Column(String)
     enabled = Column(Boolean, nullable=False, default=True)
 
+class Lock(Base):
+    __tablename__ = 'locks'
+    key = Column(String, primary_key=True)
+    expires_at = Column(DateTime, nullable=False)
+
 class SentMessage(Base):
-    __tablename__ = 'sent_messages'
     id = Column(Integer, primary_key=True)
     command = Column(String, nullable=False)
     chat_id = Column(String, nullable=False)
