@@ -11,6 +11,8 @@ import uvicorn
 
 from bot_logic import COMMANDS, button
 from tg_ids import ROZEN_CHATID
+from handlers.db import get_session
+from models import ProcessedUpdate
 
 async def error_handler(update, context):
     """Log the error and send a telegram message to notify the developer."""
@@ -117,6 +119,18 @@ async def telegram_webhook(token: str, request: Request):
     try:
         data = await request.json()
         update = telegram.Update.de_json(data=data, bot=application.bot)
+        
+        # Idempotency check: Have we processed this update_id already?
+        with get_session() as session:
+            existing = session.query(ProcessedUpdate).filter_by(update_id=update.update_id).first()
+            if existing:
+                logging.getLogger("DCUBABOT").info(f"Skipping duplicate update_id {update.update_id}")
+                return Response(status_code=200)
+            
+            # If not, mark as processed and commit immediately
+            session.add(ProcessedUpdate(update_id=update.update_id))
+            session.commit()
+
         # Await the processing SYNCHRONOUSLY before returning 200 OK
         # This prevents Cloud Run from throttling the CPU while the bot is doing work
         # TODO: If user traffic scales significantly and Telegram throws `RetryAfter` for

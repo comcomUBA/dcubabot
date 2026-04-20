@@ -3,9 +3,12 @@ import os
 import logging
 import traceback
 import resource
+import datetime
 from telegram.ext import Application
 from tg_ids import ROZEN_CHATID
 from bot_logic import _update_groups, felizdia, actualizarRiver
+from handlers.db import get_session
+from models import ProcessedUpdate
 
 def main():
     """Runs the update_groups command."""
@@ -17,6 +20,15 @@ def main():
     application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
     
     async def run_update():
+        try:
+            # Clean up old processed updates (older than 48h) to save DB space
+            with get_session() as session:
+                forty_eight_hours_ago = datetime.datetime.utcnow() - datetime.timedelta(hours=48)
+                deleted = session.query(ProcessedUpdate).filter(ProcessedUpdate.timestamp < forty_eight_hours_ago).delete()
+                logging.info(f"Cleaned up {deleted} old processed updates from DB")
+        except Exception as e:
+            logging.error(f"Error cleaning up processed updates: {e}", exc_info=True)
+
         try:
             await felizdia(application)
         except Exception as e:

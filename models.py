@@ -39,6 +39,11 @@ class Lock(Base):
     key = Column(String, primary_key=True)
     expires_at = Column(DateTime, nullable=False)
 
+class ProcessedUpdate(Base):
+    __tablename__ = 'processed_updates'
+    update_id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+
 class SentMessage(Base):
     __tablename__ = 'sent_messages'
     id = Column(Integer, primary_key=True)
