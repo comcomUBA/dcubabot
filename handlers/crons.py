@@ -10,6 +10,9 @@ from tg_ids import DC_GROUP_CHATID, NOTICIAS_CHATID
 logger = logging.getLogger("DCUBABOT")
 bsasTz = pytz.timezone("America/Argentina/Buenos_Aires")
 
+from handlers.db import get_session
+from models import Lock
+
 def felizdia_text(today):
     meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
              "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
@@ -23,9 +26,28 @@ def felizdia_text(today):
         return "Feliz " + dia + " de " + mes
 
 async def felizdia(context: ContextTypes.DEFAULT_TYPE):
-    if random.uniform(0, 7) > 1:
-        return
     today = datetime.date.today()
+    lock_key = f"felizdia_{today.year}_{today.month}_{today.day}"
+    
+    with get_session() as session:
+        existing = session.query(Lock).filter_by(key=lock_key).first()
+        if existing:
+            logger.info(f"felizdia already executed today ({today}). Skipping.")
+            return
+            
+        new_lock = Lock(key=lock_key, expires_at=datetime.datetime.utcnow() + datetime.timedelta(days=2))
+        session.add(new_lock)
+        try:
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Failed to acquire felizdia lock: {e}")
+            return
+
+    if random.uniform(0, 7) > 1:
+        logger.info(f"felizdia skipped by random chance today ({today}).")
+        return
+        
     chat_id = DC_GROUP_CHATID
     await context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
 
