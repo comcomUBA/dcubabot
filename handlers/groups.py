@@ -155,31 +155,43 @@ async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> 
 async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info("Starting update_groups job")
     with get_session() as session:
-        chats = [(c.id, c.chat_id, c.name) for c in session.query(Listable).filter_by(validated=True).filter(Listable.chat_id != None, Listable.chat_id != '').all()]
-    logger.info(f"Found {len(chats)} groups to update")
+        all_chats = session.query(Listable).filter_by(validated=True).filter(Listable.chat_id != None, Listable.chat_id != '').all()
+        
+        chats_by_id = {}
+        for c in all_chats:
+            if c.chat_id not in chats_by_id:
+                chats_by_id[c.chat_id] = []
+            chats_by_id[c.chat_id].append((c.id, c.name))
+            
+    logger.info(f"Found {len(chats_by_id)} unique groups to update")
 
-    for chat_db_id, chat_chat_id, chat_name in chats:
+    for chat_chat_id, db_entries in chats_by_id.items():
         await asyncio.sleep(1)
         chat_id, url, validated = await update_group_url(context, chat_chat_id)
+        
+        primary_name = db_entries[0][1]
+        
         if validated is False:
-            logger.warning(f"Failed to update URL for group '{chat_name}'. De-validating.")
+            logger.warning(f"Failed to update URL for group '{primary_name}'. De-validating.")
             with get_session() as session:
-                c = session.query(Listable).filter_by(id=chat_db_id).first()
-                if c:
-                    c.validated = False
+                for db_id, _ in db_entries:
+                    c = session.query(Listable).filter_by(id=db_id).first()
+                    if c:
+                        c.validated = False
             try:
-                await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {chat_name} murió 💀")
+                await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {primary_name} murió 💀")
             except Exception as e:
-                logger.error(f"Failed to send death message for {chat_name}: {e}")
+                logger.error(f"Failed to send death message for {primary_name}: {e}")
         elif validated is True:
-            logger.info(f"Updating URL for group '{chat_name}'")
+            logger.info(f"Updating URL for group '{primary_name}'")
             with get_session() as session:
-                c = session.query(Listable).filter_by(id=chat_db_id).first()
-                if c:
-                    c.url = url
-                    if str(c.chat_id) != str(chat_id):
-                        logger.info(f"Updating chat_id for group '{chat_name}' from {c.chat_id} to {chat_id}")
-                        c.chat_id = str(chat_id)
+                for db_id, _ in db_entries:
+                    c = session.query(Listable).filter_by(id=db_id).first()
+                    if c:
+                        c.url = url
+                        if str(c.chat_id) != str(chat_id):
+                            logger.info(f"Updating chat_id for group '{primary_name}' from {c.chat_id} to {chat_id}")
+                            c.chat_id = str(chat_id)
     logger.info("Finished update_groups job")
 
 from handlers.admin import admin_ids
