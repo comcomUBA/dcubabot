@@ -38,7 +38,7 @@ class SentMessage(Base):
     __tablename__ = 'sent_messages'
     id = Column(Integer, primary_key=True)
     command = Column(String, nullable=False)
-    chat_id = Column(BigInteger, nullable=False)
+    chat_id = Column(String, nullable=False)
     message_id = Column(BigInteger, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
