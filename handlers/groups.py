@@ -184,13 +184,31 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
 
 from handlers.admin import admin_ids
 
+_update_in_progress = False
+
+async def _background_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global _update_in_progress
+    try:
+        await _update_groups(context)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="¡Grupos actualizados!")
+    except Exception as e:
+        logger.error(f"Background update failed: {e}", exc_info=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Error actualizando grupos: {e}")
+    finally:
+        _update_in_progress = False
+
 async def actualizar_grupos(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global _update_in_progress
     user_id = update.effective_user.id
     if user_id not in admin_ids and str(user_id) not in admin_ids:
         logger.warning(f"Unauthorized user {user_id} tried to access /actualizar_grupos")
         return
         
+    if _update_in_progress:
+        await update.message.reply_text("Ya hay una actualización de grupos en progreso. Por favor, esperá a que termine.")
+        return
+
+    _update_in_progress = True
     logger.info(f"Manual update of groups triggered by {user_id}")
-    await update.message.reply_text("Actualizando grupos (esto puede demorar varios minutos)...")
-    await _update_groups(context)
-    await update.message.reply_text("¡Grupos actualizados!")
+    await update.message.reply_text("Actualizando grupos en segundo plano (esto puede demorar varios minutos)...")
+    asyncio.create_task(_background_update(update, context))
