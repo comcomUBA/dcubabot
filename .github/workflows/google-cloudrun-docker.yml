@@ -149,3 +149,6 @@ jobs:
               --http-method=POST \
               --oauth-service-account-email=${{ vars.GCP_SA_EMAIL }}
           fi
+
+      - name: Execute Cloud Run Job
+        run: gcloud run jobs execute ${{ env.JOB_NAME }} --region ${{ env.PROJECT_REGION }}
