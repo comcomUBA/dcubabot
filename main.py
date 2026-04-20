@@ -121,15 +121,18 @@ async def telegram_webhook(token: str, request: Request):
         update = telegram.Update.de_json(data=data, bot=application.bot)
         
         # Idempotency check: Have we processed this update_id already?
+        # Using an atomic insert to prevent race conditions when multiple Cloud Run 
+        # instances receive the same update simultaneously.
+        from sqlalchemy.dialects.postgresql import insert
         with get_session() as session:
-            existing = session.query(ProcessedUpdate).filter_by(update_id=update.update_id).first()
-            if existing:
+            stmt = insert(ProcessedUpdate).values(update_id=update.update_id).on_conflict_do_nothing()
+            result = session.execute(stmt)
+            session.commit()
+            
+            # If rowcount is 0, the record already existed and ON CONFLICT prevented insertion
+            if result.rowcount == 0:
                 logging.getLogger("DCUBABOT").info(f"Skipping duplicate update_id {update.update_id}")
                 return Response(status_code=200)
-            
-            # If not, mark as processed and commit immediately
-            session.add(ProcessedUpdate(update_id=update.update_id))
-            session.commit()
 
         # Await the processing SYNCHRONOUSLY before returning 200 OK
         # This prevents Cloud Run from throttling the CPU while the bot is doing work
