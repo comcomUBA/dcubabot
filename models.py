@@ -40,6 +40,7 @@ class Lock(Base):
     expires_at = Column(DateTime, nullable=False)
 
 class SentMessage(Base):
+    __tablename__ = 'sent_messages'
     id = Column(Integer, primary_key=True)
     command = Column(String, nullable=False)
     chat_id = Column(String, nullable=False)
