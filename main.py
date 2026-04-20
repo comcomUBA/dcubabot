@@ -29,15 +29,46 @@ async def error_handler(update, context):
 async def log_update(update, context):
     """Log every update received by the bot."""
     logger = logging.getLogger("DCUBABOT")
+    
     user = update.effective_user
     chat = update.effective_chat
     
-    log_message = f"Update received. User: {user.id} ({user.username}) in chat: {chat.id} ({chat.title})."
-    if update.message and update.message.text:
-        log_message += f" Message: {update.message.text}"
-    elif update.callback_query:
-        log_message += f" Callback Query: {update.callback_query.data}"
+    user_info = f"{user.id} ({user.username})" if user else None
+    chat_info = f"{chat.id} ({chat.title})" if chat else None
+    
+    log_parts = ["Update received"]
+    
+    if user_info:
+        log_parts.append(f"User: {user_info}")
+    if chat_info:
+        log_parts.append(f"Chat: {chat_info}")
         
+    if update.channel_post:
+        log_parts.append("Type: Channel Post")
+        if update.channel_post.text:
+            log_parts.append(f"Text: {update.channel_post.text}")
+    elif update.edited_channel_post:
+        log_parts.append("Type: Edited Channel Post")
+    elif update.poll:
+        log_parts.append(f"Type: Poll Update (id: {update.poll.id})")
+    elif update.poll_answer:
+        log_parts.append(f"Type: Poll Answer (poll_id: {update.poll_answer.poll_id})")
+    elif update.my_chat_member:
+        log_parts.append("Type: Bot Chat Member Status Update")
+    elif update.chat_member:
+        log_parts.append("Type: Chat Member Update")
+    elif update.inline_query:
+        log_parts.append(f"Type: Inline Query (query: {update.inline_query.query})")
+    
+    if update.message and update.message.text:
+        log_parts.append(f"Message: {update.message.text}")
+    elif update.callback_query:
+        log_parts.append(f"Callback Query: {update.callback_query.data}")
+        
+    if not user_info and not chat_info and len(log_parts) == 1:
+        log_parts.append("Type: Unknown/System Update")
+
+    log_message = " | ".join(log_parts)
     logger.info(log_message)
 
 
