@@ -119,6 +119,9 @@ async def telegram_webhook(token: str, request: Request):
         update = telegram.Update.de_json(data=data, bot=application.bot)
         # Await the processing SYNCHRONOUSLY before returning 200 OK
         # This prevents Cloud Run from throttling the CPU while the bot is doing work
+        # TODO: If user traffic scales significantly and Telegram throws `RetryAfter` for
+        # generic `send_message` calls, consider offloading processing or outbound
+        # messages to Google Cloud Tasks / PubSub to decouple the HTTP response from the work.
         await application.process_update(update)
     except Exception as e:
         logging.error(f"Failed to process update: {e}")
