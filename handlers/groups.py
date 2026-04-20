@@ -178,10 +178,11 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
                     c = session.query(Listable).filter_by(id=db_id).first()
                     if c:
                         c.validated = False
-            try:
-                await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {primary_name} murió 💀")
-            except Exception as e:
-                logger.error(f"Failed to send death message for {primary_name}: {e}")
+            # Temporarily disabled to avoid spam while debugging
+            # try:
+            #     await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {primary_name} murió 💀")
+            # except Exception as e:
+            #     logger.error(f"Failed to send death message for {primary_name}: {e}")
         elif validated is True:
             logger.info(f"Updating URL for group '{primary_name}'")
             with get_session() as session:
