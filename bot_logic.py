@@ -1,12 +1,16 @@
 from utils.orga2Utils import noitip, asm
 from handlers.basic import start, help_command, estasvivo, colaborar
 from handlers.info import campusvivo, flan, flanviejo, aulas, cuandovence, listarlabos
-from handlers.admin import checodepers, checodeppers, sugerirNoticia, get_logs
+from handlers.admin import checodepers, checodeppers, sugerirNoticia, get_logs, joder
 from handlers.groups import listar, listaroptativa, listareci, listarotro, cubawiki, agregargrupo, agregaroptativa, agregarotros, agregareci, sugerirgrupo, sugeriroptativa, sugerireci, sugerirotro, actualizar_grupos, _update_groups
 from handlers.callbacks import button
 from handlers.crons import felizdia, actualizarRiver
 
 COMMANDS = {
+    'joder': {
+        'handler': joder,
+        'description': '(Admin) Enviar un mensaje al grupo general'
+    },
     'logs': {
         'handler': get_logs,
         'description': '(Admin) Revisa los últimos 10 errores en GCP.'

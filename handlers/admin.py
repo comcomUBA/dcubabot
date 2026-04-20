@@ -3,12 +3,30 @@ import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
-from tg_ids import CODEPERS_CHATID, ROZEN_CHATID, DGARRO_CHATID
+from tg_ids import CODEPERS_CHATID, ROZEN_CHATID, DGARRO_CHATID, DC_GROUP_CHATID
 from models import Noticia
 from handlers.db import get_session
 
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [ROZEN_CHATID, DGARRO_CHATID]
+
+async def joder(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id != ROZEN_CHATID and str(user_id) != str(ROZEN_CHATID):
+        logger.warning(f"Unauthorized user {user_id} tried to access /joder")
+        return
+    
+    if not context.args:
+        await update.message.reply_text("Uso: /joder <mensaje>")
+        return
+        
+    message = " ".join(context.args)
+    try:
+        await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=message)
+        await update.message.reply_text("Mensaje enviado exitosamente al grupo general.")
+    except Exception as e:
+        logger.error(f"Failed to send joder message: {e}")
+        await update.message.reply_text(f"Error al enviar el mensaje: {e}")
 
 async def checodepers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
