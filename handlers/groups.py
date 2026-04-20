@@ -133,7 +133,7 @@ async def agregarotros(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def agregareci(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await agregar(update, context, ECI, "eci")
 
-from telegram.error import Forbidden, BadRequest, RetryAfter
+from telegram.error import Forbidden, BadRequest, RetryAfter, ChatMigrated
 
 async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> tuple[str, str, bool]:
     try:
@@ -142,6 +142,9 @@ async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> 
     except (Forbidden, BadRequest) as e:
         logger.error(f"Bot is no longer allowed to create invite link for {chat_id}: {e}")
         return None, None, False
+    except ChatMigrated as e:
+        logger.info(f"Group {chat_id} migrated to {e.new_chat_id}. Retrying with new chat id.")
+        return await update_group_url(context, str(e.new_chat_id))
     except RetryAfter as e:
         logger.warning(f"Rate limited while creating invite link for {chat_id}. Retry after {e.retry_after} seconds.")
         return None, None, None
@@ -174,6 +177,9 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
                 c = session.query(Listable).filter_by(id=chat_db_id).first()
                 if c:
                     c.url = url
+                    if str(c.chat_id) != str(chat_id):
+                        logger.info(f"Updating chat_id for group '{chat_name}' from {c.chat_id} to {chat_id}")
+                        c.chat_id = str(chat_id)
     logger.info("Finished update_groups job")
 
 from handlers.admin import admin_ids
