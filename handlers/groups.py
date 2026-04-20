@@ -135,22 +135,29 @@ async def agregareci(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 from telegram.error import Forbidden, BadRequest, RetryAfter, ChatMigrated
 
-async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> tuple[str, str, bool]:
-    try:
-        url = await context.bot.export_chat_invite_link(chat_id=chat_id)
-        return chat_id, url, True
-    except (Forbidden, BadRequest) as e:
-        logger.error(f"Bot is no longer allowed to create invite link for {chat_id}: {e}")
-        return None, None, False
-    except ChatMigrated as e:
-        logger.info(f"Group {chat_id} migrated to {e.new_chat_id}. Retrying with new chat id.")
-        return await update_group_url(context, str(e.new_chat_id))
-    except RetryAfter as e:
-        logger.warning(f"Rate limited while creating invite link for {chat_id}. Retry after {e.retry_after} seconds.")
-        return None, None, None
-    except Exception as e:
-        logger.error(f"Could not create invite link for {chat_id}: {e}", exc_info=True)
-        return None, None, None
+async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str, max_retries: int = 3) -> tuple[str, str, bool]:
+    base_delay = 1
+    for attempt in range(max_retries):
+        try:
+            url = await context.bot.export_chat_invite_link(chat_id=chat_id)
+            return chat_id, url, True
+        except (Forbidden, BadRequest) as e:
+            logger.error(f"Bot is no longer allowed to create invite link for {chat_id}: {e}")
+            return None, None, False
+        except ChatMigrated as e:
+            logger.info(f"Group {chat_id} migrated to {e.new_chat_id}. Retrying with new chat id.")
+            return await update_group_url(context, str(e.new_chat_id), max_retries)
+        except RetryAfter as e:
+            wait_time = e.retry_after + 1
+            logger.warning(f"Rate limited while creating invite link for {chat_id}. Waiting {wait_time} seconds (attempt {attempt + 1}/{max_retries}).")
+            await asyncio.sleep(wait_time)
+        except Exception as e:
+            wait_time = base_delay * (2 ** attempt)
+            logger.error(f"Error creating invite link for {chat_id}: {e}. Waiting {wait_time}s before retry.", exc_info=True)
+            await asyncio.sleep(wait_time)
+            
+    logger.error(f"Max retries reached for {chat_id}. Failing gracefully.")
+    return None, None, None
 
 async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info("Starting update_groups job")
