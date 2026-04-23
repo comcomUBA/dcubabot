@@ -2,6 +2,8 @@
 
 Este repositorio contiene el código fuente del Bot Oficial de Telegram de los estudiantes del Departamento de Computación de la UBA. 
 
+📚 **¿Estás empezando y querés colaborar?** Lee nuestra [Guía para empezar a desarrollar](docs/onboarding.md) para entender la arquitectura y aprender cómo agregar comandos.
+
 La arquitectura actual está basada en **Google Cloud Run** (Serverless), **FastAPI** para el manejo de webhooks, y **Python 3.11** empaquetado con **uv**.
 
 ## 🛠️ Desarrollo Local

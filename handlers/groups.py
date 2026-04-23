@@ -135,15 +135,16 @@ async def agregareci(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 from telegram.error import Forbidden, BadRequest, RetryAfter, ChatMigrated
 
-async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str, max_retries: int = 3) -> tuple[str, str, bool]:
+async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str, max_retries: int = 3) -> tuple[str, str, str, bool]:
     base_delay = 1
     for attempt in range(max_retries):
         try:
             url = await context.bot.export_chat_invite_link(chat_id=chat_id)
-            return chat_id, url, True
+            chat = await context.bot.get_chat(chat_id=chat_id)
+            return chat_id, url, chat.title, True
         except (Forbidden, BadRequest) as e:
             logger.error(f"Bot is no longer allowed to create invite link for {chat_id}: {e}")
-            return None, None, False
+            return None, None, None, False
         except ChatMigrated as e:
             logger.info(f"Group {chat_id} migrated to {e.new_chat_id}. Retrying with new chat id.")
             return await update_group_url(context, str(e.new_chat_id), max_retries)
@@ -157,7 +158,7 @@ async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str, max
             await asyncio.sleep(wait_time)
             
     logger.error(f"Max retries reached for {chat_id}. Failing gracefully.")
-    return None, None, None
+    return None, None, None, None
 
 async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info("Starting update_groups job")
@@ -174,7 +175,7 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
 
     for chat_chat_id, db_entries in chats_by_id.items():
         await asyncio.sleep(1)
-        chat_id, url, validated = await update_group_url(context, chat_chat_id)
+        chat_id, url, title, validated = await update_group_url(context, chat_chat_id)
         
         primary_name = db_entries[0][1]
         
@@ -196,6 +197,9 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
                     c = session.query(Listable).filter_by(id=db_id).first()
                     if c:
                         c.url = url
+                        if title and c.name != title:
+                            logger.info(f"Updating name for group '{primary_name}' to '{title}'")
+                            c.name = title
                         if str(c.chat_id) != str(chat_id):
                             logger.info(f"Updating chat_id for group '{primary_name}' from {c.chat_id} to {chat_id}")
                             c.chat_id = str(chat_id)
