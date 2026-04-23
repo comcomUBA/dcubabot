@@ -6,7 +6,8 @@ import resource
 import datetime
 from telegram.ext import Application
 from tg_ids import ROZEN_CHATID
-from bot_logic import _update_groups, felizdia, actualizarRiver
+from handlers.groups import _update_groups
+from handlers.crons import felizdia, actualizarRiver
 from handlers.db import get_session
 from models import ProcessedUpdate
 
@@ -31,19 +32,19 @@ def main():
 
         try:
             await felizdia(application)
-        except Exception as e:
+        except Exception:
             error_msg = f"Error en felizdia:\n{traceback.format_exc()}"
             await application.bot.send_message(chat_id=ROZEN_CHATID, text=error_msg[:4000])
 
         try:
             await actualizarRiver(application)
-        except Exception as e:
+        except Exception:
             error_msg = f"Error en actualizarRiver:\n{traceback.format_exc()}"
             await application.bot.send_message(chat_id=ROZEN_CHATID, text=error_msg[:4000])
 
         try:
             await _update_groups(application)
-        except Exception as e:
+        except Exception:
             error_msg = f"Error en update_groups:\n{traceback.format_exc()}"
             await application.bot.send_message(chat_id=ROZEN_CHATID, text=error_msg[:4000])
 
@@ -55,7 +56,7 @@ def main():
                 chat_id=ROZEN_CHATID, 
                 text=f"Cron job finalizado. RAM máxima utilizada: {memory_mb:.2f} MB"
             )
-        except Exception as e:
+        except Exception:
             logging.error(f"Failed to send memory report: {e}")
 
     asyncio.run(run_update())

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from contextlib import contextmanager
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
 # Local imports
 import models
@@ -16,7 +15,7 @@ def get_session():
     try:
         yield session
         session.commit()
-    except:
+    except Exception:
         session.rollback()
         raise
     finally:

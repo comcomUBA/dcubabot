@@ -92,7 +92,7 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
             chat_id=update.message.chat.id)
         name = update.message.chat.title
         chat_id = str(update.message.chat.id)
-    except:
+    except Exception:
         await update.message.reply_text(
             text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin")
         return
@@ -134,17 +134,25 @@ async def agregareci(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await agregar(update, context, ECI, "eci")
 
 from telegram.error import Forbidden, BadRequest, RetryAfter, ChatMigrated
+from dataclasses import dataclass
 
-async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str, max_retries: int = 3) -> tuple[str, str, str, bool]:
+@dataclass
+class GroupUrlResult:
+    chat_id: str | None
+    url: str | None
+    title: str | None
+    validated: bool | None
+
+async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str, max_retries: int = 3) -> GroupUrlResult:
     base_delay = 1
     for attempt in range(max_retries):
         try:
             url = await context.bot.export_chat_invite_link(chat_id=chat_id)
             chat = await context.bot.get_chat(chat_id=chat_id)
-            return chat_id, url, chat.title, True
+            return GroupUrlResult(chat_id=chat_id, url=url, title=chat.title, validated=True)
         except (Forbidden, BadRequest) as e:
             logger.error(f"Bot is no longer allowed to create invite link for {chat_id}: {e}")
-            return None, None, None, False
+            return GroupUrlResult(chat_id=None, url=None, title=None, validated=False)
         except ChatMigrated as e:
             logger.info(f"Group {chat_id} migrated to {e.new_chat_id}. Retrying with new chat id.")
             return await update_group_url(context, str(e.new_chat_id), max_retries)
@@ -158,7 +166,7 @@ async def update_group_url(context: ContextTypes.DEFAULT_TYPE, chat_id: str, max
             await asyncio.sleep(wait_time)
             
     logger.error(f"Max retries reached for {chat_id}. Failing gracefully.")
-    return None, None, None, None
+    return GroupUrlResult(chat_id=None, url=None, title=None, validated=None)
 
 async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
     logger.info("Starting update_groups job")
@@ -175,11 +183,11 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
 
     for chat_chat_id, db_entries in chats_by_id.items():
         await asyncio.sleep(1)
-        chat_id, url, title, validated = await update_group_url(context, chat_chat_id)
+        result = await update_group_url(context, chat_chat_id)
         
         primary_name = db_entries[0][1]
         
-        if validated is False:
+        if result.validated is False:
             logger.warning(f"Failed to update URL for group '{primary_name}'. De-validating.")
             with get_session() as session:
                 for db_id, _ in db_entries:
@@ -190,19 +198,19 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=f"El grupo {primary_name} murió 💀")
             except Exception as e:
                 logger.error(f"Failed to send death message for {primary_name}: {e}")
-        elif validated is True:
+        elif result.validated is True:
             logger.info(f"Updating URL for group '{primary_name}'")
             with get_session() as session:
                 for db_id, _ in db_entries:
                     c = session.query(Listable).filter_by(id=db_id).first()
                     if c:
-                        c.url = url
-                        if title and c.name != title:
-                            logger.info(f"Updating name for group '{primary_name}' to '{title}'")
-                            c.name = title
-                        if str(c.chat_id) != str(chat_id):
-                            logger.info(f"Updating chat_id for group '{primary_name}' from {c.chat_id} to {chat_id}")
-                            c.chat_id = str(chat_id)
+                        c.url = result.url
+                        if result.title and c.name != result.title:
+                            logger.info(f"Updating name for group '{primary_name}' to '{result.title}'")
+                            c.name = result.title
+                        if str(c.chat_id) != str(result.chat_id):
+                            logger.info(f"Updating chat_id for group '{primary_name}' from {c.chat_id} to {result.chat_id}")
+                            c.chat_id = str(result.chat_id)
     logger.info("Finished update_groups job")
 
 from handlers.admin import admin_ids

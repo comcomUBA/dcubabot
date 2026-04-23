@@ -1,5 +1,4 @@
 import re
-from abc import abstractmethod 
 
 VERANO = "ver"
 PCUAT = "1c"

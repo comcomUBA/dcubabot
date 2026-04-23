@@ -23,7 +23,7 @@ class Concierto:
                 titulo,
                 fecha,
             )
-        except:
+        except Exception:
             return None
         
 def fetch_conciertos():

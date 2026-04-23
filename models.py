@@ -3,7 +3,7 @@
 
 import os
 import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Date, Text, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Date, Text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.types import BigInteger
 

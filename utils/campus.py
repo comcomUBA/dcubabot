@@ -22,7 +22,7 @@ def is_campus_up():
         msg = "Hubo un error de conexión, debe estar caído. Espero no sea época de parciales..."
     except requests.exceptions.HTTPError:
         msg = f"Recibí una respuesta del campus con error. {response.status_code}: {response.reason}"
-    except:
+    except Exception:
         msg = "Hubo un error y no tengo idea de qué fue. Rezale a Shannon."
 
     return msg

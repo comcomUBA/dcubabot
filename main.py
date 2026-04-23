@@ -9,7 +9,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 import uvicorn
 
-from bot_logic import COMMANDS, button
+from bot_logic import COMMANDS
+from handlers.callbacks import button
 from tg_ids import ROZEN_CHATID
 from handlers.db import get_session
 from models import ProcessedUpdate

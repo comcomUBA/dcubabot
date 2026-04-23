@@ -1,5 +1,4 @@
-import os
-from models import init_db, Listable, Session
+from models import init_db, Listable
 from handlers.db import get_session
 
 def revive_all_groups():

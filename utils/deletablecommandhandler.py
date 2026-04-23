@@ -32,7 +32,7 @@ class DeletableCommandHandler(CommandHandler):
                     try:
                         context.bot.delete_message(chat_id=message.chat_id,
                                                    message_id=message.message_id)
-                    except BadRequest as e:
+                    except BadRequest:
                         logger.info("Message already deleted, tabunn")
                     session.delete(message)
 
