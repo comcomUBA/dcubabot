@@ -52,42 +52,42 @@ async def felizdia(context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=chat_id, text=felizdia_text(today))
 
 async def actualizarPartidos(context: ContextTypes.DEFAULT_TYPE):
-    hoy = datetime.datetime.now(bsasTz)
-    mañana = hoy + datetime.timedelta(days=1)
+    today = datetime.datetime.now(bsasTz)
+    tomorrow = today + datetime.timedelta(days=1)
 
-    if mañana.weekday() >= 5:
+    if tomorrow.weekday() >= 5:
         return
 
     try:
-        local, partido = river.es_local(mañana)
-        if not local:
+        is_local, match = river.es_local(tomorrow)
+        if not is_local:
             return
             
-        dias_semana = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-        nombre_dia = dias_semana[mañana.weekday()]
+        weekdays = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+        weekday_name = weekdays[tomorrow.weekday()]
         
-        horario = "hora a confirmar" if partido.hora is None else partido.hora.strftime("a las %H:%M")
-        msg = f"Mañana {nombre_dia} juega River, {horario}\n(contra {partido.equipo_visitante}, {partido.copa})"
+        time_str = "hora a confirmar" if match.hora is None else match.hora.strftime("a las %H:%M")
+        msg = f"Mañana {weekday_name} juega River, {time_str}\n(contra {match.equipo_visitante}, {match.copa})"
         await context.bot.send_message(chat_id=NOTICIAS_CHATID, text=msg)
     except Exception as e:
         logger.error(f"Error checking River matches: {e}")
 
 async def actualizarConciertos(context: ContextTypes.DEFAULT_TYPE):
-    hoy = datetime.datetime.now(bsasTz)
-    mañana = hoy + datetime.timedelta(days=1)
+    today = datetime.datetime.now(bsasTz)
+    tomorrow = today + datetime.timedelta(days=1)
 
-    if mañana.weekday() >= 5:
+    if tomorrow.weekday() >= 5:
         return
 
     try:
-        hay, concierto = conciertos.hay_concierto(mañana)
-        if not hay:
+        has_concert, concert = conciertos.hay_concierto(tomorrow)
+        if not has_concert:
             return
             
-        dias_semana = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-        nombre_dia = dias_semana[mañana.weekday()]
+        weekdays = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+        weekday_name = weekdays[tomorrow.weekday()]
         
-        msg = f"Mañana {nombre_dia} hay un concierto en River\n{concierto.titulo}"
+        msg = f"Mañana {weekday_name} hay un concierto en River\n{concert.titulo}"
         await context.bot.send_message(chat_id=NOTICIAS_CHATID, text=msg)
     except Exception as e:
         logger.error(f"Error checking concerts: {e}")
