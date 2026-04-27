@@ -5,6 +5,7 @@ import html
 import traceback
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+from telegram.request import HTTPXRequest
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 import uvicorn
@@ -91,7 +92,9 @@ async def post_init(application: Application):
         logging.getLogger("DCUBABOT").error(f"Failed to set bot commands: {e}")
 
 # Instancia global de la aplicación de Telegram
-application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).post_init(post_init).build()
+# Aumentamos el read_timeout y connection_pool_size para ser más tolerantes a lag en Cloud Run
+t_request = HTTPXRequest(connection_pool_size=8, read_timeout=20.0, write_timeout=20.0, connect_timeout=20.0)
+application = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).request(t_request).post_init(post_init).build()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
