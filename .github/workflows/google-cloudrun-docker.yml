@@ -72,7 +72,28 @@ jobs:
         id: get_url
         run: echo "URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --platform managed --region ${{ env.PROJECT_REGION }} --format 'value(status.url)')" >> $GITHUB_ENV
 
+      - name: Get Secrets from Secret Manager
+        id: secrets
+        uses: 'google-github-actions/get-secretmanager-secrets@v2'
+        with:
+          secrets: |-
+            TELEGRAM_BOT_TOKEN:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_TG_BOT_TOKEN }}
+            DB_USER:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_DB_USER }}
+            DB_PASSWORD:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_DB_PASSWORD }}
+            DB_URL:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_DB_URL }}
+            S3_ACCESS_ID:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_S3_ACCESS_ID }}
+            S3_ACCESS_SECRET:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_S3_ACCESS_SECRET }}
+            S3_HOST:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_S3_HOST }}
+
       - name: Deploy to Cloud Run
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ steps.secrets.outputs.TELEGRAM_BOT_TOKEN }}
+          DB_USER: ${{ steps.secrets.outputs.DB_USER }}
+          DB_PASSWORD: ${{ steps.secrets.outputs.DB_PASSWORD }}
+          DB_URL: ${{ steps.secrets.outputs.DB_URL }}
+          S3_ACCESS_ID: ${{ steps.secrets.outputs.S3_ACCESS_ID }}
+          S3_ACCESS_SECRET: ${{ steps.secrets.outputs.S3_ACCESS_SECRET }}
+          S3_HOST: ${{ steps.secrets.outputs.S3_HOST }}
         run: |-
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image $TAG \
@@ -80,16 +101,8 @@ jobs:
             --service-account ${{ vars.GCP_SA_EMAIL }} \
             --memory=256Mi \
             --max-instances=${{ vars.GCP_SERVICE_API_MAX_INSTANCES }} \
-            --set-secrets=TELEGRAM_BOT_TOKEN=${{ vars.GCP_SECRET_TG_BOT_TOKEN }}:latest \
-            --set-secrets=DB_USER=${{ vars.GCP_SECRET_DB_USER }}:latest \
-            --set-secrets=DB_PASSWORD=${{ vars.GCP_SECRET_DB_PASSWORD }}:latest \
-            --set-secrets=DB_URL=${{ vars.GCP_SECRET_DB_URL }}:latest \
-            --set-env-vars=DB_PORT=${{ vars.GCP_DB_PORT }} \
-            --set-secrets=S3_ACCESS_ID=${{ vars.GCP_SECRET_S3_ACCESS_ID }}:latest \
-            --set-secrets=S3_ACCESS_SECRET=${{ vars.GCP_SECRET_S3_ACCESS_SECRET }}:latest \
-            --set-secrets=S3_HOST=${{ vars.GCP_SECRET_S3_HOST }}:latest \
-            --set-env-vars=S3_BUCKET=${{ vars.GCP_S3_BUCKET }} \
-            --set-env-vars=WEBHOOK_URL=${{ env.URL }} \
+            --clear-secrets \
+            --set-env-vars "^@^TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN@DB_USER=$DB_USER@DB_PASSWORD=$DB_PASSWORD@DB_URL=$DB_URL@DB_PORT=${{ vars.GCP_DB_PORT }}@S3_ACCESS_ID=$S3_ACCESS_ID@S3_ACCESS_SECRET=$S3_ACCESS_SECRET@S3_HOST=$S3_HOST@S3_BUCKET=${{ vars.GCP_S3_BUCKET }}@WEBHOOK_URL=${{ env.URL }}" \
             --platform managed \
             --allow-unauthenticated
 
@@ -115,7 +128,22 @@ jobs:
       - name: Define image tag for deployment
         run: echo "TAG=${{ env.PROJECT_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
 
+      - name: Get Secrets from Secret Manager
+        id: secrets
+        uses: 'google-github-actions/get-secretmanager-secrets@v2'
+        with:
+          secrets: |-
+            TELEGRAM_BOT_TOKEN:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_TG_BOT_TOKEN }}
+            DB_USER:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_DB_USER }}
+            DB_PASSWORD:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_DB_PASSWORD }}
+            DB_URL:${{ env.PROJECT_ID }}/${{ vars.GCP_SECRET_DB_URL }}
+
       - name: Deploy Cloud Run Job
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ steps.secrets.outputs.TELEGRAM_BOT_TOKEN }}
+          DB_USER: ${{ steps.secrets.outputs.DB_USER }}
+          DB_PASSWORD: ${{ steps.secrets.outputs.DB_PASSWORD }}
+          DB_URL: ${{ steps.secrets.outputs.DB_URL }}
         run: |-
           gcloud run jobs deploy ${{ env.JOB_NAME }} \
             --image $TAG \
@@ -123,11 +151,8 @@ jobs:
             --command=python \
             --args=cron.py \
             --service-account ${{ vars.GCP_SA_EMAIL }} \
-            --set-secrets=TELEGRAM_BOT_TOKEN=${{ vars.GCP_SECRET_TG_BOT_TOKEN }}:latest \
-            --set-secrets=DB_USER=${{ vars.GCP_SECRET_DB_USER }}:latest \
-            --set-secrets=DB_PASSWORD=${{ vars.GCP_SECRET_DB_PASSWORD }}:latest \
-            --set-secrets=DB_URL=${{ vars.GCP_SECRET_DB_URL }}:latest \
-            --set-env-vars=DB_PORT=${{ vars.GCP_DB_PORT }}
+            --clear-secrets \
+            --set-env-vars "^@^TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN@DB_USER=$DB_USER@DB_PASSWORD=$DB_PASSWORD@DB_URL=$DB_URL@DB_PORT=${{ vars.GCP_DB_PORT }}"
 
       - name: Create or Update Cloud Scheduler Job
         run: |
