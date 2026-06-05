@@ -64,8 +64,8 @@ async def log_update(update, context):
     elif update.inline_query:
         log_parts.append(f"Type: Inline Query (query: {update.inline_query.query})")
     
-    if update.message and update.message.text:
-        log_parts.append(f"Message: {update.message.text}")
+    if update.effective_message and update.effective_message.text:
+        log_parts.append(f"Message: {update.effective_message.text}")
     elif update.callback_query:
         log_parts.append(f"Callback Query: {update.callback_query.data}")
         

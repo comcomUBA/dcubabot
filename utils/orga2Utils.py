@@ -25,14 +25,14 @@ def get_session():
 async def noitip(update, context):
     with get_session() as session:
         random_noitip = session.query(models.Noitip).order_by(func.random()).first().text
-    msg = await update.message.reply_text(random_noitip)
+    msg = await update.effective_message.reply_text(random_noitip)
     if hasattr(context, 'sent_messages'):
         context.sent_messages.append(msg)
 
 
 async def asm(update, context):
     if not context.args:
-        msg = await update.message.reply_text(
+        msg = await update.effective_message.reply_text(
             "No me pasaste ninguna instrucción.")
         if hasattr(context, 'sent_messages'):
             context.sent_messages.append(msg)
@@ -54,7 +54,7 @@ async def asm(update, context):
                 response_text = ("No pude encontrar esa instrucción.\n"
                                  "Quizás quisiste decir:\n")
                 response_text += "\n".join(getasminfo(i) for i in possibles)
-    msg = await update.message.reply_text(response_text)
+    msg = await update.effective_message.reply_text(response_text)
     if hasattr(context, 'sent_messages'):
         context.sent_messages.append(msg)
 

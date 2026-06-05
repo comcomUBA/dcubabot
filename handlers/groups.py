@@ -20,7 +20,7 @@ async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, lista
 
             keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(text="Grupos: ", disable_web_page_preview=True,
+        await update.effective_message.reply_text(text="Grupos: ", disable_web_page_preview=True,
                                         reply_markup=reply_markup)
 
 async def listar(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -38,11 +38,11 @@ async def listarotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cubawiki(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as session:
         group = session.query(Obligatoria).filter(
-            Obligatoria.chat_id == str(update.message.chat.id),
+            Obligatoria.chat_id == str(update.effective_chat.id),
             Obligatoria.cubawiki_url != None
         ).first()
         if group:
-            await update.message.reply_text(group.cubawiki_url)
+            await update.effective_message.reply_text(group.cubawiki_url)
 
 async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
     try:
@@ -50,8 +50,8 @@ async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, l
         if not (name and url):
             raise Exception("not userneim")
     except Exception:
-        await update.message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
-                                        update.message.text.split()[0] +
+        await update.effective_message.reply_text("Hiciste algo mal, la idea es que pongas:\n" +
+                                        update.effective_message.text.split()[0] +
                                         " <nombre>|<link>")
         return
 
@@ -71,29 +71,29 @@ async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, l
     await context.bot.send_message(chat_id=ROZEN_CHATID,
                             text=listable_type.__name__ + ": " + name + "\n" + url,
                             reply_markup=reply_markup)
-    await update.message.reply_text("OK, se lo mando a Rozen.")
+    await update.effective_message.reply_text("OK, se lo mando a Rozen.")
 
 async def sugerirgrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregargrupo")
+    await update.effective_message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregargrupo")
 
 async def sugeriroptativa(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregaroptativa")
+    await update.effective_message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregaroptativa")
 
 async def sugerireci(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregareci")
+    await update.effective_message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregareci")
 
 async def sugerirotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregarotro")
+    await update.effective_message.reply_text("Este comando esta deprecado, para agregar un grupo por favor agregá el bot al grupo y escribí /agregarotro")
 
 
 async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype, groupString):
     try:
         url = await context.bot.export_chat_invite_link(
-            chat_id=update.message.chat.id)
-        name = update.message.chat.title
-        chat_id = str(update.message.chat.id)
+            chat_id=update.effective_chat.id)
+        name = update.effective_chat.title
+        chat_id = str(update.effective_chat.id)
     except Exception:
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin")
         return
     with get_session() as session:
@@ -101,7 +101,7 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
         if group:
             group.url = url
             group.name = name
-            await update.message.reply_text(
+            await update.effective_message.reply_text(
                 text=f"Datos del grupo actualizados")
             return
         group = grouptype(name=name, url=url, chat_id=chat_id)
@@ -118,7 +118,7 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
     await context.bot.send_message(chat_id=ROZEN_CHATID,
                             text=f"{groupString}: {name}\n{url}",
                             reply_markup=reply_markup)
-    await update.message.reply_text("OK, se lo mando a Rozen.")
+    await update.effective_message.reply_text("OK, se lo mando a Rozen.")
 
 
 async def agregargrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -261,9 +261,9 @@ async def actualizar_grupos(update: Update, context: ContextTypes.DEFAULT_TYPE):
         lock_acquired = await acquire_lock(session, "update_groups", ttl_minutes=15)
         
     if not lock_acquired:
-        await update.message.reply_text("Ya hay una actualización de grupos en progreso (u ocurrió un error reciente). Por favor, esperá unos minutos a que termine o expire.")
+        await update.effective_message.reply_text("Ya hay una actualización de grupos en progreso (u ocurrió un error reciente). Por favor, esperá unos minutos a que termine o expire.")
         return
 
     logger.info(f"Manual update of groups triggered by {user_id}")
-    await update.message.reply_text("Actualizando grupos en segundo plano (esto puede demorar varios minutos)...")
+    await update.effective_message.reply_text("Actualizando grupos en segundo plano (esto puede demorar varios minutos)...")
     asyncio.create_task(_background_update(update, context))
