@@ -17,17 +17,17 @@ async def joder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not context.args:
-        await update.message.reply_text("Uso: /joder <mensaje>")
+        await update.effective_message.reply_text("Uso: /joder <mensaje>")
         return
         
     message = " ".join(context.args)
     formatted_message = f"@rozen dice: {message}"
     try:
         await context.bot.send_message(chat_id=DC_GROUP_CHATID, text=formatted_message)
-        await update.message.reply_text("Mensaje enviado exitosamente al grupo general.")
+        await update.effective_message.reply_text("Mensaje enviado exitosamente al grupo general.")
     except Exception as e:
         logger.error(f"Failed to send joder message: {e}")
-        await update.message.reply_text(f"Error al enviar el mensaje: {e}")
+        await update.effective_message.reply_text(f"Error al enviar el mensaje: {e}")
 
 import math
 
@@ -64,7 +64,7 @@ async def movergrupo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     with get_session() as session:
         reply_markup = get_movergrupo_keyboard(session, page=0)
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             "Seleccioná el grupo que querés recategorizar:",
             reply_markup=reply_markup
         )
@@ -74,9 +74,9 @@ async def checodepers(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ejemplo = """ Ejemplo de uso:
   /checodepers Hola, tengo un mensaje mucho muy importante que me gustaria que respondan
 """
-        await update.message.reply_text(ejemplo)
+        await update.effective_message.reply_text(ejemplo)
         return
-    user = update.message.from_user
+    user = update.effective_user
     try:
         if not user.username:
             raise Exception("not userneim")
@@ -86,24 +86,24 @@ async def checodepers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         try:
             await context.bot.forward_message(
-                CODEPERS_CHATID, update.message.chat_id, update.message.message_id)
+                CODEPERS_CHATID, update.effective_chat.id, update.effective_message.message_id)
             logger.info(f"Malio sal {str(user)}")
         except Exception as e:
-            await update.message.reply_text(
+            await update.effective_message.reply_text(
                 "La verdad me re rompí, avisale a roz asi ve que onda")
             logger.error(e)
             return
-    await update.message.reply_text("OK, se lo mando a les codepers.")
+    await update.effective_message.reply_text("OK, se lo mando a les codepers.")
 
 async def checodeppers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await checodepers(update, context)
 
 async def sugerirNoticia(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.message.from_user
+    user = update.effective_user
     name = user.first_name
     texto = " ".join(context.args)
     if not texto:
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             text="Loc@, pusisiste algo mal, la idea es q pongas:\n "
                  "/sugerirNoticia <texto>")
         return
@@ -121,7 +121,7 @@ async def sugerirNoticia(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await context.bot.send_message(chat_id=ROZEN_CHATID, text=f"Noticia-{name}: {texto}",
                             reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
-    await update.message.reply_text(text="Ok, se lo pregunto a Rozen")
+    await update.effective_message.reply_text(text="Ok, se lo pregunto a Rozen")
 
 async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -134,7 +134,7 @@ async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         import json
         import io
         
-        await update.message.reply_text("Buscando errores en Google Cloud Logging...")
+        await update.effective_message.reply_text("Buscando errores en Google Cloud Logging...")
         client = gcp_logging.Client()
         
         filter_str = 'severity>=ERROR AND (resource.type="cloud_run_revision" OR resource.type="cloud_run_job")'
@@ -158,7 +158,7 @@ async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
             log_msgs.append(log_data)
             
         if not log_msgs:
-            await update.message.reply_text("✅ No se encontraron errores recientes en GCP.")
+            await update.effective_message.reply_text("✅ No se encontraron errores recientes en GCP.")
             return
             
         logs_json_str = json.dumps(log_msgs, indent=2, ensure_ascii=False)
@@ -171,4 +171,4 @@ async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption="Acá tenés el archivo con los últimos errores registrados en GCP 🕵️‍♂️"
         )
     except Exception as e:
-        await update.message.reply_text(f"Error al leer logs (¿falta permiso roles/logging.viewer en la Service Account?): {e}")
+        await update.effective_message.reply_text(f"Error al leer logs (¿falta permiso roles/logging.viewer en la Service Account?): {e}")

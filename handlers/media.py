@@ -57,7 +57,7 @@ async def mandar_pdf(chat_id: str, context: ContextTypes.DEFAULT_TYPE, file_path
             file_obj.file_id = msg.document.file_id
 
 async def responder_imagen(update: Update, context: ContextTypes.DEFAULT_TYPE, file_path: str):
-    await mandar_imagen(update.message.chat_id, context, file_path)
+    await mandar_imagen(update.effective_chat.id, context, file_path)
 
 async def responder_documento(update: Update, context: ContextTypes.DEFAULT_TYPE, file_path: str):
-    await mandar_pdf(update.message.chat_id, context, file_path)
+    await mandar_pdf(update.effective_chat.id, context, file_path)

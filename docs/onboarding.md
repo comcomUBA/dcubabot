@@ -66,7 +66,7 @@ from telegram.ext import ContextTypes
 async def micomando(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Descripción breve de lo que hace el comando."""
     # Lógica del comando...
-    await update.message.reply_text("¡Hola! Este es mi nuevo comando.")
+    await update.effective_message.reply_text("¡Hola! Este es mi nuevo comando.")
 ```
 
 ### 2. Registrar el comando en `bot_logic.py`
