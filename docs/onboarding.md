@@ -32,7 +32,7 @@ Cuando el bot manda un mensaje con botones (teclados integrados o "Inline Keyboa
 Hay procesos que el bot no hace en respuesta a un usuario, sino que corren periódicamente (por ejemplo, chequear si es el "feliz día" o si juega River).
 - **El archivo `cron.py`:** A diferencia de `main.py` (que se queda escuchando mensajes todo el tiempo), `cron.py` se ejecuta una sola vez de principio a fin y luego se apaga.
 - **Cómo funciona en producción:** Google Cloud Scheduler lo ejecuta periódicamente (generalmente cada unas horas o una vez al día) como un "Cloud Run Job".
-- **Manejo de Errores y Diagnóstico:** El script está diseñado para no fallar silenciosamente ni interrumpirse. Cada tarea (`felizdia`, `actualizarRiver`, etc.) está envuelta en un bloque `try/except`. Si una falla, captura el error completo y se lo envía por mensaje privado a los administradores, para luego continuar con la siguiente tarea. Al finalizar todo, calcula cuánta memoria RAM consumió el proceso y envía un reporte de diagnóstico también por privado.
+- **Manejo de Errores:** El script está diseñado para no fallar silenciosamente ni interrumpirse. Cada tarea (`felizdia`, `actualizarRiver`, etc.) está envuelta en un bloque `try/except`. Si una falla, captura el error completo y se lo envía por mensaje privado a los administradores, para luego continuar con la siguiente tarea.
 - **Limpieza:** Además de mandar avisos, el cron ejecuta limpiezas internas (como borrar mensajes viejos procesados en la base de datos).
 
 ### 3. La Lógica de River Plate (y conciertos)

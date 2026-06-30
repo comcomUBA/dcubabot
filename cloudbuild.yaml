@@ -25,6 +25,7 @@ steps:
   - '--region=us-central1'
   - '--allow-unauthenticated'
   - '--port=8080'
+  - '--memory=256Mi'
 
 # Deploy the scheduled job for updating groups
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -40,3 +41,4 @@ steps:
   - '--args=cron.py'
   - '--schedule=0 0 * * *' # Daily at midnight #callate lereno
   - '--time-zone=America/Argentina/Buenos_Aires'
+  - '--memory=128Mi'
