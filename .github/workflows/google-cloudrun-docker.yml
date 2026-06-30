@@ -123,6 +123,7 @@ jobs:
             --command=python \
             --args=cron.py \
             --service-account ${{ vars.GCP_SA_EMAIL }} \
+            --memory=128Mi \
             --set-secrets=TELEGRAM_BOT_TOKEN=${{ vars.GCP_SECRET_TG_BOT_TOKEN }}:latest \
             --set-secrets=DB_USER=${{ vars.GCP_SECRET_DB_USER }}:latest \
             --set-secrets=DB_PASSWORD=${{ vars.GCP_SECRET_DB_PASSWORD }}:latest \

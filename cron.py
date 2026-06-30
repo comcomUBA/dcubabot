@@ -2,7 +2,6 @@ import asyncio
 import os
 import logging
 import traceback
-import resource
 import datetime
 from telegram.ext import Application
 from tg_ids import ROZEN_CHATID
@@ -47,17 +46,6 @@ def main():
         except Exception:
             error_msg = f"Error en update_groups:\n{traceback.format_exc()}"
             await application.bot.send_message(chat_id=ROZEN_CHATID, text=error_msg[:4000])
-
-        # Reporte final con uso de RAM de este contenedor
-        try:
-            memory_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            memory_mb = memory_kb / 1024.0
-            await application.bot.send_message(
-                chat_id=ROZEN_CHATID, 
-                text=f"Cron job finalizado. RAM máxima utilizada: {memory_mb:.2f} MB"
-            )
-        except Exception:
-            logging.error(f"Failed to send memory report: {e}")
 
     asyncio.run(run_update())
 
