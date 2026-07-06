@@ -41,4 +41,4 @@ steps:
   - '--args=cron.py'
   - '--schedule=0 0 * * *' # Daily at midnight #callate lereno
   - '--time-zone=America/Argentina/Buenos_Aires'
-  - '--memory=128Mi'
+  - '--memory=512Mi'
