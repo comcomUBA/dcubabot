@@ -3,7 +3,7 @@
 
 import os
 import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Date, Text
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Date, Text, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.types import BigInteger
 
@@ -24,6 +24,17 @@ def init_db():
     engine = create_engine(db_url)
     Session = sessionmaker(bind=engine)
     Base.metadata.create_all(engine)
+    
+    # Run migrations/updates
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE listables ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT false;"))
+            connection.execute(text("ALTER TABLE listables ADD COLUMN IF NOT EXISTS last_activity TIMESTAMP;"))
+            connection.execute(text("ALTER TABLE listables ADD COLUMN IF NOT EXISTS warned_at TIMESTAMP;"))
+            connection.execute(text("ALTER TABLE listables ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;"))
+    except Exception as e:
+        import logging
+        logging.getLogger("DCUBABOT").error(f"Error running database migrations: {e}")
 
 # --- Model Definitions ---
 
@@ -61,10 +72,18 @@ class Listable(Base):
     validated = Column(Boolean, default=False)
     type = Column(String(50))
     cubawiki_url = Column(String, nullable=True) # Specific to Obligatoria, null for others
+    last_activity = Column(DateTime, nullable=True, default=datetime.datetime.utcnow)
+    warned_at = Column(DateTime, nullable=True)
+    archived_at = Column(DateTime, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'listable',
         'polymorphic_on': type
+    }
+
+class GrupoArchivado(Listable):
+    __mapper_args__ = {
+        'polymorphic_identity': 'GrupoArchivado',
     }
 
 class Obligatoria(Listable):

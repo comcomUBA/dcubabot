@@ -2,7 +2,7 @@ import logging
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
-from models import Grupo, GrupoOptativa, ECI, GrupoOtros, Obligatoria, Listable
+from models import Grupo, GrupoOptativa, ECI, GrupoOtros, Obligatoria, Listable, GrupoArchivado
 from handlers.db import get_session
 from tg_ids import ROZEN_CHATID, DC_GROUP_CHATID
 
@@ -34,6 +34,29 @@ async def listareci(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def listarotro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await list_buttons(update, context, GrupoOtros)
+
+async def listararchivado(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    with get_session() as session:
+        buttons = session.query(GrupoArchivado).filter_by(validated=True).order_by(GrupoArchivado.name).all()
+        
+        if not buttons:
+            await update.effective_message.reply_text("No hay grupos archivados en este momento.")
+            return
+
+        keyboard = []
+        columns = 3
+        for k in range(0, len(buttons), columns):
+            row = [InlineKeyboardButton(
+                text=button.name, url=button.url, callback_data=button.url)
+                for button in buttons[k:k + columns]]
+            keyboard.append(row)
+            
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.effective_message.reply_text(
+            text="Grupos Archivados (ECI / Optativas inactivos por 1 año):",
+            disable_web_page_preview=True,
+            reply_markup=reply_markup
+        )
 
 async def cubawiki(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as session:
@@ -97,12 +120,26 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
             text=f"Mirá, no puedo hacerle un link a este grupo, proba haciendome admin")
         return
     with get_session() as session:
-        group = session.query(grouptype).filter_by(chat_id=chat_id).first()
+        group = session.query(Listable).filter_by(chat_id=chat_id).first()
         if group:
             group.url = url
             group.name = name
-            await update.effective_message.reply_text(
-                text=f"Datos del grupo actualizados")
+            was_archived = False
+            if isinstance(group, GrupoArchivado) or group.type == "GrupoArchivado":
+                group.type = grouptype.__name__
+                group.validated = True
+                import datetime
+                group.last_activity = datetime.datetime.utcnow()
+                group.warned_at = None
+                group.archived_at = None
+                was_archived = True
+                
+            if was_archived:
+                await update.effective_message.reply_text(
+                    text="¡El grupo ha sido desarchivado y reactivado exitosamente!")
+            else:
+                await update.effective_message.reply_text(
+                    text="Datos del grupo actualizados")
             return
         group = grouptype(name=name, url=url, chat_id=chat_id)
         session.add(group)
@@ -211,6 +248,62 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
                         if str(c.chat_id) != str(result.chat_id):
                             logger.info(f"Updating chat_id for group '{primary_name}' from {c.chat_id} to {result.chat_id}")
                             c.chat_id = str(result.chat_id)
+
+    logger.info("Checking for inactive GrupoOptativa and ECI groups to auto-archive...")
+    try:
+        import datetime
+        now = datetime.datetime.utcnow()
+        threshold_warn = now - datetime.timedelta(days=364)
+        with get_session() as session:
+            # Initialize last_activity for any group that has it as None
+            untracked_groups = session.query(Listable).filter(Listable.last_activity == None).all()
+            for g in untracked_groups:
+                if g.type in ["GrupoOptativa", "ECI"]:
+                    # Initialize to an old date so they trigger the warning immediately on first run
+                    g.last_activity = now - datetime.timedelta(days=366)
+                else:
+                    g.last_activity = now
+                
+            # Query all validated, non-archived ECI and GrupoOptativa groups
+            candidates = session.query(Listable).filter(
+                Listable.type.in_(["GrupoOptativa", "ECI"]),
+                Listable.validated == True
+            ).all()
+            
+            for g in candidates:
+                # Case 1: Group is inactive and has NOT been warned yet
+                if g.last_activity < threshold_warn and g.warned_at is None:
+                    command_name = "agregaroptativa" if g.type == "GrupoOptativa" else "agregareci"
+                    warning_text = (
+                        f"¡Hola! Este grupo va a ser archivado automáticamente por inactividad. Para evitarlo, un administrador debe ejecutar /{command_name} en las próximas 24hs.\n\n"
+                        f"Si directamente quieren archivarlo ya, un administrador puede tirar /archivar.\n"
+                        f"El grupo archivado seguirá siendo accesible desde /listararchivado."
+                    )
+                    logger.info(f"Sending 24h archiving warning to group {g.name} ({g.chat_id})")
+                    try:
+                        await context.bot.send_message(chat_id=g.chat_id, text=warning_text)
+                        g.warned_at = now
+                    except Exception as e:
+                        logger.error(f"Failed to send 24h warning to group {g.name} ({g.chat_id}): {e}")
+                        g.warned_at = now
+                        
+                # Case 2: Group was warned, and 24 hours have passed since the warning
+                elif g.warned_at is not None and (now - g.warned_at) >= datetime.timedelta(hours=24):
+                    logger.info(f"Auto-archiving inactive group after 24h warning: {g.name} (Last activity: {g.last_activity})")
+                    original_type = g.type
+                    g.type = "GrupoArchivado"
+                    g.warned_at = None
+                    g.archived_at = now
+                    try:
+                        await context.bot.send_message(
+                            chat_id=DC_GROUP_CHATID,
+                            text=f"El grupo {g.name} ({original_type}) ha sido archivado por inactividad de 1 año. 📁"
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to send archive message for {g.name}: {e}")
+    except Exception as e:
+        logger.error(f"Error during auto-archiving/warning check: {e}", exc_info=True)
+
     logger.info("Finished update_groups job")
 
 from handlers.admin import admin_ids
@@ -267,3 +360,52 @@ async def actualizar_grupos(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Manual update of groups triggered by {user_id}")
     await update.effective_message.reply_text("Actualizando grupos en segundo plano (esto puede demorar varios minutos)...")
     asyncio.create_task(_background_update(update, context))
+
+
+async def archivar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    if not chat or chat.type not in ["group", "supergroup"]:
+        await update.effective_message.reply_text("Este comando solo puede usarse dentro de un grupo de materias optativas o ECI.")
+        return
+        
+    user_id = update.effective_user.id
+    
+    # Check if user is a bot admin
+    from handlers.admin import admin_ids
+    is_bot_admin = user_id in admin_ids or str(user_id) in [str(aid) for aid in admin_ids]
+    
+    # Check if user is a group admin of this Telegram group
+    is_group_admin = False
+    try:
+        chat_member = await context.bot.get_chat_member(chat_id=chat.id, user_id=user_id)
+        if chat_member.status in ["administrator", "creator"]:
+            is_group_admin = True
+    except Exception as e:
+        logger.error(f"Error checking group admin status: {e}")
+        
+    if not (is_bot_admin or is_group_admin):
+        await update.effective_message.reply_text("Solo los administradores del grupo o del bot pueden archivar el grupo.")
+        return
+        
+    chat_id_str = str(chat.id)
+    with get_session() as session:
+        # Find the group in database
+        group = session.query(Listable).filter_by(chat_id=chat_id_str).first()
+        if not group:
+            await update.effective_message.reply_text("Este grupo no está registrado en el bot.")
+            return
+            
+        # We only allow archiving GrupoOptativa and ECI
+        if group.type not in ["GrupoOptativa", "ECI"]:
+            await update.effective_message.reply_text("Solo se pueden archivar grupos de materias optativas o de ECI.")
+            return
+            
+        if group.type == "GrupoArchivado":
+            await update.effective_message.reply_text("Este grupo ya está archivado.")
+            return
+            
+        group.type = "GrupoArchivado"
+        group.warned_at = None
+        import datetime
+        group.archived_at = datetime.datetime.utcnow()
+        await update.effective_message.reply_text("¡Este grupo ha sido archivado exitosamente!")

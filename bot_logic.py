@@ -2,7 +2,7 @@ from utils.orga2Utils import noitip, asm
 from handlers.basic import start, help_command, estasvivo, colaborar
 from handlers.info import campusvivo, flan, flanviejo, aulas, cuandovence, listarlabos
 from handlers.admin import checodepers, checodeppers, sugerirNoticia, get_logs, joder, movergrupo
-from handlers.groups import listar, listaroptativa, listareci, listarotro, cubawiki, agregargrupo, agregaroptativa, agregarotros, agregareci, sugerirgrupo, sugeriroptativa, sugerireci, sugerirotro, actualizar_grupos
+from handlers.groups import listar, listaroptativa, listareci, listarotro, cubawiki, agregargrupo, agregaroptativa, agregarotros, agregareci, sugerirgrupo, sugeriroptativa, sugerireci, sugerirotro, actualizar_grupos, listararchivado, archivar
 
 COMMANDS = {
     'joder': {
@@ -116,6 +116,14 @@ COMMANDS = {
     'actualizar_grupos': {
         'handler': actualizar_grupos,
         'description': 'Actualiza los links de todos los grupos.'
+    },
+    'listararchivado': {
+        'handler': listararchivado,
+        'description': 'Muestra los grupos archivados.'
+    },
+    'archivar': {
+        'handler': archivar,
+        'description': 'Archiva el grupo actual (solo admins del grupo o del bot, y solo optativas o ECI).'
     },
     'sugerirgrupo': {
         'handler': sugerirgrupo,
