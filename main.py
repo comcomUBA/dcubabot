@@ -75,6 +75,24 @@ async def log_update(update, context):
     log_message = " | ".join(log_parts)
     logger.info(log_message)
 
+async def track_activity(update, context):
+    """Track last activity time for validated groups."""
+    import datetime
+    from telegram import Update
+    from handlers.db import get_session
+    from models import Listable
+    
+    chat = update.effective_chat
+    if chat and chat.type in ["group", "supergroup"]:
+        try:
+            chat_id_str = str(chat.id)
+            with get_session() as session:
+                group = session.query(Listable).filter_by(chat_id=chat_id_str).first()
+                if group and group.warned_at is None:
+                    group.last_activity = datetime.datetime.utcnow()
+        except Exception as e:
+            logging.getLogger("DCUBABOT").error(f"Error tracking activity in group {chat.id}: {e}")
+
 
 async def post_init(application: Application):
     """Set the bot commands on startup."""
@@ -158,8 +176,9 @@ def main():
 
     application.add_error_handler(error_handler)
 
-    # Add the logging middleware handler with a high priority
+    # Add the logging and tracking middleware handlers with high priority
     application.add_handler(MessageHandler(filters.ALL, log_update), group=-1)
+    application.add_handler(MessageHandler(filters.ALL, track_activity), group=-2)
 
     for command_name, command_info in COMMANDS.items():
         application.add_handler(CommandHandler(command_name, command_info['handler']))
