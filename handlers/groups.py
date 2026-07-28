@@ -254,8 +254,9 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
         import datetime
         now = datetime.datetime.utcnow()
         threshold_warn = now - datetime.timedelta(days=364)
+
+        # 1. Initialize last_activity for any group that has it as None
         with get_session() as session:
-            # Initialize last_activity for any group that has it as None
             untracked_groups = session.query(Listable).filter(Listable.last_activity == None).all()
             for g in untracked_groups:
                 if g.type in ["GrupoOptativa", "ECI"]:
@@ -263,44 +264,78 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
                     g.last_activity = now - datetime.timedelta(days=366)
                 else:
                     g.last_activity = now
-                
-            # Query all validated, non-archived ECI and GrupoOptativa groups
+
+        # 2. Query candidates data (validated, non-archived ECI and GrupoOptativa groups)
+        # We fetch the required attributes into memory to avoid keeping a transaction open during network calls
+        candidates_data = []
+        with get_session() as session:
             candidates = session.query(Listable).filter(
                 Listable.type.in_(["GrupoOptativa", "ECI"]),
                 Listable.validated == True
             ).all()
-            
             for g in candidates:
-                # Case 1: Group is inactive and has NOT been warned yet
-                if g.last_activity < threshold_warn and g.warned_at is None:
-                    command_name = "agregaroptativa" if g.type == "GrupoOptativa" else "agregareci"
-                    warning_text = (
-                        f"¡Hola! Este grupo va a ser archivado automáticamente por inactividad. Para evitarlo, un administrador debe ejecutar /{command_name} en las próximas 24hs.\n\n"
-                        f"Si directamente quieren archivarlo ya, un administrador puede tirar /archivar.\n"
-                        f"El grupo archivado seguirá siendo accesible desde /listararchivado."
+                candidates_data.append({
+                    "id": g.id,
+                    "name": g.name,
+                    "type": g.type,
+                    "chat_id": g.chat_id,
+                    "last_activity": g.last_activity,
+                    "warned_at": g.warned_at
+                })
+
+        # 3. Process each group individually (external I/O happens outside transactions)
+        for item in candidates_data:
+            group_id = item["id"]
+            name = item["name"]
+            group_type = item["type"]
+            chat_id = item["chat_id"]
+            last_activity = item["last_activity"]
+            warned_at = item["warned_at"]
+
+            # Case 1: Group is inactive and has NOT been warned yet
+            if last_activity < threshold_warn and warned_at is None:
+                command_name = "agregaroptativa" if group_type == "GrupoOptativa" else "agregareci"
+                warning_text = (
+                    f"¡Hola! Este grupo va a ser archivado automáticamente por inactividad. Para evitarlo, un administrador debe ejecutar /{command_name} en las próximas 24hs.\n\n"
+                    f"Si directamente quieren archivarlo ya, un administrador puede tirar /archivar.\n"
+                    f"El grupo archivado seguirá siendo accesible desde /listararchivado."
+                )
+                logger.info(f"Sending 24h archiving warning to group {name} ({chat_id})")
+                try:
+                    await context.bot.send_message(chat_id=chat_id, text=warning_text)
+                except Exception as e:
+                    logger.error(f"Failed to send 24h warning to group {name} ({chat_id}): {e}")
+
+                # Use a dedicated, quick transaction to save the state
+                try:
+                    with get_session() as session:
+                        g = session.query(Listable).filter_by(id=group_id).first()
+                        if g:
+                            g.warned_at = now
+                except Exception as e:
+                    logger.error(f"Failed to update warned_at in DB for group {name}: {e}")
+
+            # Case 2: Group was warned, and 24 hours have passed since the warning
+            elif warned_at is not None and (now - warned_at) >= datetime.timedelta(hours=24):
+                logger.info(f"Auto-archiving inactive group after 24h warning: {name} (Last activity: {last_activity})")
+                try:
+                    await context.bot.send_message(
+                        chat_id=DC_GROUP_CHATID,
+                        text=f"El grupo {name} ({group_type}) ha sido archivado por inactividad de 1 año. 📁"
                     )
-                    logger.info(f"Sending 24h archiving warning to group {g.name} ({g.chat_id})")
-                    try:
-                        await context.bot.send_message(chat_id=g.chat_id, text=warning_text)
-                        g.warned_at = now
-                    except Exception as e:
-                        logger.error(f"Failed to send 24h warning to group {g.name} ({g.chat_id}): {e}")
-                        g.warned_at = now
-                        
-                # Case 2: Group was warned, and 24 hours have passed since the warning
-                elif g.warned_at is not None and (now - g.warned_at) >= datetime.timedelta(hours=24):
-                    logger.info(f"Auto-archiving inactive group after 24h warning: {g.name} (Last activity: {g.last_activity})")
-                    original_type = g.type
-                    g.type = "GrupoArchivado"
-                    g.warned_at = None
-                    g.archived_at = now
-                    try:
-                        await context.bot.send_message(
-                            chat_id=DC_GROUP_CHATID,
-                            text=f"El grupo {g.name} ({original_type}) ha sido archivado por inactividad de 1 año. 📁"
-                        )
-                    except Exception as e:
-                        logger.error(f"Failed to send archive message for {g.name}: {e}")
+                except Exception as e:
+                    logger.error(f"Failed to send archive message for {name}: {e}")
+
+                # Use a dedicated, quick transaction to save the state
+                try:
+                    with get_session() as session:
+                        g = session.query(Listable).filter_by(id=group_id).first()
+                        if g:
+                            g.type = "GrupoArchivado"
+                            g.warned_at = None
+                            g.archived_at = now
+                except Exception as e:
+                    logger.error(f"Failed to archive group {name} in DB: {e}")
     except Exception as e:
         logger.error(f"Error during auto-archiving/warning check: {e}", exc_info=True)
 
