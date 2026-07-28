@@ -125,18 +125,26 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
             group.url = url
             group.name = name
             was_archived = False
+            was_warned = group.warned_at is not None
+            import datetime
+            
             if isinstance(group, GrupoArchivado) or group.type == "GrupoArchivado":
                 group.type = grouptype.__name__
                 group.validated = True
-                import datetime
                 group.last_activity = datetime.datetime.utcnow()
                 group.warned_at = None
                 group.archived_at = None
                 was_archived = True
+            elif was_warned:
+                group.last_activity = datetime.datetime.utcnow()
+                group.warned_at = None
                 
             if was_archived:
                 await update.effective_message.reply_text(
                     text="¡El grupo ha sido desarchivado y reactivado exitosamente!")
+            elif was_warned:
+                await update.effective_message.reply_text(
+                    text="la cagué ahi desarchive este grupo")
             else:
                 await update.effective_message.reply_text(
                     text="Datos del grupo actualizados")
