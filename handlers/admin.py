@@ -4,7 +4,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 from tg_ids import CODEPERS_CHATID, ROZEN_CHATID, DGARRO_CHATID, DC_GROUP_CHATID
-from models import Noticia
+from models import Noticia, BannedUser
 from handlers.db import get_session
 
 logger = logging.getLogger("DCUBABOT")
@@ -172,3 +172,71 @@ async def get_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     except Exception as e:
         await update.effective_message.reply_text(f"Error al leer logs (¿falta permiso roles/logging.viewer en la Service Account?): {e}")
+
+async def powerban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in admin_ids and str(user_id) not in admin_ids:
+        logger.warning(f"Unauthorized user {user_id} tried to access /powerban")
+        return
+
+    msg = update.message.reply_to_message
+
+    if not msg and len(context.args) < 2:
+        await update.effective_message.reply_text("Uso: \"/powerban <user_id> <razón>\" o respondiendo al mensaje del usuario a banear")
+        return
+
+    user_to_ban = None
+    if msg:
+        user_to_ban = msg.from_user
+    else:
+        try:
+            user_to_ban = (await context.bot.getChatMember(context._chat_id, context.args[0])).user
+        except:
+            await update.effective_message.reply_text("user_id invalido")
+            return
+        context.args = context.args[1:]
+    
+    # No confundir user_id del admin del user_id del usuario baneado
+    logger.info(f"Admin '{user_id}' execute /powerban to '{user_to_ban}' ")
+
+    reason = ""
+    if context.args:
+        reason = " ".join(context.args)
+
+    username = None
+    with get_session() as session:
+        banned_user = session.query(BannedUser).filter_by(user_id=user_to_ban.id).first()
+
+        if banned_user and not banned_user.confirmed:
+            # TODO: Agregar que expire despues de unos minutos o un día para que no quede softlockeado sin poder banear al usuario.
+            await update.effective_chat.send_message("Esperando confirmación de powerban")
+            return
+
+        if banned_user and banned_user.confirmed:
+            await update.effective_chat.send_message(f"Ese usuario ya se encuentra baneado de los grupos por \"{banned_user.reason}\"")
+            return
+
+        username = user_to_ban.id
+        if user_to_ban.username:
+            username = "@" + user_to_ban.username
+
+        bot_message = await update.effective_message.reply_text(f"@{update.effective_user.username} Andá a confirmar el baneo de \"{username}\"")
+        
+        banned_user = BannedUser(
+            user_id=user_to_ban.id, confirmed=False, username=username, banned_by_id=user_id,
+            reason=reason, bot_chat_id=bot_message.chat_id, bot_msg_id=bot_message.id
+        )
+        session.add(banned_user)
+
+    keyboard = [
+            [
+                InlineKeyboardButton("Confirmar", callback_data=f"Powerban|{user_to_ban.id}|Confirm", api_kwargs={"style": "success"}),
+                InlineKeyboardButton("Cancelar", callback_data=f"Powerban|{user_to_ban.id}|Cancel", api_kwargs={"style": "danger"})
+            ]
+        ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await context.bot.send_message(chat_id=user_id, text=f"Banear usuario {user_to_ban.id} {username}?",
+                                reply_markup=reply_markup)
+
+async def unpowerban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    pass
