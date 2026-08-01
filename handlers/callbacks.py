@@ -4,6 +4,7 @@ from telegram.constants import ParseMode
 from models import Listable, Noticia, BannedUser
 from handlers.db import get_session
 from tg_ids import NOTICIAS_CHATID
+from utils.db import process_ban_state
 import logging
 
 logger = logging.getLogger("DCUBABOT")
@@ -27,10 +28,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             username = ""
             if user_to_ban.username:
                 username = f"({user_to_ban.username})"
-            logger.info(f"User '{user_to_ban}' banned by '{user_to_ban.user_id}', reason: \"{user_to_ban.reason}\"")
+            logger.info(f"User '{user_to_ban.user_id}' {username} banned by '{user_to_ban.user_id}', reason: \"{user_to_ban.reason}\"")
             ban_msg = f"Usuario '{user_to_ban.user_id}' {username} baneado de todos los grupos por razón \"{user_to_ban.reason}\" 🚫"
             await update.effective_message.edit_text(ban_msg)
             await context.bot.editMessageText(ban_msg, user_to_ban.bot_chat_id, user_to_ban.bot_msg_id)
+            await process_ban_state(session, context)
             
         if buttonType == "Powerban" and action == "Cancel":
             user_to_ban = session.query(BannedUser).filter_by(user_id=id_val).first()

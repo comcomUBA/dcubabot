@@ -6,6 +6,7 @@ from telegram.constants import ParseMode
 from tg_ids import CODEPERS_CHATID, ROZEN_CHATID, DGARRO_CHATID, DC_GROUP_CHATID
 from models import Noticia, BannedUser
 from handlers.db import get_session
+from utils.db import process_unban_state
 
 logger = logging.getLogger("DCUBABOT")
 admin_ids = [ROZEN_CHATID, DGARRO_CHATID]
@@ -239,4 +240,44 @@ async def powerban(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                 reply_markup=reply_markup)
 
 async def unpowerban(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    pass
+    user_id = update.effective_user.id
+    if user_id not in admin_ids and str(user_id) not in admin_ids:
+        logger.warning(f"Unauthorized user {user_id} tried to access /unpowerban")
+        return
+
+    msg = update.message.reply_to_message
+
+    if not msg and len(context.args) < 1:
+        await update.effective_message.reply_text("Uso: \"/unpowerban <user_id>\"")
+        return
+
+    user_to_unban = None
+    try:
+        user_to_unban = (await context.bot.getChatMember(context._chat_id, context.args[0])).user
+    except:
+        await update.effective_message.reply_text("user_id invalido")
+        return
+    context.args = context.args[1:]
+    
+    # No confundir user_id del admin del user_id del usuario baneado
+    logger.info(f"Admin '{user_id}' execute /unpowerban to '{user_to_unban}' ")
+
+    username = None
+    with get_session() as session:
+        banned_user = session.query(BannedUser).filter_by(user_id=user_to_unban.id).first()
+
+        if not banned_user:
+            await update.effective_chat.send_message(f"El usuario no tiene powerban")
+            return
+
+        if banned_user and not banned_user.processed_lock:
+            await update.effective_chat.send_message("El usuario aún se encuentra en proceso de powerban")
+            return
+
+        await process_unban_state(banned_user.user_id, session, context)
+        session.delete(banned_user)
+        username = ""
+        if banned_user.username:
+            username = f"({banned_user.username})"
+        unban_msg = f"Usuario '{banned_user.user_id}' {username} desbaneado de todos los grupos"
+        await update.effective_chat.send_message(unban_msg)
