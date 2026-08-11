@@ -122,17 +122,24 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
     with get_session() as session:
         group = session.query(Listable).filter_by(chat_id=chat_id).first()
         if group:
-            group.url = url
-            group.name = name
             was_archived = False
             if isinstance(group, GrupoArchivado) or group.type == "GrupoArchivado":
-                group.type = grouptype.__name__
-                group.validated = True
                 import datetime
-                group.last_activity = datetime.datetime.utcnow()
-                group.warned_at = None
-                group.archived_at = None
+                session.query(Listable).filter_by(id=group.id).update({
+                    "url": url,
+                    "name": name,
+                    "type": grouptype.__name__,
+                    "validated": True,
+                    "last_activity": datetime.datetime.utcnow(),
+                    "warned_at": None,
+                    "archived_at": None
+                })
+                session.flush()
+                session.expire(group)
                 was_archived = True
+            else:
+                group.url = url
+                group.name = name
                 
             if was_archived:
                 await update.effective_message.reply_text(

@@ -186,5 +186,109 @@ class TestGroupArchiving(unittest.TestCase):
         self.assertEqual(warned_retrieved.warned_at, warned_time)
         session.close()
 
+    def test_unarchive_via_agregar_simulation(self):
+        session = self.Session()
+        archived = GrupoArchivado(name="Old Archived", url="https://t.me/old_archived", chat_id="777", validated=True, archived_at=datetime.datetime.utcnow())
+        session.add(archived)
+        session.commit()
+        
+        from models import GrupoOtros
+        group = session.query(Listable).filter_by(chat_id="777").first()
+        self.assertIsNotNone(group)
+        self.assertIsInstance(group, GrupoArchivado)
+        
+        session.query(Listable).filter_by(id=group.id).update({
+            "type": "GrupoOtros",
+            "validated": True,
+            "last_activity": datetime.datetime.utcnow(),
+            "warned_at": None,
+            "archived_at": None
+        })
+        session.flush()
+        session.expire(group)
+        
+        session.commit()
+        session.close()
+        
+        session2 = self.Session()
+        unarchived = session2.query(Listable).filter_by(chat_id="777").first()
+        self.assertEqual(unarchived.type, "GrupoOtros")
+        self.assertIsInstance(unarchived, GrupoOtros)
+        session2.close()
+
+    def test_agregar_unarchives_successfully(self):
+        import asyncio
+        async def run_test():
+            session = self.Session()
+            archived = GrupoArchivado(name="Old Archived", url="https://t.me/old_archived", chat_id="777", validated=True, archived_at=datetime.datetime.utcnow())
+            session.add(archived)
+            session.commit()
+            session.close()
+            
+            update = AsyncMock()
+            update.effective_chat = MagicMock()
+            update.effective_chat.id = 777
+            update.effective_chat.title = "New Title"
+            update.effective_message = AsyncMock()
+            
+            context = AsyncMock()
+            context.bot = AsyncMock()
+            context.bot.export_chat_invite_link = AsyncMock(return_value="https://t.me/new_link")
+            
+            from handlers.groups import agregar
+            from models import GrupoOtros
+            await agregar(update, context, GrupoOtros, "otro")
+            
+            session2 = self.Session()
+            group = session2.query(Listable).filter_by(chat_id="777").first()
+            self.assertEqual(group.type, "GrupoOtros")
+            self.assertEqual(group.name, "New Title")
+            self.assertEqual(group.url, "https://t.me/new_link")
+            self.assertIsNone(group.archived_at)
+            self.assertTrue(group.validated)
+            session2.close()
+            
+            update.effective_message.reply_text.assert_called_with(
+                text="¡El grupo ha sido desarchivado y reactivado exitosamente!"
+            )
+        asyncio.run(run_test())
+
+    def test_agregaroptativa_unarchives_successfully(self):
+        import asyncio
+        async def run_test():
+            session = self.Session()
+            archived = GrupoArchivado(name="Old Archived Optativa", url="https://t.me/old_opt", chat_id="888", validated=True, archived_at=datetime.datetime.utcnow())
+            session.add(archived)
+            session.commit()
+            session.close()
+            
+            update = AsyncMock()
+            update.effective_chat = MagicMock()
+            update.effective_chat.id = 888
+            update.effective_chat.title = "New Optativa Title"
+            update.effective_message = AsyncMock()
+            
+            context = AsyncMock()
+            context.bot = AsyncMock()
+            context.bot.export_chat_invite_link = AsyncMock(return_value="https://t.me/new_opt_link")
+            
+            from handlers.groups import agregar
+            from models import GrupoOptativa
+            await agregar(update, context, GrupoOptativa, "optativa")
+            
+            session2 = self.Session()
+            group = session2.query(Listable).filter_by(chat_id="888").first()
+            self.assertEqual(group.type, "GrupoOptativa")
+            self.assertEqual(group.name, "New Optativa Title")
+            self.assertEqual(group.url, "https://t.me/new_opt_link")
+            self.assertIsNone(group.archived_at)
+            self.assertTrue(group.validated)
+            session2.close()
+            
+            update.effective_message.reply_text.assert_called_with(
+                text="¡El grupo ha sido desarchivado y reactivado exitosamente!"
+            )
+        asyncio.run(run_test())
+
 if __name__ == "__main__":
     unittest.main()

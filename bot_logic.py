@@ -81,6 +81,10 @@ COMMANDS = {
         'handler': agregarotros,
         'description': 'Agrega el grupo actual a la lista de otros grupos.'
     },
+    'agregarotro': {
+        'handler': agregarotros,
+        'description': 'Agrega el grupo actual a la lista de otros grupos.'
+    },
     'sugerirnoticia': {
         'handler': sugerirNoticia,
         'description': 'Sugiere una noticia para el canal de noticias.'
