@@ -145,3 +145,16 @@ class File(Base):
     id = Column(Integer, primary_key=True)
     path = Column(String, nullable=False, unique=True)
     file_id = Column(String, nullable=False)
+
+class BannedUser(Base):
+    __tablename__ = 'banned_users'
+    user_id = Column(BigInteger, primary_key=True)
+    username = Column(String, nullable=True)
+    banned_by_id = Column(BigInteger, nullable=False)
+    reason = Column(String, nullable=True)
+    date = Column(Date, nullable=False, default=datetime.date.today)
+    confirmed = Column(Boolean, default=False)
+    processed_lock = Column(Boolean, default=False) # True = Ya fue procesado; False = Falta procesar.
+    # Para editar el mensaje del bot.
+    bot_chat_id = Column(String, nullable=True)
+    bot_msg_id = Column(String, nullable=True)

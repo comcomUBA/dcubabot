@@ -1,9 +1,13 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
-from models import Listable, Noticia
+from models import Listable, Noticia, BannedUser
 from handlers.db import get_session
 from tg_ids import NOTICIAS_CHATID
+from utils.db import process_ban_state
+import logging
+
+logger = logging.getLogger("DCUBABOT")
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -15,9 +19,33 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttonType = data_parts[0]
     id_val = data_parts[1] if len(data_parts) > 1 else None
     action = data_parts[2] if len(data_parts) > 2 else None
-    
+
     with get_session() as session:
-        if buttonType == "Listable":
+        user_to_ban = session.query(BannedUser).filter_by(user_id=id_val).first()
+        # Powerban Callback
+        if buttonType == "Powerban" and action == "Confirm":
+            user_to_ban.confirmed = True
+            username = ""
+            if user_to_ban.username:
+                username = f"({user_to_ban.username})"
+            logger.info(f"User '{user_to_ban.user_id}' {username} banned by '{user_to_ban.user_id}', reason: \"{user_to_ban.reason}\"")
+            ban_msg = f"Usuario '{user_to_ban.user_id}' {username} baneado de todos los grupos por razón \"{user_to_ban.reason}\" 🚫"
+            await update.effective_message.edit_text(ban_msg)
+            await context.bot.editMessageText(ban_msg, user_to_ban.bot_chat_id, user_to_ban.bot_msg_id)
+            await process_ban_state(session, context)
+            
+        if buttonType == "Powerban" and action == "Cancel":
+            user_to_ban = session.query(BannedUser).filter_by(user_id=id_val).first()
+            session.delete(user_to_ban)
+            logger.info(f"User ban '{user_to_ban.user_id}' cancelled by '{user_to_ban.banned_by_id}'")
+            username = ""
+            if user_to_ban.username:
+                username = f"({user_to_ban.username})"
+            cancel_msg = f"Baneo de '{user_to_ban.user_id}' {username} cancelado"
+            await update.effective_message.edit_text(cancel_msg)
+            await context.bot.editMessageText(cancel_msg, user_to_ban.bot_chat_id, user_to_ban.bot_msg_id)
+    
+        elif buttonType == "Listable":
             group = session.query(Listable).filter_by(id=int(id_val)).first()
             if group:
                 if action == "1":
@@ -101,3 +129,5 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await query.edit_message_text(text=message.text + action_text)
             else:
                 await query.edit_message_text(text=message.text + "\n[Botón huérfano: La noticia ya no existe en la base de datos]")
+
+

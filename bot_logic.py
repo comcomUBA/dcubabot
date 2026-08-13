@@ -1,7 +1,7 @@
 from utils.orga2Utils import noitip, asm
 from handlers.basic import start, help_command, estasvivo, colaborar
 from handlers.info import campusvivo, flan, flanviejo, aulas, cuandovence, listarlabos
-from handlers.admin import checodepers, checodeppers, sugerirNoticia, get_logs, joder, movergrupo
+from handlers.admin import checodepers, checodeppers, sugerirNoticia, get_logs, joder, movergrupo, powerban, unpowerban
 from handlers.groups import listar, listaroptativa, listareci, listarotro, cubawiki, agregargrupo, agregaroptativa, agregarotros, agregareci, sugerirgrupo, sugeriroptativa, sugerireci, sugerirotro, actualizar_grupos, listararchivado, archivar
 
 COMMANDS = {
@@ -141,4 +141,12 @@ COMMANDS = {
     'sugerirotro': {
         'handler': sugerirotro,
     },
+    'powerban': {
+        'handler': powerban,
+        'description': 'Banea al usuario de todos los grupos en donde el bot es admin.'
+    },
+    'unpowerban': {
+        'handler': unpowerban,
+        'description': 'Desbanea al usuario de todos los grupos en donde el bot es admin.'
+    }
 }
