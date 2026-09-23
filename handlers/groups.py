@@ -122,32 +122,74 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
     with get_session() as session:
         group = session.query(Listable).filter_by(chat_id=chat_id).first()
         if group:
-            was_archived = False
-            if isinstance(group, GrupoArchivado) or group.type == "GrupoArchivado":
-                import datetime
+            import datetime
+            now = datetime.datetime.utcnow()
+            
+            # Case 1: The group is archived (type is GrupoArchivado, or archived_at is set)
+            if isinstance(group, GrupoArchivado) or group.type == "GrupoArchivado" or group.archived_at is not None:
                 session.query(Listable).filter_by(id=group.id).update({
                     "url": url,
                     "name": name,
                     "type": grouptype.__name__,
                     "validated": True,
-                    "last_activity": datetime.datetime.utcnow(),
+                    "last_activity": now,
                     "warned_at": None,
                     "archived_at": None
                 })
                 session.flush()
                 session.expire(group)
-                was_archived = True
+                await update.effective_message.reply_text(
+                    text="¡El grupo ha sido desarchivado y reactivado exitosamente!"
+                )
+                return
+
+            # Case 2: The group is NOT validated (either pending or de-validated/dead)
+            elif not group.validated:
+                group.url = url
+                group.name = name
+                group.last_activity = now
+                group.warned_at = None
+                group.archived_at = None
+                session.flush()
+                
+                # Re-send validation request to Rozen to prevent getting stuck
+                group_id = group.id
+                keyboard = [
+                    [
+                        InlineKeyboardButton(text="Aceptar", callback_data=f"Listable|{group_id}|1", api_kwargs={"style": "success"}),
+                        InlineKeyboardButton(text="Rechazar", callback_data=f"Listable|{group_id}|0", api_kwargs={"style": "danger"})
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await context.bot.send_message(
+                    chat_id=ROZEN_CHATID,
+                    text=f"{groupString} (re-enviado para validación): {name}\n{url}",
+                    reply_markup=reply_markup
+                )
+                await update.effective_message.reply_text("OK, el grupo no estaba validado o fue desactivado. Se lo vuelvo a mandar a Rozen para su aprobación.")
+                return
+
+            # Case 3: The group is validated, but had an active warning (inactive)
+            elif group.warned_at is not None:
+                group.url = url
+                group.name = name
+                group.last_activity = now
+                group.warned_at = None
+                group.archived_at = None
+                await update.effective_message.reply_text(
+                    text="¡El grupo ha sido reactivado y se ha cancelado el aviso de archivado!"
+                )
+                return
+
+            # Case 4: The group is validated and healthy
             else:
                 group.url = url
                 group.name = name
-                
-            if was_archived:
+                group.last_activity = now
                 await update.effective_message.reply_text(
-                    text="¡El grupo ha sido desarchivado y reactivado exitosamente!")
-            else:
-                await update.effective_message.reply_text(
-                    text="Datos del grupo actualizados")
-            return
+                    text="Datos del grupo actualizados"
+                )
+                return
         group = grouptype(name=name, url=url, chat_id=chat_id)
         session.add(group)
         session.flush()
