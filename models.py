@@ -88,6 +88,21 @@ class Listable(Base):
     }
 
     def reactivar(self, session, url, name, requested_type):
+        # Safety check: if this group is archived (either by class type, DB column value, or archived_at timestamp), we reactivate it!
+        if self.type == "GrupoArchivado" or self.archived_at is not None or isinstance(self, GrupoArchivado):
+            session.query(Listable).filter_by(id=self.id).update({
+                "url": url,
+                "name": name,
+                "type": requested_type.__name__,
+                "validated": True,
+                "last_activity": datetime.datetime.utcnow(),
+                "warned_at": None,
+                "archived_at": None
+            })
+            session.flush()
+            session.expire(self)
+            return Listable.REACTIVAR_ARCHIVED
+
         self.url = url
         self.name = name
         self.last_activity = datetime.datetime.utcnow()
@@ -106,20 +121,6 @@ class GrupoArchivado(Listable):
     __mapper_args__ = {
         'polymorphic_identity': 'GrupoArchivado',
     }
-
-    def reactivar(self, session, url, name, requested_type):
-        session.query(Listable).filter_by(id=self.id).update({
-            "url": url,
-            "name": name,
-            "type": requested_type.__name__,
-            "validated": True,
-            "last_activity": datetime.datetime.utcnow(),
-            "warned_at": None,
-            "archived_at": None
-        })
-        session.flush()
-        session.expire(self)
-        return Listable.REACTIVAR_ARCHIVED
 
 class Obligatoria(Listable):
     __mapper_args__ = {
