@@ -76,6 +76,12 @@ class Listable(Base):
     warned_at = Column(DateTime, nullable=True)
     archived_at = Column(DateTime, nullable=True)
 
+    # Reactivation result constants
+    REACTIVAR_ARCHIVED = "archived"
+    REACTIVAR_UNVALIDATED = "unvalidated"
+    REACTIVAR_WARNED = "warned"
+    REACTIVAR_HEALTHY = "healthy"
+
     __mapper_args__ = {
         'polymorphic_identity': 'listable',
         'polymorphic_on': type
@@ -89,12 +95,12 @@ class Listable(Base):
         if not self.validated:
             self.warned_at = None
             self.archived_at = None
-            return "unvalidated"
+            return Listable.REACTIVAR_UNVALIDATED
         elif self.warned_at is not None:
             self.warned_at = None
             self.archived_at = None
-            return "warned"
-        return "healthy"
+            return Listable.REACTIVAR_WARNED
+        return Listable.REACTIVAR_HEALTHY
 
 class GrupoArchivado(Listable):
     __mapper_args__ = {
@@ -113,7 +119,7 @@ class GrupoArchivado(Listable):
         })
         session.flush()
         session.expire(self)
-        return "archived"
+        return Listable.REACTIVAR_ARCHIVED
 
 class Obligatoria(Listable):
     __mapper_args__ = {

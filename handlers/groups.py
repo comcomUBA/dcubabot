@@ -124,13 +124,13 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
         if group:
             action = group.reactivar(session, url, name, grouptype)
 
-            if action == "archived":
+            if action == Listable.REACTIVAR_ARCHIVED:
                 await update.effective_message.reply_text(
                     text="¡El grupo ha sido desarchivado y reactivado exitosamente!"
                 )
                 return
 
-            elif action == "unvalidated":
+            elif action == Listable.REACTIVAR_UNVALIDATED:
                 # Re-send validation request to Rozen to prevent getting stuck
                 group_id = group.id
                 keyboard = [
@@ -150,7 +150,7 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
                 )
                 return
 
-            elif action == "warned":
+            elif action == Listable.REACTIVAR_WARNED:
                 await update.effective_message.reply_text(
                     text="¡El grupo ha sido reactivado y se ha cancelado el aviso de archivado!"
                 )
