@@ -81,10 +81,39 @@ class Listable(Base):
         'polymorphic_on': type
     }
 
+    def reactivar(self, session, url, name, requested_type):
+        self.url = url
+        self.name = name
+        self.last_activity = datetime.datetime.utcnow()
+        
+        if not self.validated:
+            self.warned_at = None
+            self.archived_at = None
+            return "unvalidated"
+        elif self.warned_at is not None:
+            self.warned_at = None
+            self.archived_at = None
+            return "warned"
+        return "healthy"
+
 class GrupoArchivado(Listable):
     __mapper_args__ = {
         'polymorphic_identity': 'GrupoArchivado',
     }
+
+    def reactivar(self, session, url, name, requested_type):
+        session.query(Listable).filter_by(id=self.id).update({
+            "url": url,
+            "name": name,
+            "type": requested_type.__name__,
+            "validated": True,
+            "last_activity": datetime.datetime.utcnow(),
+            "warned_at": None,
+            "archived_at": None
+        })
+        session.flush()
+        session.expire(self)
+        return "archived"
 
 class Obligatoria(Listable):
     __mapper_args__ = {

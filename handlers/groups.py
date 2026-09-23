@@ -122,36 +122,15 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
     with get_session() as session:
         group = session.query(Listable).filter_by(chat_id=chat_id).first()
         if group:
-            import datetime
-            now = datetime.datetime.utcnow()
-            
-            # Case 1: The group is archived (type is GrupoArchivado, or archived_at is set)
-            if isinstance(group, GrupoArchivado) or group.type == "GrupoArchivado" or group.archived_at is not None:
-                session.query(Listable).filter_by(id=group.id).update({
-                    "url": url,
-                    "name": name,
-                    "type": grouptype.__name__,
-                    "validated": True,
-                    "last_activity": now,
-                    "warned_at": None,
-                    "archived_at": None
-                })
-                session.flush()
-                session.expire(group)
+            action = group.reactivar(session, url, name, grouptype)
+
+            if action == "archived":
                 await update.effective_message.reply_text(
                     text="¡El grupo ha sido desarchivado y reactivado exitosamente!"
                 )
                 return
 
-            # Case 2: The group is NOT validated (either pending or de-validated/dead)
-            elif not group.validated:
-                group.url = url
-                group.name = name
-                group.last_activity = now
-                group.warned_at = None
-                group.archived_at = None
-                session.flush()
-                
+            elif action == "unvalidated":
                 # Re-send validation request to Rozen to prevent getting stuck
                 group_id = group.id
                 keyboard = [
@@ -166,26 +145,18 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
                     text=f"{groupString} (re-enviado para validación): {name}\n{url}",
                     reply_markup=reply_markup
                 )
-                await update.effective_message.reply_text("OK, el grupo no estaba validado o fue desactivado. Se lo vuelvo a mandar a Rozen para su aprobación.")
+                await update.effective_message.reply_text(
+                    "OK, el grupo no estaba validado o fue desactivado. Se lo vuelvo a mandar a Rozen para su aprobación."
+                )
                 return
 
-            # Case 3: The group is validated, but had an active warning (inactive)
-            elif group.warned_at is not None:
-                group.url = url
-                group.name = name
-                group.last_activity = now
-                group.warned_at = None
-                group.archived_at = None
+            elif action == "warned":
                 await update.effective_message.reply_text(
                     text="¡El grupo ha sido reactivado y se ha cancelado el aviso de archivado!"
                 )
                 return
 
-            # Case 4: The group is validated and healthy
             else:
-                group.url = url
-                group.name = name
-                group.last_activity = now
                 await update.effective_message.reply_text(
                     text="Datos del grupo actualizados"
                 )
