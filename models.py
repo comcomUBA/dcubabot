@@ -76,10 +76,54 @@ class Listable(Base):
     warned_at = Column(DateTime, nullable=True)
     archived_at = Column(DateTime, nullable=True)
 
+    # Reactivation result constants
+    REACTIVAR_ARCHIVED = "archived"
+    REACTIVAR_UNVALIDATED = "unvalidated"
+    REACTIVAR_WARNED = "warned"
+    REACTIVAR_HEALTHY = "healthy"
+
     __mapper_args__ = {
         'polymorphic_identity': 'listable',
         'polymorphic_on': type
     }
+
+    def reactivar(self, session, url, name, requested_type):
+        # Safety check: if this group is archived (either by class type, DB column value, or archived_at timestamp), we reactivate it!
+        if self.type == "GrupoArchivado" or self.archived_at is not None or isinstance(self, GrupoArchivado):
+            session.query(Listable).filter_by(id=self.id).update({
+                "url": url,
+                "name": name,
+                "type": requested_type.__name__,
+                "validated": True,
+                "last_activity": datetime.datetime.utcnow(),
+                "warned_at": None,
+                "archived_at": None
+            })
+            session.flush()
+            session.expire(self)
+            return Listable.REACTIVAR_ARCHIVED
+
+        self.url = url
+        self.name = name
+        self.last_activity = datetime.datetime.utcnow()
+        
+        if not self.validated:
+            self.warned_at = None
+            self.archived_at = None
+            return Listable.REACTIVAR_UNVALIDATED
+        elif self.warned_at is not None:
+            self.warned_at = None
+            self.archived_at = None
+            return Listable.REACTIVAR_WARNED
+        return Listable.REACTIVAR_HEALTHY
+
+    @property
+    def es_archivable(self):
+        return False
+
+    @property
+    def comando_agregar(self):
+        return "agregargrupo"
 
 class GrupoArchivado(Listable):
     __mapper_args__ = {
@@ -101,6 +145,14 @@ class ECI(Listable):
         'polymorphic_identity': 'ECI',
     }
 
+    @property
+    def es_archivable(self):
+        return True
+
+    @property
+    def comando_agregar(self):
+        return "agregareci"
+
 class Otro(Listable):
     __mapper_args__ = {
         'polymorphic_identity': 'Otro',
@@ -116,10 +168,22 @@ class GrupoOptativa(Listable):
         'polymorphic_identity': 'GrupoOptativa',
     }
 
+    @property
+    def es_archivable(self):
+        return True
+
+    @property
+    def comando_agregar(self):
+        return "agregaroptativa"
+
 class GrupoOtros(Listable):
     __mapper_args__ = {
         'polymorphic_identity': 'GrupoOtros',
     }
+
+    @property
+    def comando_agregar(self):
+        return "agregarotros"
 
 class Noticia(Base):
     __tablename__ = 'noticias'

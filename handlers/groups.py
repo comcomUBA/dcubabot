@@ -122,32 +122,45 @@ async def agregar(update: Update, context: ContextTypes.DEFAULT_TYPE, grouptype,
     with get_session() as session:
         group = session.query(Listable).filter_by(chat_id=chat_id).first()
         if group:
-            was_archived = False
-            if isinstance(group, GrupoArchivado) or group.type == "GrupoArchivado":
-                import datetime
-                session.query(Listable).filter_by(id=group.id).update({
-                    "url": url,
-                    "name": name,
-                    "type": grouptype.__name__,
-                    "validated": True,
-                    "last_activity": datetime.datetime.utcnow(),
-                    "warned_at": None,
-                    "archived_at": None
-                })
-                session.flush()
-                session.expire(group)
-                was_archived = True
-            else:
-                group.url = url
-                group.name = name
-                
-            if was_archived:
+            action = group.reactivar(session, url, name, grouptype)
+
+            if action == Listable.REACTIVAR_ARCHIVED:
                 await update.effective_message.reply_text(
-                    text="¡El grupo ha sido desarchivado y reactivado exitosamente!")
+                    text="¡El grupo ha sido desarchivado y reactivado exitosamente!"
+                )
+                return
+
+            elif action == Listable.REACTIVAR_UNVALIDATED:
+                # Re-send validation request to Rozen to prevent getting stuck
+                group_id = group.id
+                keyboard = [
+                    [
+                        InlineKeyboardButton(text="Aceptar", callback_data=f"Listable|{group_id}|1", api_kwargs={"style": "success"}),
+                        InlineKeyboardButton(text="Rechazar", callback_data=f"Listable|{group_id}|0", api_kwargs={"style": "danger"})
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await context.bot.send_message(
+                    chat_id=ROZEN_CHATID,
+                    text=f"{groupString} (re-enviado para validación): {name}\n{url}",
+                    reply_markup=reply_markup
+                )
+                await update.effective_message.reply_text(
+                    "OK, el grupo no estaba validado o fue desactivado. Se lo vuelvo a mandar a Rozen para su aprobación."
+                )
+                return
+
+            elif action == Listable.REACTIVAR_WARNED:
+                await update.effective_message.reply_text(
+                    text="¡El grupo ha sido reactivado y se ha cancelado el aviso de archivado!"
+                )
+                return
+
             else:
                 await update.effective_message.reply_text(
-                    text="Datos del grupo actualizados")
-            return
+                    text="Datos del grupo actualizados"
+                )
+                return
         group = grouptype(name=name, url=url, chat_id=chat_id)
         session.add(group)
         session.flush()
@@ -266,29 +279,28 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
         with get_session() as session:
             untracked_groups = session.query(Listable).filter(Listable.last_activity == None).all()
             for g in untracked_groups:
-                if g.type in ["GrupoOptativa", "ECI"]:
+                if g.es_archivable:
                     # Initialize to an old date so they trigger the warning immediately on first run
                     g.last_activity = now - datetime.timedelta(days=366)
                 else:
                     g.last_activity = now
 
-        # 2. Query candidates data (validated, non-archived ECI and GrupoOptativa groups)
+        # 2. Query candidates data (validated, non-archived archivable groups)
         # We fetch the required attributes into memory to avoid keeping a transaction open during network calls
         candidates_data = []
         with get_session() as session:
-            candidates = session.query(Listable).filter(
-                Listable.type.in_(["GrupoOptativa", "ECI"]),
-                Listable.validated == True
-            ).all()
+            candidates = session.query(Listable).filter_by(validated=True).all()
             for g in candidates:
-                candidates_data.append({
-                    "id": g.id,
-                    "name": g.name,
-                    "type": g.type,
-                    "chat_id": g.chat_id,
-                    "last_activity": g.last_activity,
-                    "warned_at": g.warned_at
-                })
+                if g.es_archivable:
+                    candidates_data.append({
+                        "id": g.id,
+                        "name": g.name,
+                        "type": g.type,
+                        "chat_id": g.chat_id,
+                        "last_activity": g.last_activity,
+                        "warned_at": g.warned_at,
+                        "comando_agregar": g.comando_agregar
+                    })
 
         # 3. Process each group individually (external I/O happens outside transactions)
         for item in candidates_data:
@@ -298,12 +310,12 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
             chat_id = item["chat_id"]
             last_activity = item["last_activity"]
             warned_at = item["warned_at"]
+            comando_agregar = item["comando_agregar"]
 
             # Case 1: Group is inactive and has NOT been warned yet
             if last_activity < threshold_warn and warned_at is None:
-                command_name = "agregaroptativa" if group_type == "GrupoOptativa" else "agregareci"
                 warning_text = (
-                    f"¡Hola! Este grupo va a ser archivado automáticamente por inactividad. Para evitarlo, un administrador debe ejecutar /{command_name} en las próximas 24hs.\n\n"
+                    f"¡Hola! Este grupo va a ser archivado automáticamente por inactividad. Para evitarlo, un administrador debe ejecutar /{comando_agregar} en las próximas 24hs.\n\n"
                     f"Si directamente quieren archivarlo ya, un administrador puede tirar /archivar.\n"
                     f"El grupo archivado seguirá siendo accesible desde /listararchivado."
                 )
@@ -437,8 +449,8 @@ async def archivar(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.effective_message.reply_text("Este grupo no está registrado en el bot.")
             return
             
-        # We only allow archiving GrupoOptativa and ECI
-        if group.type not in ["GrupoOptativa", "ECI"]:
+        # We only allow archiving groups that are marked as archivable
+        if not group.es_archivable:
             await update.effective_message.reply_text("Solo se pueden archivar grupos de materias optativas o de ECI.")
             return
             

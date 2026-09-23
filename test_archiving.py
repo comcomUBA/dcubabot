@@ -290,5 +290,103 @@ class TestGroupArchiving(unittest.TestCase):
             )
         asyncio.run(run_test())
 
+    def test_agregar_warned_group_reactivates_successfully(self):
+        import asyncio
+        async def run_test():
+            session = self.Session()
+            warned_time = datetime.datetime.utcnow() - datetime.timedelta(hours=12)
+            warned = GrupoOptativa(name="Warned Group", url="https://t.me/warned", chat_id="999", validated=True, last_activity=datetime.datetime.utcnow() - datetime.timedelta(days=365), warned_at=warned_time)
+            session.add(warned)
+            session.commit()
+            session.close()
+            
+            update = AsyncMock()
+            update.effective_chat = MagicMock()
+            update.effective_chat.id = 999
+            update.effective_chat.title = "Reactivated Group Title"
+            update.effective_message = AsyncMock()
+            
+            context = AsyncMock()
+            context.bot = AsyncMock()
+            context.bot.export_chat_invite_link = AsyncMock(return_value="https://t.me/new_warned_link")
+            
+            from handlers.groups import agregar
+            await agregar(update, context, GrupoOptativa, "optativa")
+            
+            session2 = self.Session()
+            group = session2.query(Listable).filter_by(chat_id="999").first()
+            self.assertEqual(group.type, "GrupoOptativa")
+            self.assertEqual(group.name, "Reactivated Group Title")
+            self.assertEqual(group.url, "https://t.me/new_warned_link")
+            self.assertIsNone(group.warned_at)
+            self.assertIsNone(group.archived_at)
+            self.assertTrue(group.validated)
+            session2.close()
+            
+            update.effective_message.reply_text.assert_called_with(
+                text="¡El grupo ha sido reactivado y se ha cancelado el aviso de archivado!"
+            )
+        asyncio.run(run_test())
+
+    def test_agregar_unvalidated_group_resends_to_rozen(self):
+        import asyncio
+        async def run_test():
+            session = self.Session()
+            unvalidated = GrupoOptativa(name="Unvalidated Group", url="https://t.me/unval", chat_id="111", validated=False)
+            session.add(unvalidated)
+            session.commit()
+            session.close()
+            
+            update = AsyncMock()
+            update.effective_chat = MagicMock()
+            update.effective_chat.id = 111
+            update.effective_chat.title = "Updated Unvalidated Title"
+            update.effective_message = AsyncMock()
+            
+            context = AsyncMock()
+            context.bot = AsyncMock()
+            context.bot.export_chat_invite_link = AsyncMock(return_value="https://t.me/new_unval_link")
+            context.bot.send_message = AsyncMock()
+            
+            from handlers.groups import agregar
+            await agregar(update, context, GrupoOptativa, "optativa")
+            
+            session2 = self.Session()
+            group = session2.query(Listable).filter_by(chat_id="111").first()
+            self.assertEqual(group.type, "GrupoOptativa")
+            self.assertEqual(group.name, "Updated Unvalidated Title")
+            self.assertEqual(group.url, "https://t.me/new_unval_link")
+            self.assertFalse(group.validated)
+            session2.close()
+            
+            context.bot.send_message.assert_called_once()
+            call_kwargs = context.bot.send_message.call_args[1]
+            self.assertIn("optativa (re-enviado para validación)", call_kwargs["text"])
+            
+            update.effective_message.reply_text.assert_called_with(
+                "OK, el grupo no estaba validado o fue desactivado. Se lo vuelvo a mandar a Rozen para su aprobación."
+            )
+        asyncio.run(run_test())
+
+    def test_polymorphic_properties(self):
+        from models import GrupoOptativa, ECI, Grupo, GrupoOtros
+        
+        opt = GrupoOptativa(name="Opt", url="url")
+        eci = ECI(name="ECI", url="url")
+        group = Grupo(name="Grupo", url="url")
+        otros = GrupoOtros(name="Otros", url="url")
+        
+        # Test es_archivable
+        self.assertTrue(opt.es_archivable)
+        self.assertTrue(eci.es_archivable)
+        self.assertFalse(group.es_archivable)
+        self.assertFalse(otros.es_archivable)
+        
+        # Test comando_agregar
+        self.assertEqual(opt.comando_agregar, "agregaroptativa")
+        self.assertEqual(eci.comando_agregar, "agregareci")
+        self.assertEqual(group.comando_agregar, "agregargrupo")
+        self.assertEqual(otros.comando_agregar, "agregarotros")
+
 if __name__ == "__main__":
     unittest.main()
