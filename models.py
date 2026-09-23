@@ -117,6 +117,14 @@ class Listable(Base):
             return Listable.REACTIVAR_WARNED
         return Listable.REACTIVAR_HEALTHY
 
+    @property
+    def es_archivable(self):
+        return False
+
+    @property
+    def comando_agregar(self):
+        return "agregargrupo"
+
 class GrupoArchivado(Listable):
     __mapper_args__ = {
         'polymorphic_identity': 'GrupoArchivado',
@@ -137,6 +145,14 @@ class ECI(Listable):
         'polymorphic_identity': 'ECI',
     }
 
+    @property
+    def es_archivable(self):
+        return True
+
+    @property
+    def comando_agregar(self):
+        return "agregareci"
+
 class Otro(Listable):
     __mapper_args__ = {
         'polymorphic_identity': 'Otro',
@@ -152,10 +168,22 @@ class GrupoOptativa(Listable):
         'polymorphic_identity': 'GrupoOptativa',
     }
 
+    @property
+    def es_archivable(self):
+        return True
+
+    @property
+    def comando_agregar(self):
+        return "agregaroptativa"
+
 class GrupoOtros(Listable):
     __mapper_args__ = {
         'polymorphic_identity': 'GrupoOtros',
     }
+
+    @property
+    def comando_agregar(self):
+        return "agregarotros"
 
 class Noticia(Base):
     __tablename__ = 'noticias'

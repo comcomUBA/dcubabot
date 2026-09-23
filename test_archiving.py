@@ -368,5 +368,25 @@ class TestGroupArchiving(unittest.TestCase):
             )
         asyncio.run(run_test())
 
+    def test_polymorphic_properties(self):
+        from models import GrupoOptativa, ECI, Grupo, GrupoOtros
+        
+        opt = GrupoOptativa(name="Opt", url="url")
+        eci = ECI(name="ECI", url="url")
+        group = Grupo(name="Grupo", url="url")
+        otros = GrupoOtros(name="Otros", url="url")
+        
+        # Test es_archivable
+        self.assertTrue(opt.es_archivable)
+        self.assertTrue(eci.es_archivable)
+        self.assertFalse(group.es_archivable)
+        self.assertFalse(otros.es_archivable)
+        
+        # Test comando_agregar
+        self.assertEqual(opt.comando_agregar, "agregaroptativa")
+        self.assertEqual(eci.comando_agregar, "agregareci")
+        self.assertEqual(group.comando_agregar, "agregargrupo")
+        self.assertEqual(otros.comando_agregar, "agregarotros")
+
 if __name__ == "__main__":
     unittest.main()

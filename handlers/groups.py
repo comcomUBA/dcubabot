@@ -279,29 +279,28 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
         with get_session() as session:
             untracked_groups = session.query(Listable).filter(Listable.last_activity == None).all()
             for g in untracked_groups:
-                if g.type in ["GrupoOptativa", "ECI"]:
+                if g.es_archivable:
                     # Initialize to an old date so they trigger the warning immediately on first run
                     g.last_activity = now - datetime.timedelta(days=366)
                 else:
                     g.last_activity = now
 
-        # 2. Query candidates data (validated, non-archived ECI and GrupoOptativa groups)
+        # 2. Query candidates data (validated, non-archived archivable groups)
         # We fetch the required attributes into memory to avoid keeping a transaction open during network calls
         candidates_data = []
         with get_session() as session:
-            candidates = session.query(Listable).filter(
-                Listable.type.in_(["GrupoOptativa", "ECI"]),
-                Listable.validated == True
-            ).all()
+            candidates = session.query(Listable).filter_by(validated=True).all()
             for g in candidates:
-                candidates_data.append({
-                    "id": g.id,
-                    "name": g.name,
-                    "type": g.type,
-                    "chat_id": g.chat_id,
-                    "last_activity": g.last_activity,
-                    "warned_at": g.warned_at
-                })
+                if g.es_archivable:
+                    candidates_data.append({
+                        "id": g.id,
+                        "name": g.name,
+                        "type": g.type,
+                        "chat_id": g.chat_id,
+                        "last_activity": g.last_activity,
+                        "warned_at": g.warned_at,
+                        "comando_agregar": g.comando_agregar
+                    })
 
         # 3. Process each group individually (external I/O happens outside transactions)
         for item in candidates_data:
@@ -311,12 +310,12 @@ async def _update_groups(context: ContextTypes.DEFAULT_TYPE):
             chat_id = item["chat_id"]
             last_activity = item["last_activity"]
             warned_at = item["warned_at"]
+            comando_agregar = item["comando_agregar"]
 
             # Case 1: Group is inactive and has NOT been warned yet
             if last_activity < threshold_warn and warned_at is None:
-                command_name = "agregaroptativa" if group_type == "GrupoOptativa" else "agregareci"
                 warning_text = (
-                    f"¡Hola! Este grupo va a ser archivado automáticamente por inactividad. Para evitarlo, un administrador debe ejecutar /{command_name} en las próximas 24hs.\n\n"
+                    f"¡Hola! Este grupo va a ser archivado automáticamente por inactividad. Para evitarlo, un administrador debe ejecutar /{comando_agregar} en las próximas 24hs.\n\n"
                     f"Si directamente quieren archivarlo ya, un administrador puede tirar /archivar.\n"
                     f"El grupo archivado seguirá siendo accesible desde /listararchivado."
                 )
@@ -450,8 +449,8 @@ async def archivar(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.effective_message.reply_text("Este grupo no está registrado en el bot.")
             return
             
-        # We only allow archiving GrupoOptativa and ECI
-        if group.type not in ["GrupoOptativa", "ECI"]:
+        # We only allow archiving groups that are marked as archivable
+        if not group.es_archivable:
             await update.effective_message.reply_text("Solo se pueden archivar grupos de materias optativas o de ECI.")
             return
             
