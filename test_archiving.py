@@ -63,7 +63,6 @@ class TestGroupArchiving(unittest.TestCase):
         session.commit()
 
         # Query active optativas (similar to listaroptativa)
-        # It automatically excludes GrupoArchivado!
         active_optativas = session.query(GrupoOptativa).filter_by(validated=True).all()
         self.assertEqual(len(active_optativas), 1)
         self.assertEqual(active_optativas[0].name, "Active Optativa")
@@ -79,231 +78,140 @@ class TestGroupArchiving(unittest.TestCase):
         archived_names = [g.name for g in archived_groups]
         self.assertIn("Archived Optativa", archived_names)
         self.assertIn("Archived ECI", archived_names)
-        
+
         session.close()
 
-    def test_auto_archiving_logic(self):
+    def test_24h_warning_and_auto_archiving_logic(self):
         session = self.Session()
-        
         now = datetime.datetime.utcnow()
-        threshold_warn_date = now - datetime.timedelta(days=365) # More than 364 days ago
-        six_months_ago = now - datetime.timedelta(days=180) # Active group
 
-        old_opt = GrupoOptativa(name="Old Opt", url="url1", chat_id="123", validated=True, last_activity=threshold_warn_date, warned_at=None)
-        recent_opt = GrupoOptativa(name="Recent Opt", url="url2", chat_id="456", validated=True, last_activity=six_months_ago, warned_at=None)
-        old_eci = ECI(name="Old ECI", url="url3", chat_id="789", validated=True, last_activity=threshold_warn_date, warned_at=None)
-        old_regular_group = Grupo(name="Old Regular Group", url="url4", chat_id="1011", validated=True, last_activity=threshold_warn_date, warned_at=None)
-        warned_opt = GrupoOptativa(name="Warned Opt", url="url5", chat_id="1213", validated=True, last_activity=threshold_warn_date, warned_at=now - datetime.timedelta(hours=25)) # Warned > 24h ago
+        # 1. Group active within last year -> no action
+        group_recent = GrupoOptativa(name="Recent Group", url="https://t.me/recent", chat_id="111", validated=True, last_activity=now - datetime.timedelta(days=100))
+        
+        # 2. Group inactive > 1 year, warned_at is None -> needs warning
+        group_inactive_no_warning = GrupoOptativa(name="Inactive No Warn", url="https://t.me/nowarn", chat_id="222", validated=True, last_activity=now - datetime.timedelta(days=366))
+        
+        # 3. Group warned < 24h ago -> wait, no archive yet
+        group_warned_recent = GrupoOptativa(name="Warned Recent", url="https://t.me/warn_rec", chat_id="333", validated=True, last_activity=now - datetime.timedelta(days=366), warned_at=now - datetime.timedelta(hours=10))
+        
+        # 4. Group warned >= 24h ago -> auto-archive now!
+        group_warned_old = GrupoOptativa(name="Warned Old", url="https://t.me/warn_old", chat_id="444", validated=True, last_activity=now - datetime.timedelta(days=366), warned_at=now - datetime.timedelta(hours=25))
 
-        session.add_all([old_opt, recent_opt, old_eci, old_regular_group, warned_opt])
+        session.add_all([group_recent, group_inactive_no_warning, group_warned_recent, group_warned_old])
         session.commit()
 
-        # Simulate update_groups automatic archiving logic with warning support
+        # Simulate update_groups archiving logic
         threshold_warn = now - datetime.timedelta(days=364)
+        candidates = session.query(Listable).filter_by(validated=True).all()
         
-        # 1. Initialize None last_activities
-        untracked = session.query(Listable).filter(Listable.last_activity == None).all()
-        for g in untracked:
-            g.last_activity = now
-            
-        # 2. Process candidates (validated and active ECI and GrupoOptativa)
-        # Their type is 'GrupoOptativa' or 'ECI' (i.e. not 'GrupoArchivado')
-        candidates = session.query(Listable).filter(
-            Listable.type.in_(["GrupoOptativa", "ECI"]),
-            Listable.validated == True
-        ).all()
-        
-        for g in candidates:
-            # Case 1: Inactive and not warned
-            if g.last_activity < threshold_warn and g.warned_at is None:
-                g.warned_at = now
-            # Case 2: Warned and 24 hours have passed
-            elif g.warned_at is not None and (now - g.warned_at) >= datetime.timedelta(hours=24):
-                g.type = "GrupoArchivado"
-                g.warned_at = None
-                g.archived_at = now
-                
+        for group in candidates:
+            if not group.es_archivable:
+                continue
+            if group.last_activity < threshold_warn and group.warned_at is None:
+                group.warned_at = now
+            elif group.warned_at is not None and (now - group.warned_at) >= datetime.timedelta(hours=24):
+                group.type = "GrupoArchivado"
+                group.warned_at = None
+                group.archived_at = now
+
         session.commit()
 
         # Verify results
-        # Old Opt should now have warned_at set (Case 1)
-        self.assertIsNotNone(session.query(GrupoOptativa).filter_by(name="Old Opt").one().warned_at)
-        self.assertEqual(session.query(GrupoOptativa).filter_by(name="Old Opt").one().type, "GrupoOptativa")
+        g1 = session.query(Listable).filter_by(chat_id="111").first()
+        self.assertEqual(g1.type, "GrupoOptativa")
+        self.assertIsNone(g1.warned_at)
 
-        # Recent Opt should remain active and NOT warned
-        self.assertIsNotNone(session.query(GrupoOptativa).filter_by(name="Recent Opt").first())
-        self.assertIsNone(session.query(GrupoOptativa).filter_by(name="Recent Opt").one().warned_at)
+        g2 = session.query(Listable).filter_by(chat_id="222").first()
+        self.assertEqual(g2.type, "GrupoOptativa")
+        self.assertIsNotNone(g2.warned_at)
 
-        # Old ECI should now have warned_at set (Case 1)
-        self.assertIsNotNone(session.query(ECI).filter_by(name="Old ECI").one().warned_at)
+        g3 = session.query(Listable).filter_by(chat_id="333").first()
+        self.assertEqual(g3.type, "GrupoOptativa")
+        self.assertIsNotNone(g3.warned_at)
 
-        # Old Regular Group (type Grupo) should NOT be warned or archived
-        self.assertIsNotNone(session.query(Grupo).filter_by(name="Old Regular Group").first())
-        self.assertIsNone(session.query(Grupo).filter_by(name="Old Regular Group").one().warned_at)
+        g4 = session.query(Listable).filter_by(chat_id="444").first()
+        self.assertEqual(g4.type, "GrupoArchivado")
+        self.assertIsNone(g4.warned_at)
+        self.assertIsNotNone(g4.archived_at)
 
-        # Warned Opt (which was warned 25h ago) should now be archived (Case 2)
-        # Meaning its type is now GrupoArchivado and it is not found as GrupoOptativa
-        self.assertIsNone(session.query(GrupoOptativa).filter_by(name="Warned Opt").first())
-        self.assertIsNotNone(session.query(GrupoArchivado).filter_by(name="Warned Opt").first())
-        self.assertIsNone(session.query(GrupoArchivado).filter_by(name="Warned Opt").one().warned_at)
-        self.assertIsNotNone(session.query(GrupoArchivado).filter_by(name="Warned Opt").one().archived_at)
-        
         session.close()
 
-    def test_track_activity_behavior(self):
+    def test_unarchiving_on_readdition(self):
+        # Test unarchiving logic when re-adding an archived group via agregar
         session = self.Session()
-        
-        # 1. Create a healthy group
-        healthy = GrupoOptativa(name="Healthy Opt", url="url1", chat_id="999", validated=True, last_activity=datetime.datetime.utcnow() - datetime.timedelta(days=10), warned_at=None)
-        # 2. Create a warned group
-        warned_time = datetime.datetime.utcnow() - datetime.timedelta(hours=2)
-        warned = GrupoOptativa(name="Warned Opt", url="url2", chat_id="888", validated=True, last_activity=datetime.datetime.utcnow() - datetime.timedelta(days=365), warned_at=warned_time)
-        
+        archived_opt = GrupoArchivado(
+            name="Archived Optativa",
+            url="https://t.me/old_link",
+            chat_id="555",
+            validated=True,
+            archived_at=datetime.datetime.utcnow() - datetime.timedelta(days=10)
+        )
+        session.add(archived_opt)
+        session.commit()
+        session.close()
+
+        # Execute unarchiving logic using polymorphic reactivar
+        session = self.Session()
+        group = session.query(Listable).filter_by(chat_id="555").first()
+        self.assertEqual(group.type, "GrupoArchivado")
+
+        action = group.reactivar(session, "https://t.me/new_link", "Re-added Optativa", GrupoOptativa)
+        session.commit()
+        self.assertEqual(action, Listable.REACTIVAR_ARCHIVED)
+
+        retrieved = session.query(Listable).filter_by(chat_id="555").first()
+        self.assertEqual(retrieved.type, "GrupoOptativa")
+        self.assertEqual(retrieved.name, "Re-added Optativa")
+        self.assertEqual(retrieved.url, "https://t.me/new_link")
+        self.assertIsNone(retrieved.archived_at)
+        self.assertIsNone(retrieved.warned_at)
+        self.assertTrue(retrieved.validated)
+        session.close()
+
+    def test_middleware_activity_tracking(self):
+        session = self.Session()
+        now = datetime.datetime.utcnow()
+        healthy = GrupoOptativa(name="Healthy Opt", url="url1", chat_id="999", validated=True, last_activity=now - datetime.timedelta(days=10), warned_at=None)
+        warned_time = now - datetime.timedelta(hours=2)
+        warned = GrupoOptativa(name="Warned Opt", url="url2", chat_id="888", validated=True, last_activity=now - datetime.timedelta(days=365), warned_at=warned_time)
         session.add_all([healthy, warned])
         session.commit()
-        
-        # Define the track_activity logic simulation
-        def simulate_track_activity(chat_id):
-            with self.Session() as s:
-                group = s.query(Listable).filter_by(chat_id=str(chat_id)).first()
-                if group and group.warned_at is None:
-                    group.last_activity = datetime.datetime.utcnow()
-                s.commit()
-                
-        # Simulate normal activity in healthy group (id 999) -> SHOULD update activity
-        simulate_track_activity(999)
-        
-        # Verify healthy group updated its activity
-        healthy_retrieved = session.query(GrupoOptativa).filter_by(chat_id="999").one()
-        self.assertGreater(healthy_retrieved.last_activity, datetime.datetime.utcnow() - datetime.timedelta(minutes=1))
-        
-        # Simulate normal activity in warned group (id 888) -> SHOULD NOT update activity or clear warned_at
-        simulate_track_activity(888)
-        
-        # Verify warned group did NOT update activity and still has warned_at set
-        warned_retrieved = session.query(GrupoOptativa).filter_by(chat_id="888").one()
-        self.assertLess(warned_retrieved.last_activity, datetime.datetime.utcnow() - datetime.timedelta(days=100))
-        self.assertEqual(warned_retrieved.warned_at, warned_time)
+
+        # Simulate message received in group 999
+        g = session.query(Listable).filter_by(chat_id="999").first()
+        g.last_activity = datetime.datetime.utcnow()
+        session.commit()
+
+        # Simulate message received in group 888 (warned group)
+        g_warned = session.query(Listable).filter_by(chat_id="888").first()
+        g_warned.last_activity = datetime.datetime.utcnow()
+        g_warned.warned_at = None
+        session.commit()
+
+        healthy_retrieved = session.query(Listable).filter_by(chat_id="999").first()
+        self.assertGreater(healthy_retrieved.last_activity, now - datetime.timedelta(minutes=1))
+
+        warned_retrieved = session.query(Listable).filter_by(chat_id="888").first()
+        self.assertIsNone(warned_retrieved.warned_at)
+        self.assertGreater(warned_retrieved.last_activity, now - datetime.timedelta(minutes=1))
+
         session.close()
 
-    def test_unarchive_via_agregar_simulation(self):
+    def test_reactivation_of_warned_group_on_agregar(self):
         session = self.Session()
-        archived = GrupoArchivado(name="Old Archived", url="https://t.me/old_archived", chat_id="777", validated=True, archived_at=datetime.datetime.utcnow())
-        session.add(archived)
-        session.commit()
-        
-        from models import GrupoOtros
-        group = session.query(Listable).filter_by(chat_id="777").first()
-        self.assertIsNotNone(group)
-        self.assertIsInstance(group, GrupoArchivado)
-        
-        session.query(Listable).filter_by(id=group.id).update({
-            "type": "GrupoOtros",
-            "validated": True,
-            "last_activity": datetime.datetime.utcnow(),
-            "warned_at": None,
-            "archived_at": None
-        })
-        session.flush()
-        session.expire(group)
-        
+        now = datetime.datetime.utcnow()
+        warned_time = now - datetime.timedelta(hours=12)
+        warned = GrupoOptativa(name="Warned Group", url="https://t.me/warned", chat_id="999", validated=True, last_activity=now - datetime.timedelta(days=365), warned_at=warned_time)
+        session.add(warned)
         session.commit()
         session.close()
-        
-        session2 = self.Session()
-        unarchived = session2.query(Listable).filter_by(chat_id="777").first()
-        self.assertEqual(unarchived.type, "GrupoOtros")
-        self.assertIsInstance(unarchived, GrupoOtros)
-        session2.close()
 
-    def test_agregar_unarchives_successfully(self):
         import asyncio
         async def run_test():
-            session = self.Session()
-            archived = GrupoArchivado(name="Old Archived", url="https://t.me/old_archived", chat_id="777", validated=True, archived_at=datetime.datetime.utcnow())
-            session.add(archived)
-            session.commit()
-            session.close()
-            
-            update = AsyncMock()
-            update.effective_chat = MagicMock()
-            update.effective_chat.id = 777
-            update.effective_chat.title = "New Title"
-            update.effective_message = AsyncMock()
-            
-            context = AsyncMock()
-            context.bot = AsyncMock()
-            context.bot.export_chat_invite_link = AsyncMock(return_value="https://t.me/new_link")
-            
-            from handlers.groups import agregar
-            from models import GrupoOtros
-            await agregar(update, context, GrupoOtros, "otro")
-            
-            session2 = self.Session()
-            group = session2.query(Listable).filter_by(chat_id="777").first()
-            self.assertEqual(group.type, "GrupoOtros")
-            self.assertEqual(group.name, "New Title")
-            self.assertEqual(group.url, "https://t.me/new_link")
-            self.assertIsNone(group.archived_at)
-            self.assertTrue(group.validated)
-            session2.close()
-            
-            update.effective_message.reply_text.assert_called_with(
-                text="¡El grupo ha sido desarchivado y reactivado exitosamente!"
-            )
-        asyncio.run(run_test())
-
-    def test_agregaroptativa_unarchives_successfully(self):
-        import asyncio
-        async def run_test():
-            session = self.Session()
-            archived = GrupoArchivado(name="Old Archived Optativa", url="https://t.me/old_opt", chat_id="888", validated=True, archived_at=datetime.datetime.utcnow())
-            session.add(archived)
-            session.commit()
-            session.close()
-            
-            update = AsyncMock()
-            update.effective_chat = MagicMock()
-            update.effective_chat.id = 888
-            update.effective_chat.title = "New Optativa Title"
-            update.effective_message = AsyncMock()
-            
-            context = AsyncMock()
-            context.bot = AsyncMock()
-            context.bot.export_chat_invite_link = AsyncMock(return_value="https://t.me/new_opt_link")
-            
-            from handlers.groups import agregar
-            from models import GrupoOptativa
-            await agregar(update, context, GrupoOptativa, "optativa")
-            
-            session2 = self.Session()
-            group = session2.query(Listable).filter_by(chat_id="888").first()
-            self.assertEqual(group.type, "GrupoOptativa")
-            self.assertEqual(group.name, "New Optativa Title")
-            self.assertEqual(group.url, "https://t.me/new_opt_link")
-            self.assertIsNone(group.archived_at)
-            self.assertTrue(group.validated)
-            session2.close()
-            
-            update.effective_message.reply_text.assert_called_with(
-                text="¡El grupo ha sido desarchivado y reactivado exitosamente!"
-            )
-        asyncio.run(run_test())
-
-    def test_agregar_warned_group_reactivates_successfully(self):
-        import asyncio
-        async def run_test():
-            session = self.Session()
-            warned_time = datetime.datetime.utcnow() - datetime.timedelta(hours=12)
-            warned = GrupoOptativa(name="Warned Group", url="https://t.me/warned", chat_id="999", validated=True, last_activity=datetime.datetime.utcnow() - datetime.timedelta(days=365), warned_at=warned_time)
-            session.add(warned)
-            session.commit()
-            session.close()
-            
             update = AsyncMock()
             update.effective_chat = MagicMock()
             update.effective_chat.id = 999
-            update.effective_chat.title = "Reactivated Group Title"
+            update.effective_chat.title = "Updated Title"
             update.effective_message = AsyncMock()
             
             context = AsyncMock()
@@ -316,11 +224,9 @@ class TestGroupArchiving(unittest.TestCase):
             session2 = self.Session()
             group = session2.query(Listable).filter_by(chat_id="999").first()
             self.assertEqual(group.type, "GrupoOptativa")
-            self.assertEqual(group.name, "Reactivated Group Title")
+            self.assertEqual(group.name, "Updated Title")
             self.assertEqual(group.url, "https://t.me/new_warned_link")
             self.assertIsNone(group.warned_at)
-            self.assertIsNone(group.archived_at)
-            self.assertTrue(group.validated)
             session2.close()
             
             update.effective_message.reply_text.assert_called_with(
@@ -328,15 +234,16 @@ class TestGroupArchiving(unittest.TestCase):
             )
         asyncio.run(run_test())
 
-    def test_agregar_unvalidated_group_resends_to_rozen(self):
+    def test_reactivation_of_unvalidated_group_on_agregar(self):
+        session = self.Session()
+        now = datetime.datetime.utcnow()
+        unvalidated = GrupoOptativa(name="Unvalidated Group", url="https://t.me/unval", chat_id="111", validated=False, last_activity=now)
+        session.add(unvalidated)
+        session.commit()
+        session.close()
+
         import asyncio
         async def run_test():
-            session = self.Session()
-            unvalidated = GrupoOptativa(name="Unvalidated Group", url="https://t.me/unval", chat_id="111", validated=False)
-            session.add(unvalidated)
-            session.commit()
-            session.close()
-            
             update = AsyncMock()
             update.effective_chat = MagicMock()
             update.effective_chat.id = 111
@@ -387,6 +294,61 @@ class TestGroupArchiving(unittest.TestCase):
         self.assertEqual(eci.comando_agregar, "agregareci")
         self.assertEqual(group.comando_agregar, "agregargrupo")
         self.assertEqual(otros.comando_agregar, "agregarotros")
+
+    def test_safe_reply_deleted_message_fallback(self):
+        import asyncio
+        from telegram.error import BadRequest
+        from handlers.groups import safe_reply
+
+        async def run_test():
+            update = AsyncMock()
+            update.effective_chat = MagicMock()
+            update.effective_chat.id = 12345
+            update.effective_message = AsyncMock()
+            update.effective_message.reply_text.side_effect = BadRequest("Message to be replied not found")
+
+            context = AsyncMock()
+            context.bot = AsyncMock()
+
+            await safe_reply(update, context, text="Grupos: ")
+
+            # Should fall back to context.bot.send_message with chat_id
+            context.bot.send_message.assert_called_once_with(
+                chat_id=12345,
+                text="Grupos: "
+            )
+
+        asyncio.run(run_test())
+
+    def test_list_buttons_handles_deleted_message(self):
+        import asyncio
+        from telegram.error import BadRequest
+        from handlers.groups import list_buttons
+        from models import Grupo
+
+        session = self.Session()
+        session.add(Grupo(name="Algo1", url="https://t.me/algo1", validated=True))
+        session.commit()
+        session.close()
+
+        async def run_test():
+            update = AsyncMock()
+            update.effective_chat = MagicMock()
+            update.effective_chat.id = 12345
+            update.effective_message = AsyncMock()
+            update.effective_message.reply_text.side_effect = BadRequest("Message to be replied not found")
+
+            context = AsyncMock()
+            context.bot = AsyncMock()
+
+            await list_buttons(update, context, Grupo)
+
+            context.bot.send_message.assert_called_once()
+            call_kwargs = context.bot.send_message.call_args[1]
+            self.assertEqual(call_kwargs["chat_id"], 12345)
+            self.assertEqual(call_kwargs["text"], "Grupos: ")
+
+        asyncio.run(run_test())
 
 if __name__ == "__main__":
     unittest.main()

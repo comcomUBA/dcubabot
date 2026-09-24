@@ -2,11 +2,24 @@ import logging
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+from telegram.error import BadRequest
 from models import Grupo, GrupoOptativa, ECI, GrupoOtros, Obligatoria, Listable, GrupoArchivado
 from handlers.db import get_session
 from tg_ids import ROZEN_CHATID, DC_GROUP_CHATID
 
 logger = logging.getLogger("DCUBABOT")
+
+async def safe_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, **kwargs):
+    if update.effective_message:
+        try:
+            return await update.effective_message.reply_text(text, **kwargs)
+        except BadRequest as e:
+            if "message to be replied not found" in str(e).lower():
+                if update.effective_chat:
+                    return await context.bot.send_message(chat_id=update.effective_chat.id, text=text, **kwargs)
+            raise
+    elif update.effective_chat:
+        return await context.bot.send_message(chat_id=update.effective_chat.id, text=text, **kwargs)
 
 async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
     with get_session() as session:
@@ -20,8 +33,8 @@ async def list_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE, lista
 
             keyboard.append(row)
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.effective_message.reply_text(text="Grupos: ", disable_web_page_preview=True,
-                                        reply_markup=reply_markup)
+        await safe_reply(update, context, text="Grupos: ", disable_web_page_preview=True,
+                         reply_markup=reply_markup)
 
 async def listar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await list_buttons(update, context, Grupo)
@@ -40,7 +53,7 @@ async def listararchivado(update: Update, context: ContextTypes.DEFAULT_TYPE):
         buttons = session.query(GrupoArchivado).filter_by(validated=True).order_by(GrupoArchivado.name).all()
         
         if not buttons:
-            await update.effective_message.reply_text("No hay grupos archivados en este momento.")
+            await safe_reply(update, context, "No hay grupos archivados en este momento.")
             return
 
         keyboard = []
@@ -52,7 +65,9 @@ async def listararchivado(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard.append(row)
             
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.effective_message.reply_text(
+        await safe_reply(
+            update,
+            context,
             text="Grupos Archivados (ECI / Optativas inactivos por 1 año):",
             disable_web_page_preview=True,
             reply_markup=reply_markup
@@ -65,7 +80,7 @@ async def cubawiki(update: Update, context: ContextTypes.DEFAULT_TYPE):
             Obligatoria.cubawiki_url != None
         ).first()
         if group:
-            await update.effective_message.reply_text(group.cubawiki_url)
+            await safe_reply(update, context, group.cubawiki_url)
 
 async def suggest_listable(update: Update, context: ContextTypes.DEFAULT_TYPE, listable_type):
     try:
